@@ -1,6 +1,7 @@
+import IconApp from '@/components/icon/icon-app'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
-import { Sparkles, Map, Zap, Brain, Trophy, Compass } from 'lucide-react'
+import { Brain, Compass, Map, Sparkles, Trophy, Zap } from 'lucide-react'
 import { QuestCreator } from '../components/QuestCreator'
 import { Button } from '../components/ui/button'
 
@@ -11,23 +12,23 @@ function HomePage() {
     {
       icon: Brain,
       title: 'AI-Powered',
-      description: 'Gemini transforms your content into engaging quests'
+      description: 'Gemini transforms your content into engaging quests',
     },
     {
       icon: Map,
       title: 'Visual Learning Map',
-      description: 'Navigate through stages like a game'
+      description: 'Navigate through stages like a game',
     },
     {
       icon: Zap,
       title: 'Instant Feedback',
-      description: 'Learn from mistakes with fun explanations'
+      description: 'Learn from mistakes with fun explanations',
     },
     {
       icon: Trophy,
       title: 'Gamified Progress',
-      description: 'Earn points and track achievements'
-    }
+      description: 'Earn points and track achievements',
+    },
   ]
 
   return (
@@ -48,9 +49,9 @@ function HomePage() {
             <div className="flex items-center justify-center gap-3 mb-6">
               <motion.div
                 animate={{ rotate: [0, 360] }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
               >
-                <Sparkles className="w-10 h-10 text-purple-400" />
+                <IconApp className="w-8 h-8" />
               </motion.div>
               <span className="text-purple-400 font-semibold tracking-wide uppercase text-sm">
                 AI-Powered Edutainment
@@ -66,8 +67,9 @@ function HomePage() {
             </h1>
 
             <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-8">
-              Turn any content into gamified "Learning Quests" with AI.
-              Master new topics through interactive stages, quizzes, and instant feedback.
+              Turn any content into gamified "Learning Quests" with AI. Master
+              new topics through interactive stages, quizzes, and instant
+              feedback.
             </p>
 
             <div className="flex flex-wrap justify-center gap-4 mb-12">
@@ -102,7 +104,9 @@ function HomePage() {
                 className="p-4 rounded-xl bg-slate-800/30 border border-slate-700/50 backdrop-blur-sm"
               >
                 <feature.icon className="w-8 h-8 text-purple-400 mx-auto mb-3" />
-                <h3 className="font-semibold text-white mb-1">{feature.title}</h3>
+                <h3 className="font-semibold text-white mb-1">
+                  {feature.title}
+                </h3>
                 <p className="text-sm text-slate-400">{feature.description}</p>
               </motion.div>
             ))}

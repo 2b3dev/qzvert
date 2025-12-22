@@ -25,7 +25,7 @@ export default function Header() {
                 <IconApp className="w-6 h-6" />
               </motion.div>
               <span className="font-black text-xl text-white group-hover:text-purple-300 transition-colors">
-                qzvert
+                Qzvert
               </span>
             </Link>
 
