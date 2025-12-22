@@ -29,12 +29,12 @@ function QuestPlayPage() {
 
   if (!currentQuest) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
-            <BookOpen className="w-12 h-12 text-slate-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-white mb-2">No Quest Found</h2>
-            <p className="text-slate-400 mb-6">Create a new quest to get started</p>
+            <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-foreground mb-2">No Quest Found</h2>
+            <p className="text-muted-foreground mb-6">Create a new quest to get started</p>
             <Button onClick={() => navigate({ to: '/' })}>
               <Home className="w-4 h-4" />
               Back to Home
@@ -80,7 +80,7 @@ function QuestPlayPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 py-8 px-6">
+    <div className="min-h-screen bg-background py-8 px-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <motion.div
@@ -92,7 +92,7 @@ function QuestPlayPage() {
             <ArrowLeft className="w-4 h-4" />
             Back to Map
           </Button>
-          <div className="flex items-center gap-2 text-purple-400">
+          <div className="flex items-center gap-2 text-primary">
             <Trophy className="w-5 h-5" />
             <span className="font-bold">{score} pts</span>
           </div>
@@ -104,10 +104,10 @@ function QuestPlayPage() {
           animate={{ opacity: 1 }}
           className="text-center mb-8"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/20 text-purple-300 text-sm mb-4">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm mb-4">
             Stage {currentStageIndex + 1} of {currentQuest.stages.length}
           </div>
-          <h1 className="text-3xl font-bold text-white">{stage.title}</h1>
+          <h1 className="text-3xl font-bold text-foreground">{stage.title}</h1>
         </motion.div>
 
         <AnimatePresence mode="wait">
@@ -119,15 +119,15 @@ function QuestPlayPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              <Card className="mb-8 bg-gradient-to-br from-slate-900 to-slate-800">
+              <Card className="mb-8 bg-gradient-to-br from-card to-secondary/50">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-3 text-xl">
-                    <BookOpen className="w-6 h-6 text-purple-400" />
+                    <BookOpen className="w-6 h-6 text-primary" />
                     Lesson Overview
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-slate-300 text-lg leading-relaxed">{stage.lesson}</p>
+                  <p className="text-muted-foreground text-lg leading-relaxed">{stage.lesson}</p>
                 </CardContent>
               </Card>
 
@@ -171,9 +171,9 @@ function QuestPlayPage() {
               >
                 <Trophy className="w-24 h-24 text-yellow-400 mx-auto mb-6" />
               </motion.div>
-              <h2 className="text-4xl font-black text-white mb-4">Stage Complete!</h2>
-              <p className="text-xl text-slate-400 mb-2">You earned</p>
-              <p className="text-5xl font-bold text-purple-400 mb-8">{score} points</p>
+              <h2 className="text-4xl font-black text-foreground mb-4">Stage Complete!</h2>
+              <p className="text-xl text-muted-foreground mb-2">You earned</p>
+              <p className="text-5xl font-bold text-primary mb-8">{score} points</p>
 
               <div className="flex justify-center gap-4">
                 <Button size="lg" onClick={handleNextStage}>
@@ -221,9 +221,9 @@ function QuestPlayPage() {
               <h2 className="text-5xl font-black bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent mb-4">
                 Quest Complete!
               </h2>
-              <p className="text-xl text-slate-400 mb-2">Total Score</p>
-              <p className="text-6xl font-bold text-purple-400 mb-4">{score}</p>
-              <p className="text-slate-400 mb-8">
+              <p className="text-xl text-muted-foreground mb-2">Total Score</p>
+              <p className="text-6xl font-bold text-primary mb-4">{score}</p>
+              <p className="text-muted-foreground mb-8">
                 You completed all {currentQuest.stages.length} stages!
               </p>
 
@@ -257,9 +257,9 @@ function QuestPlayPage() {
               >
                 <div className="text-8xl mb-6">💔</div>
               </motion.div>
-              <h2 className="text-4xl font-black text-red-400 mb-4">Game Over</h2>
-              <p className="text-xl text-slate-400 mb-2">You scored</p>
-              <p className="text-5xl font-bold text-purple-400 mb-8">{score} points</p>
+              <h2 className="text-4xl font-black text-destructive mb-4">Game Over</h2>
+              <p className="text-xl text-muted-foreground mb-2">You scored</p>
+              <p className="text-5xl font-bold text-primary mb-8">{score} points</p>
 
               <div className="flex justify-center gap-4">
                 <Button size="lg" variant="secondary" onClick={handleQuit}>

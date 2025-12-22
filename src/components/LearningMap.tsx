@@ -33,7 +33,7 @@ export function LearningMap({ onStageSelect }: LearningMapProps) {
               y1="50%"
               x2={x2}
               y2="50%"
-              stroke={isCompleted ? '#a855f7' : '#334155'}
+              stroke={isCompleted ? 'hsl(var(--primary))' : 'hsl(var(--border))'}
               strokeWidth="4"
               strokeDasharray={isCompleted ? '0' : '8 8'}
               className="transition-all duration-500"
@@ -62,7 +62,7 @@ export function LearningMap({ onStageSelect }: LearningMapProps) {
               <div className="absolute -top-3 -right-3 z-10">
                 <div className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
-                  isCompleted ? "bg-purple-500 text-white" : "bg-slate-700 text-slate-300"
+                  isCompleted ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
                 )}>
                   {index + 1}
                 </div>
@@ -76,20 +76,20 @@ export function LearningMap({ onStageSelect }: LearningMapProps) {
                 disabled={isLocked}
                 className={cn(
                   "relative w-24 h-24 md:w-32 md:h-32 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all duration-300 border-4",
-                  isCompleted && "bg-gradient-to-br from-purple-600 to-indigo-600 border-purple-400 shadow-lg shadow-purple-500/30",
+                  isCompleted && "bg-gradient-to-br from-primary to-primary/70 border-primary shadow-lg shadow-primary/30",
                   isCurrent && !isCompleted && "bg-gradient-to-br from-amber-500 to-orange-500 border-amber-400 shadow-lg shadow-amber-500/30 animate-pulse",
-                  isLocked && "bg-slate-800 border-slate-700 opacity-60 cursor-not-allowed",
-                  !isCompleted && !isCurrent && !isLocked && "bg-slate-800 border-slate-600 hover:border-purple-500 hover:shadow-lg hover:shadow-purple-500/20"
+                  isLocked && "bg-muted border-border opacity-60 cursor-not-allowed",
+                  !isCompleted && !isCurrent && !isLocked && "bg-secondary border-border hover:border-primary hover:shadow-lg hover:shadow-primary/20"
                 )}
               >
                 {isCompleted ? (
-                  <CheckCircle2 className="w-10 h-10 text-white" />
+                  <CheckCircle2 className="w-10 h-10 text-primary-foreground" />
                 ) : isLocked ? (
-                  <Lock className="w-8 h-8 text-slate-500" />
+                  <Lock className="w-8 h-8 text-muted-foreground" />
                 ) : isCurrent ? (
                   <Play className="w-10 h-10 text-white" />
                 ) : (
-                  <Star className="w-8 h-8 text-slate-400" />
+                  <Star className="w-8 h-8 text-muted-foreground" />
                 )}
               </motion.button>
 
@@ -102,7 +102,7 @@ export function LearningMap({ onStageSelect }: LearningMapProps) {
               >
                 <h3 className={cn(
                   "font-semibold text-sm",
-                  isCompleted ? "text-purple-300" : isCurrent ? "text-amber-300" : "text-slate-400"
+                  isCompleted ? "text-primary" : isCurrent ? "text-amber-500" : "text-muted-foreground"
                 )}>
                   {stage.title}
                 </h3>

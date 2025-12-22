@@ -118,7 +118,7 @@ export function QuizPlayer({ onStageComplete, onGameOver }: QuizPlayerProps) {
                 <Heart
                   className={cn(
                     "w-8 h-8 transition-all duration-300",
-                    i < lives ? "text-red-500 fill-red-500" : "text-slate-700"
+                    i < lives ? "text-destructive fill-destructive" : "text-muted-foreground/30"
                   )}
                 />
               </motion.div>
@@ -133,7 +133,7 @@ export function QuizPlayer({ onStageComplete, onGameOver }: QuizPlayerProps) {
             transition={{ repeat: timeLeft <= 5 ? Infinity : 0, duration: 0.5 }}
             className={cn(
               "flex items-center gap-2 px-4 py-2 rounded-full",
-              timeLeft <= 5 ? "bg-red-500/20 text-red-400" : "bg-slate-800 text-slate-300"
+              timeLeft <= 5 ? "bg-destructive/20 text-destructive" : "bg-secondary text-muted-foreground"
             )}
           >
             <Timer className="w-5 h-5" />
@@ -142,7 +142,7 @@ export function QuizPlayer({ onStageComplete, onGameOver }: QuizPlayerProps) {
         )}
 
         {/* Progress */}
-        <div className="flex items-center gap-2 text-slate-400">
+        <div className="flex items-center gap-2 text-muted-foreground">
           <span className="text-sm">
             {currentQuizIndex + 1} / {totalQuizzes}
           </span>
@@ -159,9 +159,9 @@ export function QuizPlayer({ onStageComplete, onGameOver }: QuizPlayerProps) {
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -50 }}
       >
-        <Card className="mb-6 bg-gradient-to-br from-slate-900 to-slate-800">
+        <Card className="mb-6 bg-gradient-to-br from-card to-secondary/50">
           <CardContent className="pt-6">
-            <h2 className="text-2xl font-bold text-white mb-2">
+            <h2 className="text-2xl font-bold text-foreground mb-2">
               {quiz.question}
             </h2>
           </CardContent>
@@ -187,32 +187,32 @@ export function QuizPlayer({ onStageComplete, onGameOver }: QuizPlayerProps) {
                 disabled={showResult}
                 className={cn(
                   "w-full p-4 rounded-xl border-2 text-left font-medium transition-all duration-300",
-                  !showResult && "hover:border-purple-500 hover:bg-purple-500/10",
-                  !showResult && isSelected && "border-purple-500 bg-purple-500/20",
-                  !showResult && !isSelected && "border-slate-700 bg-slate-800/50",
-                  showAsCorrect && "border-green-500 bg-green-500/20 text-green-300",
-                  showAsWrong && "border-red-500 bg-red-500/20 text-red-300",
-                  showResult && !showAsCorrect && !showAsWrong && "border-slate-700 bg-slate-800/30 opacity-50"
+                  !showResult && "hover:border-primary hover:bg-primary/10",
+                  !showResult && isSelected && "border-primary bg-primary/20",
+                  !showResult && !isSelected && "border-border bg-secondary/50",
+                  showAsCorrect && "border-emerald-500 bg-emerald-500/20 text-emerald-300",
+                  showAsWrong && "border-destructive bg-destructive/20 text-destructive",
+                  showResult && !showAsCorrect && !showAsWrong && "border-border bg-secondary/30 opacity-50"
                 )}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className={cn(
                       "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm",
-                      showAsCorrect && "bg-green-500 text-white",
-                      showAsWrong && "bg-red-500 text-white",
-                      !showResult && "bg-slate-700 text-slate-300"
+                      showAsCorrect && "bg-emerald-500 text-white",
+                      showAsWrong && "bg-destructive text-white",
+                      !showResult && "bg-muted text-muted-foreground"
                     )}>
                       {String.fromCharCode(65 + index)}
                     </span>
                     <span className={cn(
-                      showResult ? (showAsCorrect ? "text-green-300" : showAsWrong ? "text-red-300" : "text-slate-500") : "text-slate-200"
+                      showResult ? (showAsCorrect ? "text-emerald-300" : showAsWrong ? "text-destructive" : "text-muted-foreground") : "text-foreground"
                     )}>
                       {option}
                     </span>
                   </div>
-                  {showAsCorrect && <CheckCircle className="w-6 h-6 text-green-400" />}
-                  {showAsWrong && <XCircle className="w-6 h-6 text-red-400" />}
+                  {showAsCorrect && <CheckCircle className="w-6 h-6 text-emerald-400" />}
+                  {showAsWrong && <XCircle className="w-6 h-6 text-destructive" />}
                 </div>
               </motion.button>
             )
@@ -229,13 +229,13 @@ export function QuizPlayer({ onStageComplete, onGameOver }: QuizPlayerProps) {
             >
               <Card className={cn(
                 "mb-6",
-                isCorrect ? "border-green-500/50 bg-green-500/10" : "border-amber-500/50 bg-amber-500/10"
+                isCorrect ? "border-emerald-500/50 bg-emerald-500/10" : "border-amber-500/50 bg-amber-500/10"
               )}>
                 <CardContent className="pt-6">
                   <div className="flex items-start gap-4">
                     {isCorrect ? (
-                      <div className="p-2 rounded-full bg-green-500/20">
-                        <Trophy className="w-6 h-6 text-green-400" />
+                      <div className="p-2 rounded-full bg-emerald-500/20">
+                        <Trophy className="w-6 h-6 text-emerald-400" />
                       </div>
                     ) : (
                       <div className="p-2 rounded-full bg-amber-500/20">
@@ -245,11 +245,11 @@ export function QuizPlayer({ onStageComplete, onGameOver }: QuizPlayerProps) {
                     <div>
                       <h3 className={cn(
                         "font-bold text-lg mb-2",
-                        isCorrect ? "text-green-300" : "text-amber-300"
+                        isCorrect ? "text-emerald-300" : "text-amber-300"
                       )}>
                         {isCorrect ? "Excellent!" : "Almost there!"}
                       </h3>
-                      <p className="text-slate-300">{quiz.explanation}</p>
+                      <p className="text-muted-foreground">{quiz.explanation}</p>
                     </div>
                   </div>
                 </CardContent>

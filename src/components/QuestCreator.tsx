@@ -51,20 +51,20 @@ export function QuestCreator() {
       transition={{ duration: 0.5 }}
       className="w-full max-w-3xl mx-auto"
     >
-      <Card className="border-purple-500/20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <Card className="border-primary/20 bg-gradient-to-br from-card via-card/80 to-card">
         <CardHeader className="text-center pb-2">
           <div className="flex justify-center mb-4">
             <motion.div
               animate={{ rotate: [0, 10, -10, 0] }}
               transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
             >
-              <Sparkles className="w-12 h-12 text-purple-400" />
+              <Sparkles className="w-12 h-12 text-primary" />
             </motion.div>
           </div>
-          <CardTitle className="text-3xl bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+          <CardTitle className="text-3xl bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">
             Create Your Quest
           </CardTitle>
-          <CardDescription className="text-slate-400 text-lg">
+          <CardDescription className="text-muted-foreground text-lg">
             Transform any content into an epic learning adventure
           </CardDescription>
         </CardHeader>
@@ -81,31 +81,31 @@ export function QuestCreator() {
                 disabled={type !== 'text'}
                 className={`p-4 rounded-xl border-2 transition-all duration-200 ${
                   selectedType === type
-                    ? 'border-purple-500 bg-purple-500/10'
+                    ? 'border-primary bg-primary/10'
                     : type === 'text'
-                    ? 'border-slate-700 hover:border-slate-600 bg-slate-800/50'
-                    : 'border-slate-700 bg-slate-800/30 opacity-50 cursor-not-allowed'
+                    ? 'border-border hover:border-muted-foreground bg-secondary/50'
+                    : 'border-border bg-secondary/30 opacity-50 cursor-not-allowed'
                 }`}
               >
-                <Icon className={`w-6 h-6 mx-auto mb-2 ${selectedType === type ? 'text-purple-400' : 'text-slate-400'}`} />
-                <div className={`font-medium ${selectedType === type ? 'text-purple-300' : 'text-slate-300'}`}>
+                <Icon className={`w-6 h-6 mx-auto mb-2 ${selectedType === type ? 'text-primary' : 'text-muted-foreground'}`} />
+                <div className={`font-medium ${selectedType === type ? 'text-primary' : 'text-foreground'}`}>
                   {label}
                 </div>
-                <div className="text-xs text-slate-500 mt-1">{description}</div>
+                <div className="text-xs text-muted-foreground mt-1">{description}</div>
               </motion.button>
             ))}
           </div>
 
           {/* Content Input */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-300">Your Content</label>
+            <label className="text-sm font-medium text-foreground">Your Content</label>
             <Textarea
               placeholder="Paste your learning content here... (articles, notes, documentation, etc.)"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               className="min-h-[200px] text-base"
             />
-            <div className="flex justify-between text-xs text-slate-500">
+            <div className="flex justify-between text-xs text-muted-foreground">
               <span>Tip: The more detailed your content, the better the quest!</span>
               <span>{content.length} characters</span>
             </div>
@@ -118,7 +118,7 @@ export function QuestCreator() {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400"
+                className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive"
               >
                 {error}
               </motion.div>

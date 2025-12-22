@@ -16,12 +16,12 @@ function QuestPreviewPage() {
 
   if (!currentQuest) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
-            <BookOpen className="w-12 h-12 text-slate-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-white mb-2">No Quest Found</h2>
-            <p className="text-slate-400 mb-6">Create a new quest to get started</p>
+            <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-foreground mb-2">No Quest Found</h2>
+            <p className="text-muted-foreground mb-6">Create a new quest to get started</p>
             <Button onClick={() => navigate({ to: '/' })}>
               <ArrowLeft className="w-4 h-4" />
               Back to Home
@@ -45,7 +45,7 @@ function QuestPreviewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 py-8 px-6">
+    <div className="min-h-screen bg-background py-8 px-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <motion.div
@@ -70,10 +70,10 @@ function QuestPreviewPage() {
           transition={{ delay: 0.1 }}
           className="text-center mb-12"
         >
-          <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-4">
+          <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent mb-4">
             {currentQuest.title}
           </h1>
-          <p className="text-slate-400 text-lg">
+          <p className="text-muted-foreground text-lg">
             {currentQuest.stages.length} Stages to Master
           </p>
         </motion.div>
@@ -84,9 +84,9 @@ function QuestPreviewPage() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <Card className="mb-8 overflow-visible bg-gradient-to-br from-slate-900/80 to-slate-800/80">
+          <Card className="mb-8 overflow-visible bg-gradient-to-br from-card to-secondary/50">
             <CardHeader>
-              <CardTitle className="text-center text-xl text-slate-200">
+              <CardTitle className="text-center text-xl text-foreground">
                 Your Learning Journey
               </CardTitle>
             </CardHeader>
@@ -110,20 +110,20 @@ function QuestPreviewPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 + index * 0.1 }}
             >
-              <Card className="h-full hover:border-purple-500/50 transition-colors cursor-pointer"
+              <Card className="h-full hover:border-primary/50 transition-colors cursor-pointer"
                 onClick={() => handleStageSelect(index)}
               >
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 font-bold text-sm">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
                       {index + 1}
                     </div>
                     <CardTitle className="text-lg">{stage.title}</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-slate-400 text-sm line-clamp-3">{stage.lesson}</p>
-                  <div className="mt-3 text-xs text-purple-400">
+                  <p className="text-muted-foreground text-sm line-clamp-3">{stage.lesson}</p>
+                  <div className="mt-3 text-xs text-primary">
                     {stage.quizzes.length} quiz{stage.quizzes.length !== 1 ? 'zes' : ''}
                   </div>
                 </CardContent>

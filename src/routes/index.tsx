@@ -12,7 +12,7 @@ function HomePage() {
     {
       icon: Brain,
       title: 'AI-Powered',
-      description: 'Gemini transforms your content into engaging quests',
+      description: 'AI transforms your content into engaging quests',
     },
     {
       icon: Map,
@@ -32,13 +32,13 @@ function HomePage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-screen bg-gradient-to-b from-background via-muted/50 to-background">
       {/* Hero Section */}
       <section className="relative py-20 px-6 overflow-hidden">
         {/* Background Effects */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900/20 via-transparent to-transparent" />
-        <div className="absolute top-20 left-1/4 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
+        <div className="absolute top-20 left-1/4 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
 
         <div className="relative max-w-6xl mx-auto text-center">
           <motion.div
@@ -51,22 +51,22 @@ function HomePage() {
                 animate={{ rotate: [0, 360] }}
                 transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
               >
-                <IconApp className="w-8 h-8" />
+                <IconApp className="w-8 h-8" color={'hsl(var(--foreground))'} />
               </motion.div>
-              <span className="text-purple-400 font-semibold tracking-wide uppercase text-sm">
+              <span className="text-primary font-semibold tracking-wide uppercase text-sm">
                 AI-Powered Edutainment
               </span>
             </div>
 
             <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight">
-              <span className="text-white">Transform Learning</span>
+              <span className="text-foreground">Transform Learning</span>
               <br />
-              <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary via-pink-500 to-primary bg-clip-text text-transparent">
                 Into Adventure
               </span>
             </h1>
 
-            <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-8">
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
               Turn any content into gamified "Learning Quests" with AI. Master
               new topics through interactive stages, quizzes, and instant
               feedback.
@@ -101,13 +101,15 @@ function HomePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.3 + index * 0.1 }}
-                className="p-4 rounded-xl bg-slate-800/30 border border-slate-700/50 backdrop-blur-sm"
+                className="p-4 rounded-xl bg-card border border-border backdrop-blur-sm"
               >
-                <feature.icon className="w-8 h-8 text-purple-400 mx-auto mb-3" />
-                <h3 className="font-semibold text-white mb-1">
+                <feature.icon className="w-8 h-8 text-primary mx-auto mb-3" />
+                <h3 className="font-semibold text-foreground mb-1">
                   {feature.title}
                 </h3>
-                <p className="text-sm text-slate-400">{feature.description}</p>
+                <p className="text-sm text-muted-foreground">
+                  {feature.description}
+                </p>
               </motion.div>
             ))}
           </motion.div>

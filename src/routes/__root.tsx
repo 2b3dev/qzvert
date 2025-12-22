@@ -1,12 +1,24 @@
-import { HeadContent, Scripts, createRootRoute, Outlet } from '@tanstack/react-router'
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
+import {
+  createRootRoute,
+  HeadContent,
+  Outlet,
+  Scripts,
+} from '@tanstack/react-router'
+import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 
 import Header from '../components/Header'
+import { getTheme } from '../server/theme'
 
 import appCss from '../styles.css?url'
 
+const IS_SHOW_DEVTOOL = false
+
 export const Route = createRootRoute({
+  loader: async () => {
+    const { theme } = await getTheme()
+    return { theme }
+  },
   head: () => ({
     meta: [
       {
@@ -21,7 +33,8 @@ export const Route = createRootRoute({
       },
       {
         name: 'description',
-        content: 'AI-powered micro-SaaS that transforms any content into gamified learning quests',
+        content:
+          'AI-powered micro-SaaS that transforms any content into gamified learning quests',
       },
     ],
     links: [
@@ -48,25 +61,29 @@ function RootComponent() {
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const { theme } = Route.useLoaderData()
+
   return (
-    <html lang="en">
+    <html lang="en" className={theme === 'dark' ? 'dark' : ''}>
       <head>
         <HeadContent />
       </head>
-      <body className="bg-slate-950 text-slate-100 antialiased">
+      <body className="antialiased transition-colors duration-300">
         <Header />
         <main>{children}</main>
-        <TanStackDevtools
-          config={{
-            position: 'bottom-right',
-          }}
-          plugins={[
-            {
-              name: 'Tanstack Router',
-              render: <TanStackRouterDevtoolsPanel />,
-            },
-          ]}
-        />
+        {IS_SHOW_DEVTOOL && (
+          <TanStackDevtools
+            config={{
+              position: 'bottom-right',
+            }}
+            plugins={[
+              {
+                name: 'Tanstack Router',
+                render: <TanStackRouterDevtoolsPanel />,
+              },
+            ]}
+          />
+        )}
         <Scripts />
       </body>
     </html>

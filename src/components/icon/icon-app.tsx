@@ -3,7 +3,6 @@ export default function IconApp({
   className,
   style,
   color = '#fff',
-  backgroundColor = '#2C2C2C',
   logoUrl,
 }: {
   width?: string
@@ -40,13 +39,13 @@ export default function IconApp({
       <title id="app-icon-title">App Icon</title>
       <path
         d="M539.127 472.407C539.871 474.19 540.509 476.034 540.731 477.953C542.971 497.25 523.88 512.816 505.035 505.818L395.304 465.07L471.538 407.924L494.5 365.5L539.127 472.407Z"
-        fill="white"
+        fill={color}
       />
       <circle
         cx="266.5"
         cy="266.5"
         r="236.5"
-        stroke="white"
+        stroke={color}
         stroke-width="60"
       />
       <path
