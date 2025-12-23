@@ -2,7 +2,7 @@ import IconApp from '@/components/icon/icon-app'
 import { setTheme, type Theme } from '@/server/theme'
 import { Link, useRouter } from '@tanstack/react-router'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Compass, Home, Menu, Moon, Plus, Sun, X, User, LogOut, LogIn } from 'lucide-react'
+import { Compass, CreditCard, Home, Menu, Moon, Plus, Sun, X, User, LogOut, LogIn } from 'lucide-react'
 import { useState } from 'react'
 import { Route } from '../routes/__root'
 import { useAuthStore } from '../stores/auth-store'
@@ -28,6 +28,7 @@ export default function Header() {
   const navLinks = [
     { to: '/', label: 'Home', icon: Home },
     { to: '/explore', label: 'Explore', icon: Compass },
+    { to: '/pricing', label: 'Pricing', icon: CreditCard },
   ]
 
   return (

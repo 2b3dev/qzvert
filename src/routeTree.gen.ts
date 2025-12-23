@@ -9,12 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as QuestPreviewRouteImport } from './routes/quest/preview'
 import { Route as QuestPlayRouteImport } from './routes/quest/play'
 
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
+  '/pricing': typeof PricingRoute
   '/quest/play': typeof QuestPlayRoute
   '/quest/preview': typeof QuestPreviewRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
+  '/pricing': typeof PricingRoute
   '/quest/play': typeof QuestPlayRoute
   '/quest/preview': typeof QuestPreviewRoute
 }
@@ -60,19 +68,33 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
+  '/pricing': typeof PricingRoute
   '/quest/play': typeof QuestPlayRoute
   '/quest/preview': typeof QuestPreviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/explore' | '/login' | '/quest/play' | '/quest/preview'
+  fullPaths:
+    | '/'
+    | '/explore'
+    | '/login'
+    | '/pricing'
+    | '/quest/play'
+    | '/quest/preview'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/explore' | '/login' | '/quest/play' | '/quest/preview'
+  to:
+    | '/'
+    | '/explore'
+    | '/login'
+    | '/pricing'
+    | '/quest/play'
+    | '/quest/preview'
   id:
     | '__root__'
     | '/'
     | '/explore'
     | '/login'
+    | '/pricing'
     | '/quest/play'
     | '/quest/preview'
   fileRoutesById: FileRoutesById
@@ -81,12 +103,20 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ExploreRoute: typeof ExploreRoute
   LoginRoute: typeof LoginRoute
+  PricingRoute: typeof PricingRoute
   QuestPlayRoute: typeof QuestPlayRoute
   QuestPreviewRoute: typeof QuestPreviewRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -129,6 +159,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ExploreRoute: ExploreRoute,
   LoginRoute: LoginRoute,
+  PricingRoute: PricingRoute,
   QuestPlayRoute: QuestPlayRoute,
   QuestPreviewRoute: QuestPreviewRoute,
 }
