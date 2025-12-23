@@ -217,7 +217,7 @@ function HomePage() {
                 <ul className="space-y-3 mb-6">
                   <li className="flex items-center gap-3">
                     <Zap className="w-5 h-5 text-primary" />
-                    <span className="text-foreground">ยิ่งเล่น ยิ่งเก่ง ไม่มีเครียด</span>
+                    <span className="text-foreground">ยิ่งเล่น ยิ่งสนุก ยิ่งเก่ง</span>
                   </li>
                   <li className="flex items-center gap-3">
                     <Trophy className="w-5 h-5 text-primary" />
