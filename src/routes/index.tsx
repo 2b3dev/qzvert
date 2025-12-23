@@ -3,13 +3,13 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import {
   BookOpen,
-  Compass,
+  Briefcase,
   FileText,
   Gamepad2,
+  GraduationCap,
   Map,
   MessageSquare,
   Play,
-  Rocket,
   Sparkles,
   Star,
   Target,
@@ -17,7 +17,9 @@ import {
   Trophy,
   Users,
   Video,
+  Wand2,
   XCircle,
+  Zap,
 } from 'lucide-react'
 import { QuestCreator } from '../components/QuestCreator'
 import { Button } from '../components/ui/button'
@@ -148,34 +150,132 @@ function HomePage() {
               เปลี่ยนบทเรียนที่น่าเบื่อ ให้กลายเป็นเกมที่แสนสนุก ด้วยพลัง AI
             </p>
             <p className="text-base text-muted-foreground/80 max-w-2xl mx-auto mb-8">
-              QzVert เปลี่ยน Text, PDF, Video ให้กลายเป็นประสบการณ์ที่โต้ตอบได้
-              สนุกจนลืมไปว่ากำลังเรียน
+              ไม่ว่าคุณจะเป็น <span className="text-primary">ผู้เรียน</span> ที่อยากสนุกกับการเรียน หรือ <span className="text-pink-400">ครู/Creator</span> ที่อยากสร้างประสบการณ์ใหม่
             </p>
 
-            <div className="flex flex-wrap justify-center gap-4 mb-6">
-              <Button size="lg" className="text-lg px-8 py-6" asChild>
-                <a href="#create">
-                  <Rocket className="w-5 h-5" />
-                  เริ่มต้นภารกิจฟรี
-                </a>
+            {/* Dual CTA */}
+            <div className="flex flex-col sm:flex-row justify-center gap-4 mb-6">
+              <Button size="lg" className="text-lg px-8 py-6 bg-gradient-to-r from-primary to-cyan-500 hover:from-primary/90 hover:to-cyan-500/90" asChild>
+                <Link to="/explore">
+                  <GraduationCap className="w-5 h-5" />
+                  เริ่มเรียนเลย
+                </Link>
               </Button>
               <Button
                 size="lg"
-                variant="outline"
-                className="text-lg px-8 py-6"
+                className="text-lg px-8 py-6 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-500/90 hover:to-pink-500/90"
                 asChild
               >
-                <Link to="/explore">
-                  <Compass className="w-5 h-5" />
-                  Explore Quests
-                </Link>
+                <a href="#create">
+                  <Wand2 className="w-5 h-5" />
+                  สร้างเควสของคุณ
+                </a>
               </Button>
             </div>
 
             <p className="text-sm text-muted-foreground">
-              เชื่อมต่อได้กับทุกรูปแบบเนื้อหา | AI เจนด่านให้ใน 10 วินาที
+              เริ่มต้นใช้งานฟรี ไม่มีค่าใช้จ่าย
             </p>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Dual Audience Section */}
+      <section className="py-20 px-6">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              QzVert สำหรับ<span className="text-primary">ทุกคน</span>
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              ไม่ว่าคุณจะอยู่ฝั่งไหน เราช่วยให้การเรียนรู้สนุกขึ้น
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* For Learners */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="relative p-8 rounded-3xl bg-gradient-to-br from-primary/10 to-cyan-500/10 border border-primary/20 overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
+              <div className="relative">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-cyan-500 flex items-center justify-center mb-6">
+                  <GraduationCap className="w-7 h-7 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold mb-3 text-primary">สำหรับผู้เรียน</h3>
+                <p className="text-muted-foreground mb-6">
+                  เรียนไปเล่นไป สนุกจนลืมว่ากำลังเรียน
+                </p>
+                <ul className="space-y-3 mb-6">
+                  <li className="flex items-center gap-3">
+                    <Zap className="w-5 h-5 text-primary" />
+                    <span className="text-foreground">ยิ่งเล่น ยิ่งเก่ง ไม่มีเครียด</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <Trophy className="w-5 h-5 text-primary" />
+                    <span className="text-foreground">เห็นพัฒนาการตัวเองทุกวัน</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <Users className="w-5 h-5 text-primary" />
+                    <span className="text-foreground">สนุกกับเพื่อนๆ ได้ทุกที่ทุกเวลา</span>
+                  </li>
+                </ul>
+                <Button className="bg-gradient-to-r from-primary to-cyan-500" asChild>
+                  <Link to="/explore">
+                    <GraduationCap className="w-4 h-4" />
+                    สำรวจเควส
+                  </Link>
+                </Button>
+              </div>
+            </motion.div>
+
+            {/* For Creators */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="relative p-8 rounded-3xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-pink-500/20 overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full blur-3xl" />
+              <div className="relative">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-6">
+                  <Briefcase className="w-7 h-7 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold mb-3 text-pink-400">สำหรับครู / Creator / องค์กร</h3>
+                <p className="text-muted-foreground mb-6">
+                  สร้างประสบการณ์การเรียนรู้ที่น่าจดจำให้นักเรียนหรือพนักงาน
+                </p>
+                <ul className="space-y-3 mb-6">
+                  <li className="flex items-center gap-3">
+                    <Wand2 className="w-5 h-5 text-pink-400" />
+                    <span className="text-foreground">AI สร้างเควสจากเนื้อหาในไม่กี่วินาที</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <TrendingUp className="w-5 h-5 text-pink-400" />
+                    <span className="text-foreground">วัดผลง่าย เห็นภาพรวมชัด</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <Star className="w-5 h-5 text-pink-400" />
+                    <span className="text-foreground">ยกระดับประสบการณ์ผู้เรียนด้วยเนื้อหาที่น่าจดจำ</span>
+                  </li>
+                </ul>
+                <Button className="bg-gradient-to-r from-purple-500 to-pink-500" asChild>
+                  <a href="#create">
+                    <Wand2 className="w-4 h-4" />
+                    สร้างเควสฟรี
+                  </a>
+                </Button>
+              </div>
+            </motion.div>
+          </div>
         </div>
       </section>
 
@@ -371,16 +471,30 @@ function HomePage() {
             viewport={{ once: true }}
           >
             <h2 className="text-3xl md:text-5xl font-black mb-6">
-              <span className="text-foreground">Ready to Unlock the</span>
+              <span className="text-foreground">พร้อมเปลี่ยนการเรียนรู้</span>
               <br />
               <span className="bg-gradient-to-r from-primary via-pink-500 to-orange-400 bg-clip-text text-transparent">
-                Power of Context?
+                ให้สนุกกว่าที่เคย?
               </span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-              อย่าปล่อยให้เนื้อหาของคุณหยุดนิ่ง เริ่มต้นสร้าง World ของคุณวันนี้
-              เพื่อการเรียนรู้ที่ไม่เคยน่าเบื่ออีกต่อไป
+              ไม่ว่าคุณจะอยากเรียนหรืออยากสอน QzVert พร้อมช่วยคุณ
             </p>
+
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
+              <Button size="lg" className="text-lg px-8 py-6 bg-gradient-to-r from-primary to-cyan-500" asChild>
+                <Link to="/explore">
+                  <GraduationCap className="w-5 h-5" />
+                  เริ่มเรียนเลย
+                </Link>
+              </Button>
+              <Button size="lg" className="text-lg px-8 py-6 bg-gradient-to-r from-purple-500 to-pink-500" asChild>
+                <a href="#create">
+                  <Wand2 className="w-5 h-5" />
+                  สร้างเควสของคุณ
+                </a>
+              </Button>
+            </div>
           </motion.div>
         </div>
       </section>
