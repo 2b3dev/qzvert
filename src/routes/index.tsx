@@ -1,7 +1,19 @@
 import IconApp from '@/components/icon/icon-app'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
-import { Brain, Compass, Map, Sparkles, Trophy, Zap } from 'lucide-react'
+import {
+  BookOpen,
+  Brain,
+  Compass,
+  GraduationCap,
+  Languages,
+  Map,
+  MessageSquare,
+  Sparkles,
+  Trophy,
+  Users,
+  Zap,
+} from 'lucide-react'
 import { QuestCreator } from '../components/QuestCreator'
 import { Button } from '../components/ui/button'
 
@@ -12,22 +24,53 @@ function HomePage() {
     {
       icon: Brain,
       title: 'AI-Powered',
-      description: 'AI transforms your content into engaging quests',
+      description: 'Gemini AI transforms content into quests',
     },
     {
       icon: Map,
-      title: 'Visual Learning Map',
-      description: 'Navigate through stages like a game',
+      title: 'Learning Map',
+      description: 'Navigate stages like a game',
     },
     {
       icon: Zap,
       title: 'Instant Feedback',
-      description: 'Learn from mistakes with fun explanations',
+      description: 'Learn with fun explanations',
     },
     {
       icon: Trophy,
-      title: 'Gamified Progress',
-      description: 'Earn points and track achievements',
+      title: 'Gamified',
+      description: 'Points, lives, and achievements',
+    },
+  ]
+
+  const useCases = [
+    {
+      icon: GraduationCap,
+      title: 'Smart Quiz',
+      description: 'สร้าง Quiz อัตโนมัติจาก Text/PDF/Video',
+      tag: 'Entry Point',
+      color: 'from-blue-500 to-cyan-500',
+    },
+    {
+      icon: Map,
+      title: 'Quest Course',
+      description: 'เปลี่ยนคอร์สเป็นเกม RPG พร้อม Learning Map',
+      tag: 'Gamified',
+      color: 'from-purple-500 to-pink-500',
+    },
+    {
+      icon: BookOpen,
+      title: 'Flashcard RPG',
+      description: 'ท่องจำด้วยการสะสมการ์ดพลัง',
+      tag: 'Memorize',
+      color: 'from-orange-500 to-red-500',
+    },
+    {
+      icon: MessageSquare,
+      title: 'Roleplay Agent',
+      description: 'ฝึกทักษะผ่านบทสนทนากับ AI',
+      tag: 'Immersive',
+      color: 'from-green-500 to-emerald-500',
     },
   ]
 
@@ -59,17 +102,19 @@ function HomePage() {
             </div>
 
             <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight">
-              <span className="text-foreground">Transform Learning</span>
+              <span className="text-foreground">Content is Cheap</span>
               <br />
               <span className="bg-gradient-to-r from-primary via-pink-500 to-primary bg-clip-text text-transparent">
-                Into Adventure
+                Context is Priceless
               </span>
             </h1>
 
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-              Turn any content into gamified "Learning Quests" with AI. Master
-              new topics through interactive stages, quizzes, and instant
-              feedback.
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-4">
+              เปลี่ยน "ขยะข้อมูล" ให้กลายเป็น "เส้นทางการเรียนรู้ที่สนุก"
+            </p>
+            <p className="text-base text-muted-foreground/80 max-w-xl mx-auto mb-8">
+              AI Game Master ที่เปลี่ยนเนื้อหา (PDF, YouTube, Text) เป็นภารกิจ
+              RPG ด้วย Octalysis Gamification Framework
             </p>
 
             <div className="flex flex-wrap justify-center gap-4 mb-12">
@@ -113,6 +158,64 @@ function HomePage() {
               </motion.div>
             ))}
           </motion.div>
+        </div>
+      </section>
+
+      {/* Use Cases Section */}
+      <section className="py-16 px-6 bg-muted/30">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              4 Ways to Transform Learning
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              เลือกรูปแบบที่เหมาะกับการเรียนรู้ของคุณ
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {useCases.map((useCase, index) => (
+              <motion.div
+                key={useCase.title}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                whileHover={{ y: -5, scale: 1.02 }}
+                className="group relative p-6 rounded-2xl bg-card border border-border overflow-hidden"
+              >
+                {/* Gradient Background */}
+                <div
+                  className={`absolute inset-0 bg-gradient-to-br ${useCase.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}
+                />
+
+                {/* Tag */}
+                <span
+                  className={`inline-block px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r ${useCase.color} text-white mb-4`}
+                >
+                  {useCase.tag}
+                </span>
+
+                {/* Icon */}
+                <div
+                  className={`w-12 h-12 rounded-xl bg-gradient-to-br ${useCase.color} flex items-center justify-center mb-4`}
+                >
+                  <useCase.icon className="w-6 h-6 text-white" />
+                </div>
+
+                {/* Content */}
+                <h3 className="text-xl font-bold mb-2">{useCase.title}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {useCase.description}
+                </p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 

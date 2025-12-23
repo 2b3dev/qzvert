@@ -1,11 +1,22 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, BookOpen, Trophy, Star, RotateCcw, Home } from 'lucide-react'
+import {
+  ArrowLeft,
+  BookOpen,
+  Trophy,
+  Star,
+  RotateCcw,
+  Home,
+  Target,
+  TrendingUp,
+  AlertCircle,
+} from 'lucide-react'
 import { useState } from 'react'
 import { useQuestStore } from '../../stores/quest-store'
 import { QuizPlayer } from '../../components/QuizPlayer'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
+import { Progress } from '../../components/ui/progress'
 
 export const Route = createFileRoute('/quest/play')({
   component: QuestPlayPage
@@ -191,51 +202,123 @@ function QuestPlayPage() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="text-center"
             >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: [0, 1.2, 1] }}
-                transition={{ delay: 0.2, type: 'spring' }}
-                className="relative inline-block mb-6"
-              >
-                <Trophy className="w-32 h-32 text-yellow-400" />
+              <div className="text-center mb-8">
                 <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                  className="absolute -top-2 -right-2"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: [0, 1.2, 1] }}
+                  transition={{ delay: 0.2, type: 'spring' }}
+                  className="relative inline-block mb-6"
                 >
-                  {[...Array(3)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.6 + i * 0.1 }}
-                    >
-                      <Star className="w-8 h-8 text-yellow-400 fill-yellow-400" />
-                    </motion.div>
-                  ))}
+                  <Trophy className="w-24 h-24 text-yellow-400" />
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5 }}
+                    className="absolute -top-2 -right-2 flex"
+                  >
+                    {[...Array(3)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.6 + i * 0.1 }}
+                      >
+                        <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
+                      </motion.div>
+                    ))}
+                  </motion.div>
                 </motion.div>
+                <h2 className="text-4xl font-black bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent mb-2">
+                  Quest Complete!
+                </h2>
+                <p className="text-5xl font-bold text-primary mb-2">{score} pts</p>
+                <p className="text-muted-foreground">
+                  Completed {currentQuest.stages.length} stages
+                </p>
+              </div>
+
+              {/* AI Weakness Analysis (Mock) */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <Card className="mb-6 border-primary/20">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Target className="w-5 h-5 text-primary" />
+                      AI Weakness Analysis
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Mock Analysis Data */}
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-muted-foreground">
+                            Concept Understanding
+                          </span>
+                          <span className="text-emerald-400">85%</span>
+                        </div>
+                        <Progress value={85} className="h-2" />
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-muted-foreground">
+                            Application Skills
+                          </span>
+                          <span className="text-amber-400">70%</span>
+                        </div>
+                        <Progress value={70} className="h-2" />
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-muted-foreground">
+                            Speed & Accuracy
+                          </span>
+                          <span className="text-primary">90%</span>
+                        </div>
+                        <Progress value={90} className="h-2" />
+                      </div>
+                    </div>
+
+                    {/* Recommendations */}
+                    <div className="pt-4 border-t border-border">
+                      <h4 className="font-medium mb-3 flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-primary" />
+                        Recommended Review
+                      </h4>
+                      <div className="space-y-2">
+                        <div className="flex items-start gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                          <AlertCircle className="w-4 h-4 text-amber-400 mt-0.5" />
+                          <div className="text-sm">
+                            <span className="text-amber-300 font-medium">
+                              Stage 2:
+                            </span>{' '}
+                            <span className="text-muted-foreground">
+                              Review application concepts for better mastery
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </motion.div>
-              <h2 className="text-5xl font-black bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent mb-4">
-                Quest Complete!
-              </h2>
-              <p className="text-xl text-muted-foreground mb-2">Total Score</p>
-              <p className="text-6xl font-bold text-primary mb-4">{score}</p>
-              <p className="text-muted-foreground mb-8">
-                You completed all {currentQuest.stages.length} stages!
-              </p>
 
               <div className="flex justify-center gap-4">
                 <Button size="lg" variant="secondary" onClick={handleFinish}>
                   <Home className="w-5 h-5" />
                   Back to Home
                 </Button>
-                <Button size="lg" onClick={() => {
-                  resetGame()
-                  navigate({ to: '/' })
-                }}>
+                <Button
+                  size="lg"
+                  onClick={() => {
+                    resetGame()
+                    navigate({ to: '/' })
+                  }}
+                >
                   Create New Quest
                 </Button>
               </div>

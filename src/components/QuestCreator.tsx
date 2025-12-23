@@ -1,23 +1,88 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sparkles, FileText, Video, Type, Loader2, Wand2 } from 'lucide-react'
+import {
+  Sparkles,
+  FileText,
+  Video,
+  Type,
+  Loader2,
+  Wand2,
+  GraduationCap,
+  Map,
+  BookOpen,
+  MessageSquare,
+} from 'lucide-react'
 import { Button } from './ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from './ui/card'
 import { Textarea } from './ui/input'
 import { generateQuest } from '../server/gemini'
 import { useQuestStore } from '../stores/quest-store'
 import { useNavigate } from '@tanstack/react-router'
 
 type ContentType = 'text' | 'pdf' | 'video_link'
+type OutputType = 'quiz' | 'quest' | 'flashcard' | 'roleplay'
 
 const contentTypes = [
-  { type: 'text' as ContentType, icon: Type, label: 'Text', description: 'Paste any text content' },
-  { type: 'pdf' as ContentType, icon: FileText, label: 'PDF', description: 'Coming soon' },
-  { type: 'video_link' as ContentType, icon: Video, label: 'Video Link', description: 'Coming soon' },
+  {
+    type: 'text' as ContentType,
+    icon: Type,
+    label: 'Text',
+    description: 'Paste content',
+  },
+  {
+    type: 'pdf' as ContentType,
+    icon: FileText,
+    label: 'PDF',
+    description: 'Coming soon',
+  },
+  {
+    type: 'video_link' as ContentType,
+    icon: Video,
+    label: 'YouTube',
+    description: 'Coming soon',
+  },
+]
+
+const outputTypes = [
+  {
+    type: 'quiz' as OutputType,
+    icon: GraduationCap,
+    label: 'Smart Quiz',
+    description: 'Multiple choice, T/F, Fill-blank',
+    available: true,
+  },
+  {
+    type: 'quest' as OutputType,
+    icon: Map,
+    label: 'Quest Course',
+    description: 'Stages + Learning Map',
+    available: true,
+  },
+  {
+    type: 'flashcard' as OutputType,
+    icon: BookOpen,
+    label: 'Flashcard',
+    description: 'Spaced repetition cards',
+    available: false,
+  },
+  {
+    type: 'roleplay' as OutputType,
+    icon: MessageSquare,
+    label: 'Roleplay',
+    description: 'AI conversation practice',
+    available: false,
+  },
 ]
 
 export function QuestCreator() {
   const [selectedType, setSelectedType] = useState<ContentType>('text')
+  const [selectedOutput, setSelectedOutput] = useState<OutputType>('quest')
   const [content, setContent] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -70,30 +135,80 @@ export function QuestCreator() {
         </CardHeader>
 
         <CardContent className="space-y-6">
+          {/* Output Type Selector */}
+          <div>
+            <label className="text-sm font-medium text-foreground mb-3 block">
+              Output Type
+            </label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {outputTypes.map(
+                ({ type, icon: Icon, label, description, available }) => (
+                  <motion.button
+                    key={type}
+                    whileHover={available ? { scale: 1.02 } : {}}
+                    whileTap={available ? { scale: 0.98 } : {}}
+                    onClick={() => available && setSelectedOutput(type)}
+                    disabled={!available}
+                    className={`p-3 rounded-xl border-2 transition-all duration-200 text-left ${
+                      selectedOutput === type
+                        ? 'border-primary bg-primary/10'
+                        : available
+                          ? 'border-border hover:border-muted-foreground bg-secondary/50'
+                          : 'border-border bg-secondary/30 opacity-50 cursor-not-allowed'
+                    }`}
+                  >
+                    <Icon
+                      className={`w-5 h-5 mb-2 ${selectedOutput === type ? 'text-primary' : 'text-muted-foreground'}`}
+                    />
+                    <div
+                      className={`font-medium text-sm ${selectedOutput === type ? 'text-primary' : 'text-foreground'}`}
+                    >
+                      {label}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {available ? description : 'Coming soon'}
+                    </div>
+                  </motion.button>
+                )
+              )}
+            </div>
+          </div>
+
           {/* Content Type Selector */}
-          <div className="grid grid-cols-3 gap-3">
-            {contentTypes.map(({ type, icon: Icon, label, description }) => (
-              <motion.button
-                key={type}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => type === 'text' && setSelectedType(type)}
-                disabled={type !== 'text'}
-                className={`p-4 rounded-xl border-2 transition-all duration-200 ${
-                  selectedType === type
-                    ? 'border-primary bg-primary/10'
-                    : type === 'text'
-                    ? 'border-border hover:border-muted-foreground bg-secondary/50'
-                    : 'border-border bg-secondary/30 opacity-50 cursor-not-allowed'
-                }`}
-              >
-                <Icon className={`w-6 h-6 mx-auto mb-2 ${selectedType === type ? 'text-primary' : 'text-muted-foreground'}`} />
-                <div className={`font-medium ${selectedType === type ? 'text-primary' : 'text-foreground'}`}>
-                  {label}
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">{description}</div>
-              </motion.button>
-            ))}
+          <div>
+            <label className="text-sm font-medium text-foreground mb-3 block">
+              Input Source
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              {contentTypes.map(({ type, icon: Icon, label, description }) => (
+                <motion.button
+                  key={type}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => type === 'text' && setSelectedType(type)}
+                  disabled={type !== 'text'}
+                  className={`p-3 rounded-xl border-2 transition-all duration-200 ${
+                    selectedType === type
+                      ? 'border-primary bg-primary/10'
+                      : type === 'text'
+                        ? 'border-border hover:border-muted-foreground bg-secondary/50'
+                        : 'border-border bg-secondary/30 opacity-50 cursor-not-allowed'
+                  }`}
+                >
+                  <Icon
+                    className={`w-5 h-5 mx-auto mb-2 ${selectedType === type ? 'text-primary' : 'text-muted-foreground'}`}
+                  />
+                  <div
+                    className={`font-medium text-sm ${selectedType === type ? 'text-primary' : 'text-foreground'}`}
+                  >
+                    {label}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {description}
+                  </div>
+                </motion.button>
+              ))}
+            </div>
           </div>
 
           {/* Content Input */}
