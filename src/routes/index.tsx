@@ -3,16 +3,21 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import {
   BookOpen,
-  Brain,
   Compass,
-  GraduationCap,
-  Languages,
+  FileText,
+  Gamepad2,
   Map,
   MessageSquare,
+  Play,
+  Rocket,
   Sparkles,
+  Star,
+  Target,
+  TrendingUp,
   Trophy,
   Users,
-  Zap,
+  Video,
+  XCircle,
 } from 'lucide-react'
 import { QuestCreator } from '../components/QuestCreator'
 import { Button } from '../components/ui/button'
@@ -20,64 +25,91 @@ import { Button } from '../components/ui/button'
 export const Route = createFileRoute('/')({ component: HomePage })
 
 function HomePage() {
-  const features = [
+  const problems = [
     {
-      icon: Brain,
-      title: 'AI-Powered',
-      description: 'Gemini AI transforms content into quests',
+      icon: BookOpen,
+      title: 'คลังคำศัพท์เดิมๆ',
+      description: 'ให้แค่การท่องจำที่ไร้บริบท (Lack of Context)',
     },
     {
-      icon: Map,
-      title: 'Learning Map',
-      description: 'Navigate stages like a game',
+      icon: Video,
+      title: 'วิดีโอออนไลน์',
+      description: 'การรับข้อมูลทางเดียวที่ชวนให้วอกแวกได้ง่าย',
     },
     {
-      icon: Zap,
-      title: 'Instant Feedback',
-      description: 'Learn with fun explanations',
-    },
-    {
-      icon: Trophy,
-      title: 'Gamified',
-      description: 'Points, lives, and achievements',
+      icon: FileText,
+      title: 'เอกสาร PDF / บทความ',
+      description: 'การอ่านที่ขาดแรงกระตุ้นให้ลงมือทำจริง',
     },
   ]
 
-  const useCases = [
-    {
-      icon: GraduationCap,
-      title: 'Smart Quiz',
-      description: 'สร้าง Quiz อัตโนมัติจาก Text/PDF/Video',
-      tag: 'Entry Point',
-      color: 'from-blue-500 to-cyan-500',
-    },
+  const solutions = [
     {
       icon: Map,
-      title: 'Quest Course',
-      description: 'เปลี่ยนคอร์สเป็นเกม RPG พร้อม Learning Map',
-      tag: 'Gamified',
-      color: 'from-purple-500 to-pink-500',
-    },
-    {
-      icon: BookOpen,
-      title: 'Flashcard RPG',
-      description: 'ท่องจำด้วยการสะสมการ์ดพลัง',
-      tag: 'Memorize',
-      color: 'from-orange-500 to-red-500',
+      title: 'Instant World-Mapping',
+      description:
+        'ไม่ว่าจะเป็นคลังข้อสอบเก่า, วิดีโอสอนทักษะ หรือเอกสารวิชาการ AI จะเปลี่ยนให้เป็น "แผนที่การเดินทาง" (Learning Map) ทันที',
     },
     {
       icon: MessageSquare,
-      title: 'Roleplay Agent',
-      description: 'ฝึกทักษะผ่านบทสนทนากับ AI',
-      tag: 'Immersive',
-      color: 'from-green-500 to-emerald-500',
+      title: 'Multi-Scenario Roleplay',
+      description:
+        'ฝึกฝนทักษะผ่านสถานการณ์จำลองที่ปรับตามเนื้อหา เช่น เปลี่ยนบทเรียนการขายเป็นการเจรจาปิดดีลกับ AI NPC',
+    },
+    {
+      icon: Trophy,
+      title: 'Reward-Driven Learning',
+      description:
+        'เปลี่ยนทุกความเข้าใจให้เป็นแต้ม XP, ไอเทม และการอัปเลเวลตัวละคร เพื่อสร้างความจดจำที่ฝังลึก',
+    },
+  ]
+
+  const transformTypes = [
+    {
+      icon: Play,
+      title: 'Video-to-Quest',
+      description:
+        'เปลี่ยนวิดีโอคอร์สออนไลน์ให้เป็นภารกิจสู้บอส (Quiz) ตามช่วงเวลาสำคัญ',
+      color: 'from-red-500 to-orange-500',
+    },
+    {
+      icon: FileText,
+      title: 'Document-to-Dungeon',
+      description:
+        'แปลงเอกสาร PDF หรือสรุปบทเรียนยาวๆ ให้เป็นด่านผจญภัยที่ต้องใช้ข้อมูลในการผ่านทาง',
+      color: 'from-blue-500 to-cyan-500',
+    },
+    {
+      icon: Gamepad2,
+      title: 'Flashcard-to-RPG',
+      description:
+        'เปลี่ยนชุดคำศัพท์และนิยามแห้งๆ ให้กลายเป็นสกิลการ์ดที่ใช้ดวลได้จริง',
+      color: 'from-purple-500 to-pink-500',
+    },
+  ]
+
+  const creatorBenefits = [
+    {
+      icon: TrendingUp,
+      title: 'ลดอัตราการดรอปเรียน',
+      description: 'Reduce Churn Rate ด้วยประสบการณ์ที่ทำให้ติดใจ',
+    },
+    {
+      icon: Users,
+      title: 'สร้าง Community',
+      description: 'ระบบกิลด์และ Leaderboard สร้างกลุ่มผู้เรียนที่แข็งแกร่ง',
+    },
+    {
+      icon: Star,
+      title: 'อัปเกรดมูลค่าเนื้อหา',
+      description: 'ทำให้เนื้อหาเดิมดูทันสมัยและเข้าถึงง่ายสำหรับคนยุค AI',
     },
   ]
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-muted/50 to-background">
       {/* Hero Section */}
-      <section className="relative py-20 px-6 overflow-hidden">
+      <section className="relative py-24 px-6 overflow-hidden">
         {/* Background Effects */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
         <div className="absolute top-20 left-1/4 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
@@ -94,7 +126,10 @@ function HomePage() {
                 animate={{ rotate: [0, 360] }}
                 transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
               >
-                <IconApp className="w-8 h-8" color={'hsl(var(--foreground))'} />
+                <IconApp
+                  className="w-10 h-10"
+                  color={'hsl(var(--foreground))'}
+                />
               </motion.div>
               <span className="text-primary font-semibold tracking-wide uppercase text-sm">
                 AI-Powered Edutainment
@@ -102,67 +137,50 @@ function HomePage() {
             </div>
 
             <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight">
-              <span className="text-foreground">Content is Cheap</span>
+              <span className="text-foreground">Stop Studying.</span>
               <br />
-              <span className="bg-gradient-to-r from-primary via-pink-500 to-primary bg-clip-text text-transparent">
-                Context is Priceless
+              <span className="bg-gradient-to-r from-primary via-pink-500 to-orange-400 bg-clip-text text-transparent">
+                Start Playing.
               </span>
             </h1>
 
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-4">
-              เปลี่ยน "ขยะข้อมูล" ให้กลายเป็น "เส้นทางการเรียนรู้ที่สนุก"
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-4">
+              เปลี่ยนบทเรียนที่น่าเบื่อ ให้กลายเป็นเกมที่แสนสนุก ด้วยพลัง AI
             </p>
-            <p className="text-base text-muted-foreground/80 max-w-xl mx-auto mb-8">
-              AI Game Master ที่เปลี่ยนเนื้อหา (PDF, YouTube, Text) เป็นภารกิจ
-              RPG ด้วย Octalysis Gamification Framework
+            <p className="text-base text-muted-foreground/80 max-w-2xl mx-auto mb-8">
+              QzVert เปลี่ยน Text, PDF, Video ให้กลายเป็นประสบการณ์ที่โต้ตอบได้
+              สนุกจนลืมไปว่ากำลังเรียน
             </p>
 
-            <div className="flex flex-wrap justify-center gap-4 mb-12">
-              <Button size="lg" asChild>
+            <div className="flex flex-wrap justify-center gap-4 mb-6">
+              <Button size="lg" className="text-lg px-8 py-6" asChild>
                 <a href="#create">
-                  <Sparkles className="w-5 h-5" />
-                  Start Creating
+                  <Rocket className="w-5 h-5" />
+                  เริ่มต้นภารกิจฟรี
                 </a>
               </Button>
-              <Button size="lg" variant="outline" asChild>
+              <Button
+                size="lg"
+                variant="outline"
+                className="text-lg px-8 py-6"
+                asChild
+              >
                 <Link to="/explore">
                   <Compass className="w-5 h-5" />
                   Explore Quests
                 </Link>
               </Button>
             </div>
-          </motion.div>
 
-          {/* Features Grid */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-16"
-          >
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.3 + index * 0.1 }}
-                className="p-4 rounded-xl bg-card border border-border backdrop-blur-sm"
-              >
-                <feature.icon className="w-8 h-8 text-primary mx-auto mb-3" />
-                <h3 className="font-semibold text-foreground mb-1">
-                  {feature.title}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {feature.description}
-                </p>
-              </motion.div>
-            ))}
+            <p className="text-sm text-muted-foreground">
+              เชื่อมต่อได้กับทุกรูปแบบเนื้อหา | AI เจนด่านให้ใน 10 วินาที
+            </p>
           </motion.div>
         </div>
       </section>
 
-      {/* Use Cases Section */}
-      <section className="py-16 px-6 bg-muted/30">
+      {/* Problem Section */}
+      <section className="py-20 px-6 bg-muted/30">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -171,51 +189,199 @@ function HomePage() {
             className="text-center mb-12"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              4 Ways to Transform Learning
+              "ทำไมความรู้ดีๆ ถึงถูกลืม?"
             </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              เลือกรูปแบบที่เหมาะกับการเรียนรู้ของคุณ
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              ปัญหาไม่ได้อยู่ที่เนื้อหา แต่อยู่ที่{' '}
+              <span className="text-primary font-semibold">
+                "วิธีการนำเสนอ"
+              </span>
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {useCases.map((useCase, index) => (
+          <div className="grid md:grid-cols-3 gap-6">
+            {problems.map((problem, index) => (
               <motion.div
-                key={useCase.title}
+                key={problem.title}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                whileHover={{ y: -5, scale: 1.02 }}
-                className="group relative p-6 rounded-2xl bg-card border border-border overflow-hidden"
+                className="p-6 rounded-2xl bg-card border border-destructive/20 relative overflow-hidden"
+              >
+                <div className="absolute top-4 right-4">
+                  <XCircle className="w-6 h-6 text-destructive/50" />
+                </div>
+                <problem.icon className="w-10 h-10 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-bold mb-2 text-foreground">
+                  {problem.title}
+                </h3>
+                <p className="text-muted-foreground">{problem.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Solution Section */}
+      <section className="py-20 px-6">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm font-medium mb-4">
+              <Sparkles className="w-4 h-4" />
+              The QzVert Engine
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              "The Universal Context Layer"
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              เราไม่ได้สร้างเนื้อหาใหม่ แต่เรา{' '}
+              <span className="text-primary font-semibold">"ชุบชีวิต"</span>{' '}
+              เนื้อหาที่คุณมีอยู่แล้ว
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {solutions.map((solution, index) => (
+              <motion.div
+                key={solution.title}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="p-6 rounded-2xl bg-gradient-to-br from-card to-primary/5 border border-primary/20"
+              >
+                <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center mb-4">
+                  <solution.icon className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="text-lg font-bold mb-2 text-foreground">
+                  {solution.title}
+                </h3>
+                <p className="text-muted-foreground">{solution.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Transform Types Section */}
+      <section className="py-20 px-6 bg-muted/30">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              "รองรับทุกแหล่งการเรียนรู้ที่คุณรัก"
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Connect Everything - ไม่ว่าจะมีอะไร ก็เอามาใส่ QzVert ได้หมด
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {transformTypes.map((type, index) => (
+              <motion.div
+                key={type.title}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.15 }}
+                whileHover={{ y: -8, scale: 1.02 }}
+                className="group relative p-8 rounded-2xl bg-card border border-border overflow-hidden"
               >
                 {/* Gradient Background */}
                 <div
-                  className={`absolute inset-0 bg-gradient-to-br ${useCase.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}
+                  className={`absolute inset-0 bg-gradient-to-br ${type.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}
                 />
-
-                {/* Tag */}
-                <span
-                  className={`inline-block px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r ${useCase.color} text-white mb-4`}
-                >
-                  {useCase.tag}
-                </span>
 
                 {/* Icon */}
                 <div
-                  className={`w-12 h-12 rounded-xl bg-gradient-to-br ${useCase.color} flex items-center justify-center mb-4`}
+                  className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${type.color} flex items-center justify-center mb-6`}
                 >
-                  <useCase.icon className="w-6 h-6 text-white" />
+                  <type.icon className="w-8 h-8 text-white" />
                 </div>
 
                 {/* Content */}
-                <h3 className="text-xl font-bold mb-2">{useCase.title}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {useCase.description}
+                <h3 className="text-2xl font-bold mb-3">{type.title}</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  {type.description}
                 </p>
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Creator Value Section */}
+      <section className="py-20 px-6">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-pink-400 text-sm font-medium mb-4">
+              <Target className="w-4 h-4" />
+              For Creators
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              เพิ่มความประทับใจ (Retention) ให้ถึงขีดสุด
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              เปลี่ยนคอร์สของคุณให้เป็น Premium Experience ที่ไม่มีใครเหมือน
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {creatorBenefits.map((benefit, index) => (
+              <motion.div
+                key={benefit.title}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="p-6 rounded-2xl bg-card border border-border text-center"
+              >
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center mx-auto mb-4">
+                  <benefit.icon className="w-7 h-7 text-pink-400" />
+                </div>
+                <h3 className="text-lg font-bold mb-2">{benefit.title}</h3>
+                <p className="text-muted-foreground">{benefit.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA Section */}
+      <section className="py-20 px-6 bg-gradient-to-b from-muted/30 to-background">
+        <div className="max-w-4xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-3xl md:text-5xl font-black mb-6">
+              <span className="text-foreground">Ready to Unlock the</span>
+              <br />
+              <span className="bg-gradient-to-r from-primary via-pink-500 to-orange-400 bg-clip-text text-transparent">
+                Power of Context?
+              </span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+              อย่าปล่อยให้เนื้อหาของคุณหยุดนิ่ง เริ่มต้นสร้าง World ของคุณวันนี้
+              เพื่อการเรียนรู้ที่ไม่เคยน่าเบื่ออีกต่อไป
+            </p>
+          </motion.div>
         </div>
       </section>
 

@@ -36,7 +36,7 @@ export default function Header() {
                 <IconApp className="w-6 h-6" color={'hsl(var(--foreground))'} />
               </motion.div>
               <span className="font-black text-xl text-foreground group-hover:text-primary transition-colors">
-                Qzvert
+                QzVert
               </span>
             </Link>
 
