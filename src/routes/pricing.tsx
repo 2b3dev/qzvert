@@ -2,8 +2,11 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import {
   Check,
+  ChevronDown,
   Crown,
   GraduationCap,
+  HelpCircle,
+  MessageCircle,
   Rocket,
   Shield,
   Sparkles,
@@ -13,6 +16,7 @@ import {
   X,
   Zap,
 } from 'lucide-react'
+import { useState } from 'react'
 import { Button } from '../components/ui/button'
 import {
   Card,
@@ -32,7 +36,76 @@ interface PlanFeature {
   legend: string | boolean
 }
 
+interface FAQItem {
+  question: string
+  answer: string
+  category: string
+}
+
 function PricingPage() {
+  const [openFAQ, setOpenFAQ] = useState<number | null>(null)
+
+  const toggleFAQ = (index: number) => {
+    setOpenFAQ(openFAQ === index ? null : index)
+  }
+
+  const faqItems: FAQItem[] = [
+    // General
+    {
+      category: 'General',
+      question: 'Qzvert คืออะไร? ต่างจากแอปเรียนออนไลน์ทั่วไปอย่างไร?',
+      answer:
+        'Qzvert คือ "AI Edutainment Platform" ที่เปลี่ยนเนื้อหาการเรียนรู้แห้งๆ ให้กลายเป็นโลกจำลอง (Contextual Learning) เราไม่ได้ให้คุณแค่อ่านหรือดู แต่เราให้คุณ "สวมบทบาท" และใช้ความรู้จริงเพื่อพิชิตภารกิจ ทำให้การเรียนสนุกเหมือนการเล่นเกม RPG',
+    },
+    {
+      category: 'General',
+      question: 'ต้องมีทักษะการเขียนโปรแกรมหรือออกแบบเกมไหมถึงจะใช้งานได้?',
+      answer:
+        'ไม่จำเป็นเลยครับ! นั่นคือหัวใจของ Qzvert คุณมีหน้าที่เพียงแค่อัปโหลดเนื้อหา (วิดีโอ, PDF หรือลิงก์บทความ) AI GM ของเราจะทำหน้าที่ "วิศวกรเกม" เนรมิตแผนที่ ด่าน และควิซให้คุณโดยอัตโนมัติในไม่กี่วินาที',
+    },
+    // For Creators
+    {
+      category: 'For Creators',
+      question: 'ฉันสามารถนำ Qzvert ไปใช้กับคอร์สที่ฉันขายอยู่แล้วได้ไหม?',
+      answer:
+        'ได้แน่นอนครับ! Qzvert ถูกออกแบบมาเพื่อเป็น "Add-on Layer" คุณสามารถส่งลิงก์ Quest ให้ผู้เรียนของคุณเข้าไปเล่นหลังจากดูบทเรียนจบ เพื่อเพิ่มอัตราความเข้าใจ (Retention) และทำให้ผู้เรียนประทับใจจนต้องบอกต่อ',
+    },
+    {
+      category: 'For Creators',
+      question: 'ข้อมูลเนื้อหาที่ฉันอัปโหลดจะปลอดภัยไหม?',
+      answer:
+        'เราให้ความสำคัญกับความเป็นส่วนตัวและความปลอดภัยของข้อมูลเป็นอันดับหนึ่ง เนื้อหาที่คุณอัปโหลดจะถูกใช้เพื่อสร้างเควสในบัญชีของคุณเท่านั้น และเรามีระบบเข้ารหัสข้อมูลมาตรฐานสากลเพื่อป้องกันการเข้าถึงจากบุคคลภายนอก',
+    },
+    // For Learners
+    {
+      category: 'For Learners',
+      question: 'ถ้าฉันตอบคำถามผิดบ่อยๆ จะเกิดอะไรขึ้น?',
+      answer:
+        'ในโลกของ Qzvert การตอบผิดไม่ใช่ความล้มเหลว แต่คือการเรียนรู้! หากคุณตอบผิด พลังชีวิต (Energy) อาจลดลง หรือเนื้อเรื่องอาจเปลี่ยนไปในทางที่ท้าทายขึ้น แต่อย่าห่วง AI ของเราจะส่ง "Hint" หรือตัวช่วยลับๆ มาให้เพื่อช่วยให้คุณพัฒนาและกลับมาพิชิตบอสได้อีกครั้ง',
+    },
+    {
+      category: 'For Learners',
+      question: 'แต้ม XP และไอเทมที่ได้ มีไว้ทำอะไร?',
+      answer:
+        'แต้มเหล่านี้ใช้เพื่อแสดงความก้าวหน้า (Progression) ของคุณ คุณสามารถนำไปอัปเกรด Avatar, ปลดล็อกด่านลับ หรือแลกรับสิทธิพิเศษจาก Creator (เช่น ส่วนลดคอร์สถัดไป หรือเอกสารลับ) ซึ่งจะช่วยสร้างความภูมิใจในทุกย่างก้าวของการเรียนรู้',
+    },
+    // Technology & Pricing
+    {
+      category: 'Technology & Pricing',
+      question: 'AI ที่ใช้ประมวลผลมีความแม่นยำแค่ไหน?',
+      answer:
+        'เราใช้ขุมพลังจาก Gemini 2.5 Flash ซึ่งเป็น AI รุ่นล่าสุดที่เน้นความรวดเร็วและความแม่นยำสูง อย่างไรก็ตาม ระบบจะมีเครื่องมือให้ Creator สามารถ "ตรวจสอบและปรับแต่ง" (Review & Edit) เนื้อหาที่ AI สร้างขึ้นก่อนเผยแพร่จริงได้เสมอ',
+    },
+    {
+      category: 'Technology & Pricing',
+      question: 'หากสมัครสมาชิกรายเดือน (Pro) แล้วสามารถยกเลิกได้เมื่อไหร่?',
+      answer:
+        'คุณมีอิสระเต็มที่ครับ! คุณสามารถยกเลิกการสมัครสมาชิกได้ทุกเมื่อผ่านหน้า Dashboard โดยจะไม่มีค่าธรรมเนียมแอบแฝง และเควสที่คุณสร้างไว้แล้วจะยังคงถูกเก็บรักษาไว้ในระบบ (ตามเงื่อนไขของแพ็กเกจ)',
+    },
+  ]
+
+  const faqCategories = [...new Set(faqItems.map((item) => item.category))]
+
   const plans = [
     {
       name: 'Explorer',
@@ -401,6 +474,128 @@ function PricingPage() {
                 </Link>
               </Button>
             </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section id="faq" className="py-20 px-6 bg-muted/30">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm font-medium mb-4">
+              <HelpCircle className="w-4 h-4" />
+              FAQ
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              คำถามที่<span className="text-primary">พบบ่อย</span>
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              หาคำตอบสำหรับคำถามยอดนิยมเกี่ยวกับ Qzvert
+            </p>
+          </motion.div>
+
+          {/* FAQ by Category */}
+          <div className="space-y-8">
+            {faqCategories.map((category) => (
+              <motion.div
+                key={category}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+              >
+                <h3 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+                  {category === 'General' && <HelpCircle className="w-5 h-5" />}
+                  {category === 'For Creators' && <Wand2 className="w-5 h-5" />}
+                  {category === 'For Learners' && <GraduationCap className="w-5 h-5" />}
+                  {category === 'Technology & Pricing' && <Zap className="w-5 h-5" />}
+                  {category === 'General' && 'ข้อมูลทั่วไป'}
+                  {category === 'For Creators' && 'สำหรับผู้สร้างคอร์สและครู'}
+                  {category === 'For Learners' && 'สำหรับผู้เรียน'}
+                  {category === 'Technology & Pricing' && 'เทคนิคและราคา'}
+                </h3>
+
+                <div className="space-y-3">
+                  {faqItems
+                    .filter((item) => item.category === category)
+                    .map((item, index) => {
+                      const globalIndex = faqItems.findIndex(
+                        (faq) => faq.question === item.question
+                      )
+                      const isOpen = openFAQ === globalIndex
+
+                      return (
+                        <motion.div
+                          key={item.question}
+                          initial={{ opacity: 0, y: 10 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: index * 0.05 }}
+                          className="rounded-xl border border-border bg-card overflow-hidden"
+                        >
+                          <button
+                            onClick={() => toggleFAQ(globalIndex)}
+                            className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/50 transition-colors"
+                          >
+                            <span className="font-medium text-foreground pr-4">
+                              {item.question}
+                            </span>
+                            <motion.div
+                              animate={{ rotate: isOpen ? 180 : 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="flex-shrink-0"
+                            >
+                              <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                            </motion.div>
+                          </button>
+
+                          <motion.div
+                            initial={false}
+                            animate={{
+                              height: isOpen ? 'auto' : 0,
+                              opacity: isOpen ? 1 : 0,
+                            }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="px-4 pb-4 text-muted-foreground leading-relaxed">
+                              {item.answer}
+                            </div>
+                          </motion.div>
+                        </motion.div>
+                      )
+                    })}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Still have questions? CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mt-12 p-6 rounded-2xl bg-gradient-to-r from-primary/10 to-cyan-500/10 border border-primary/20 text-center"
+          >
+            <MessageCircle className="w-10 h-10 text-primary mx-auto mb-4" />
+            <h3 className="text-xl font-bold mb-2">ยังสงสัย?</h3>
+            <p className="text-muted-foreground mb-4">
+              คุยกับทีมงานของเราได้เลย เรายินดีช่วยเหลือคุณทุกคำถาม
+            </p>
+            <Button
+              className="bg-gradient-to-r from-primary to-cyan-500 hover:from-primary/90 hover:to-cyan-500/90"
+              size="lg"
+              asChild
+            >
+              <Link to="/contact">
+                <MessageCircle className="w-4 h-4" />
+                คุยกับทีมงาน
+              </Link>
+            </Button>
           </motion.div>
         </div>
       </section>

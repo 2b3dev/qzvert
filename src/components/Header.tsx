@@ -1,8 +1,8 @@
 import IconApp from '@/components/icon/icon-app'
 import { setTheme, type Theme } from '@/server/theme'
 import { Link, useRouter } from '@tanstack/react-router'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Compass, CreditCard, Home, Menu, Moon, Plus, Sun, X, User, LogOut, LogIn } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { LogIn, LogOut, Menu, Moon, Plus, Sun, User, X } from 'lucide-react'
 import { useState } from 'react'
 import { Route } from '../routes/__root'
 import { useAuthStore } from '../stores/auth-store'
@@ -26,9 +26,10 @@ export default function Header() {
   }
 
   const navLinks = [
-    { to: '/', label: 'Home', icon: Home },
-    { to: '/explore', label: 'Explore', icon: Compass },
-    { to: '/pricing', label: 'Pricing', icon: CreditCard },
+    { to: '/explore', label: 'Explore' },
+    { to: '/pricing', label: 'Pricing' },
+    { to: '/about', label: 'About' },
+    { to: '/contact', label: 'Contact' },
   ]
 
   return (
@@ -51,7 +52,7 @@ export default function Header() {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-1">
-              {navLinks.map(({ to, label, icon: Icon }) => (
+              {navLinks.map(({ to, label }) => (
                 <Link
                   key={to}
                   to={to}
@@ -61,7 +62,6 @@ export default function Header() {
                       'flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 text-primary',
                   }}
                 >
-                  <Icon className="w-4 h-4" />
                   {label}
                 </Link>
               ))}
@@ -168,7 +168,7 @@ export default function Header() {
         </div>
 
         <nav className="p-4 space-y-2">
-          {navLinks.map(({ to, label, icon: Icon }) => (
+          {navLinks.map(({ to, label }) => (
             <Link
               key={to}
               to={to}
@@ -179,7 +179,6 @@ export default function Header() {
                   'flex items-center gap-3 p-3 rounded-lg bg-primary/10 text-primary',
               }}
             >
-              <Icon className="w-5 h-5" />
               {label}
             </Link>
           ))}
