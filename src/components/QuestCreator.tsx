@@ -11,6 +11,7 @@ import {
   Map,
   BookOpen,
   MessageSquare,
+  Lock,
 } from 'lucide-react'
 import { Button } from './ui/button'
 import {
@@ -23,7 +24,8 @@ import {
 import { Textarea } from './ui/input'
 import { generateQuest } from '../server/gemini'
 import { useQuestStore } from '../stores/quest-store'
-import { useNavigate } from '@tanstack/react-router'
+import { useAuthStore } from '../stores/auth-store'
+import { useNavigate, Link } from '@tanstack/react-router'
 
 type ContentType = 'text' | 'pdf' | 'video_link'
 type OutputType = 'quiz' | 'quest' | 'flashcard' | 'roleplay'
@@ -87,7 +89,61 @@ export function QuestCreator() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const setQuest = useQuestStore((state) => state.setQuest)
+  const { user, isLoading: isAuthLoading } = useAuthStore()
   const navigate = useNavigate()
+
+  // Auth gate - show login prompt if not authenticated
+  if (!isAuthLoading && !user) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-3xl mx-auto"
+      >
+        <Card className="border-primary/20 bg-gradient-to-br from-card via-card/80 to-card">
+          <CardHeader className="text-center pb-2">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <Lock className="w-8 h-8 text-primary" />
+              </div>
+            </div>
+            <CardTitle className="text-3xl bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">
+              เข้าสู่ระบบเพื่อสร้างเควส
+            </CardTitle>
+            <CardDescription className="text-muted-foreground text-lg">
+              สมัครสมาชิกฟรี เพื่อเริ่มต้นสร้าง Learning Quest ของคุณ
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 text-muted-foreground">
+                <Wand2 className="w-5 h-5 text-primary" />
+                <span>AI สร้างเควสจากเนื้อหาในไม่กี่วินาที</span>
+              </div>
+              <div className="flex items-center gap-3 text-muted-foreground">
+                <Map className="w-5 h-5 text-primary" />
+                <span>แผนที่การเรียนรู้แบบ Gamified</span>
+              </div>
+              <div className="flex items-center gap-3 text-muted-foreground">
+                <GraduationCap className="w-5 h-5 text-primary" />
+                <span>Quiz หลายรูปแบบ พร้อมคำอธิบาย</span>
+              </div>
+            </div>
+            <Button size="lg" className="w-full" asChild>
+              <Link to="/login">
+                <Sparkles className="w-5 h-5" />
+                เข้าสู่ระบบ / สมัครสมาชิก
+              </Link>
+            </Button>
+            <p className="text-center text-sm text-muted-foreground">
+              เริ่มต้นใช้งานฟรี ไม่มีค่าใช้จ่าย
+            </p>
+          </CardContent>
+        </Card>
+      </motion.div>
+    )
+  }
 
   const handleGenerate = async () => {
     if (!content.trim()) {

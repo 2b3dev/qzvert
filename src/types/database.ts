@@ -146,3 +146,22 @@ export interface GeneratedQuest {
     }[]
   }[]
 }
+
+// Profile types
+export type UserRole = 'learner' | 'creator' | 'admin'
+
+export interface Profile {
+  id: string
+  display_name: string | null
+  avatar_url: string | null
+  role: UserRole
+  metadata: Record<string, unknown>
+  created_at: string
+  updated_at: string
+}
+
+export interface ProfileUpdate {
+  display_name?: string
+  avatar_url?: string
+  metadata?: Record<string, unknown>
+}

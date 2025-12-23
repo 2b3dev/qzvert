@@ -6,9 +6,11 @@ import {
   Scripts,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
+import { useEffect } from 'react'
 
 import Header from '../components/Header'
 import { getTheme } from '../server/theme'
+import { useAuthStore } from '../stores/auth-store'
 
 import appCss from '../styles.css?url'
 
@@ -62,6 +64,13 @@ function RootComponent() {
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const { theme } = Route.useLoaderData()
+  const { initialize, isInitialized } = useAuthStore()
+
+  useEffect(() => {
+    if (!isInitialized) {
+      initialize()
+    }
+  }, [initialize, isInitialized])
 
   return (
     <html lang="en" className={theme === 'dark' ? 'dark' : ''}>

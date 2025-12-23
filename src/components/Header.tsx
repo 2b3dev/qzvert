@@ -1,20 +1,28 @@
 import IconApp from '@/components/icon/icon-app'
 import { setTheme, type Theme } from '@/server/theme'
 import { Link, useRouter } from '@tanstack/react-router'
-import { motion } from 'framer-motion'
-import { Compass, Home, Menu, Moon, Plus, Sun, X } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Compass, Home, Menu, Moon, Plus, Sun, X, User, LogOut, LogIn } from 'lucide-react'
 import { useState } from 'react'
 import { Route } from '../routes/__root'
+import { useAuthStore } from '../stores/auth-store'
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const { theme } = Route.useLoaderData()
   const router = useRouter()
+  const { user, signOut } = useAuthStore()
 
   const toggleTheme = async () => {
     const newTheme: Theme = theme === 'dark' ? 'light' : 'dark'
     await setTheme({ data: { theme: newTheme } })
     router.invalidate()
+  }
+
+  const handleSignOut = async () => {
+    await signOut()
+    setIsUserMenuOpen(false)
   }
 
   const navLinks = [
@@ -81,6 +89,51 @@ export default function Header() {
                   )}
                 </motion.div>
               </button>
+
+              {/* User Menu */}
+              {user ? (
+                <div className="relative ml-2">
+                  <button
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="flex items-center gap-2 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                      <User className="w-4 h-4 text-primary" />
+                    </div>
+                  </button>
+                  <AnimatePresence>
+                    {isUserMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute right-0 mt-2 w-56 rounded-lg bg-card border border-border shadow-lg py-2"
+                      >
+                        <div className="px-4 py-2 border-b border-border">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {user.email}
+                          </p>
+                        </div>
+                        <button
+                          onClick={handleSignOut}
+                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          ออกจากระบบ
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <Link
+                  to="/login"
+                  className="ml-2 flex items-center gap-2 px-4 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                >
+                  <LogIn className="w-4 h-4" />
+                  เข้าสู่ระบบ
+                </Link>
+              )}
             </nav>
 
             {/* Mobile Menu Button */}
@@ -138,6 +191,36 @@ export default function Header() {
             <Plus className="w-5 h-5" />
             Create Quest
           </Link>
+
+          {/* Mobile User Section */}
+          <div className="mt-4 pt-4 border-t border-border">
+            {user ? (
+              <>
+                <div className="px-3 py-2 text-sm text-muted-foreground truncate">
+                  {user.email}
+                </div>
+                <button
+                  onClick={() => {
+                    handleSignOut()
+                    setIsOpen(false)
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                >
+                  <LogOut className="w-5 h-5" />
+                  ออกจากระบบ
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 p-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              >
+                <LogIn className="w-5 h-5" />
+                เข้าสู่ระบบ
+              </Link>
+            )}
+          </div>
         </nav>
       </motion.div>
 
