@@ -12,6 +12,8 @@ import {
   BookOpen,
   MessageSquare,
   Lock,
+  Globe,
+  ChevronDown,
 } from 'lucide-react'
 import { Button } from './ui/button'
 import {
@@ -29,6 +31,12 @@ import { useNavigate, Link } from '@tanstack/react-router'
 
 type ContentType = 'text' | 'pdf' | 'video_link'
 type OutputType = 'quiz' | 'quest' | 'flashcard' | 'roleplay'
+type Language = 'th' | 'en'
+
+const languages = [
+  { code: 'th' as Language, label: 'ไทย', flag: '🇹🇭' },
+  { code: 'en' as Language, label: 'English', flag: '🇺🇸' },
+]
 
 const contentTypes = [
   {
@@ -85,6 +93,8 @@ const outputTypes = [
 export function QuestCreator() {
   const [selectedType, setSelectedType] = useState<ContentType>('text')
   const [selectedOutput, setSelectedOutput] = useState<OutputType>('quest')
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>('th')
+  const [isLanguageOpen, setIsLanguageOpen] = useState(false)
   const [content, setContent] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -269,7 +279,9 @@ export function QuestCreator() {
 
           {/* Content Input */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Your Content</label>
+            <label className="text-sm font-medium text-foreground">
+              Your Content
+            </label>
             <Textarea
               placeholder="Paste your learning content here... (articles, notes, documentation, etc.)"
               value={content}
@@ -280,6 +292,65 @@ export function QuestCreator() {
               <span>Tip: The more detailed your content, the better the quest!</span>
               <span>{content.length} characters</span>
             </div>
+          </div>
+
+          {/* Language Dropdown */}
+          <div className="relative">
+            <label className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
+              <Globe className="w-4 h-4" />
+              Quest Language (ภาษาที่จะ generate)
+            </label>
+            <button
+              type="button"
+              onClick={() => setIsLanguageOpen(!isLanguageOpen)}
+              className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-border bg-secondary/50 hover:border-muted-foreground transition-all duration-200"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xl">
+                  {languages.find((l) => l.code === selectedLanguage)?.flag}
+                </span>
+                <span className="font-medium">
+                  {languages.find((l) => l.code === selectedLanguage)?.label}
+                </span>
+              </div>
+              <ChevronDown
+                className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${
+                  isLanguageOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+
+            <AnimatePresence>
+              {isLanguageOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg z-10 overflow-hidden"
+                >
+                  {languages.map(({ code, label, flag }) => (
+                    <button
+                      key={code}
+                      type="button"
+                      onClick={() => {
+                        setSelectedLanguage(code)
+                        setIsLanguageOpen(false)
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors ${
+                        selectedLanguage === code ? 'bg-primary/10 text-primary' : ''
+                      }`}
+                    >
+                      <span className="text-xl">{flag}</span>
+                      <span className="font-medium">{label}</span>
+                      {selectedLanguage === code && (
+                        <span className="ml-auto text-primary">✓</span>
+                      )}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Error Message */}

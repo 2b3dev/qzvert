@@ -93,7 +93,7 @@ function HomePage() {
   const creatorBenefits = [
     {
       icon: TrendingUp,
-      title: 'ลดอัตราการดรอปเรียน',
+      title: 'ลดอัตราการเลิกเรียน',
       description: 'Reduce Churn Rate ด้วยประสบการณ์ที่ทำให้ติดใจ',
     },
     {
