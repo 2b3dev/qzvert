@@ -81,6 +81,7 @@ IMPORTANT: Respond ONLY with valid JSON in this exact format:
 {
   "title": "Quiz Title",
   "type": "smart_quiz",
+  "tags": ["tag1", "tag2", "tag3"],
   "quizzes": [
     ${quizJsonExample}
   ]
@@ -88,6 +89,8 @@ IMPORTANT: Respond ONLY with valid JSON in this exact format:
 
 Rules:
 - CRITICAL: All text content must be in ${data.language === 'th' ? 'Thai (ภาษาไทย)' : 'English'}
+- Generate 3-5 relevant tags that describe the quiz topic/content (e.g., "physics", "newton's laws", "motion")
+- Tags should be lowercase and help users find related quizzes
 - Create engaging and clear questions
 - Include helpful explanations for each answer
 - Questions should cover different aspects of the content
@@ -114,6 +117,7 @@ IMPORTANT: Respond ONLY with valid JSON in this exact format:
 {
   "title": "Quest Title",
   "type": "quest_course",
+  "tags": ["tag1", "tag2", "tag3"],
   "stages": [
     {
       "title": "Stage 1 Title",
@@ -127,6 +131,8 @@ IMPORTANT: Respond ONLY with valid JSON in this exact format:
 
 Rules:
 - CRITICAL: All text content must be in ${data.language === 'th' ? 'Thai (ภาษาไทย)' : 'English'}
+- Generate 3-5 relevant tags that describe the quest topic/content (e.g., "physics", "newton's laws", "motion")
+- Tags should be lowercase and help users find related quests
 - Make the content engaging and fun
 - Each stage should teach a specific concept before testing it
 - Include helpful explanations

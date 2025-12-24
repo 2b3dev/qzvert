@@ -166,6 +166,7 @@ export type GeneratedQuiz = GeneratedMultipleChoiceQuiz | GeneratedSubjectiveQui
 export interface GeneratedSmartQuiz {
   title: string
   type: 'smart_quiz'
+  tags?: string[]
   quizzes: GeneratedQuiz[]
 }
 
@@ -173,6 +174,7 @@ export interface GeneratedSmartQuiz {
 export interface GeneratedQuestCourse {
   title: string
   type: 'quest_course'
+  tags?: string[]
   stages: {
     title: string
     lesson: string

@@ -51,6 +51,7 @@ export function QuizPlayer({ onStageComplete, onGameOver, onQuizComplete }: Quiz
   const [showResult, setShowResult] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
   const [timeLeft, setTimeLeft] = useState(themeConfig.timerSeconds)
+  const [timedOut, setTimedOut] = useState(false)
 
   // Handle both Smart Quiz and Quest Course formats
   const isSmartQuizMode = currentQuest?.type === 'smart_quiz'
@@ -61,35 +62,39 @@ export function QuizPlayer({ onStageComplete, onGameOver, onQuizComplete }: Quiz
 
   const isSubjective = quiz ? isSubjectiveQuiz(quiz) : false
 
-  // Timer logic
+  // Format time as mm:ss
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
+
+  // Timer logic - total quiz time (doesn't reset per question)
   useEffect(() => {
-    if (!themeConfig.timerEnabled || showResult) return
+    if (!themeConfig.timerEnabled || timedOut) return
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           handleTimeout()
-          return themeConfig.timerSeconds
+          return 0
         }
         return prev - 1
       })
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [themeConfig.timerEnabled, showResult, currentQuizIndex])
+  }, [themeConfig.timerEnabled, timedOut])
 
   const handleTimeout = useCallback(() => {
-    if (themeConfig.livesEnabled) {
-      loseLife()
-      if (lives <= 1) {
-        onGameOver()
-        return
-      }
+    setTimedOut(true)
+    // When time is up, end the quiz
+    if (isSmartQuizMode) {
+      onQuizComplete?.()
+    } else {
+      onGameOver()
     }
-    setSelectedAnswer(-1)
-    setIsCorrect(false)
-    setShowResult(true)
-  }, [lives, loseLife, onGameOver, themeConfig.livesEnabled])
+  }, [isSmartQuizMode, onQuizComplete, onGameOver])
 
   const handleAnswer = (answerIndex: number) => {
     if (showResult || !quiz || isSubjective) return
@@ -100,7 +105,10 @@ export function QuizPlayer({ onStageComplete, onGameOver, onQuizComplete }: Quiz
 
     if (correct) {
       const basePoints = 100
-      const timeBonus = themeConfig.timerEnabled ? Math.floor(timeLeft * 2) : 0
+      // Time bonus based on percentage of time remaining
+      const timeBonus = themeConfig.timerEnabled
+        ? Math.floor((timeLeft / themeConfig.timerSeconds) * 50)
+        : 0
       addScore(basePoints + timeBonus)
     } else if (themeConfig.livesEnabled) {
       loseLife()
@@ -131,7 +139,7 @@ export function QuizPlayer({ onStageComplete, onGameOver, onQuizComplete }: Quiz
       setSelectedAnswer(null)
       setSubjectiveAnswer('')
       setShowResult(false)
-      setTimeLeft(themeConfig.timerSeconds)
+      // Don't reset timer - it's total quiz time, not per-question
     } else {
       // For Smart Quiz, call onQuizComplete; for Quest Course, complete stage
       if (isSmartQuizMode) {
@@ -172,15 +180,15 @@ export function QuizPlayer({ onStageComplete, onGameOver, onQuizComplete }: Quiz
         {/* Timer */}
         {themeConfig.timerEnabled && !isSubjective && (
           <motion.div
-            animate={{ scale: timeLeft <= 5 ? [1, 1.1, 1] : 1 }}
-            transition={{ repeat: timeLeft <= 5 ? Infinity : 0, duration: 0.5 }}
+            animate={{ scale: timeLeft <= 30 ? [1, 1.05, 1] : 1 }}
+            transition={{ repeat: timeLeft <= 30 ? Infinity : 0, duration: 0.5 }}
             className={cn(
               "flex items-center gap-2 px-4 py-2 rounded-full",
-              timeLeft <= 5 ? "bg-destructive/20 text-destructive" : "bg-secondary text-muted-foreground"
+              timeLeft <= 30 ? "bg-destructive/20 text-destructive" : "bg-secondary text-muted-foreground"
             )}
           >
             <Timer className="w-5 h-5" />
-            <span className="font-mono font-bold text-lg">{timeLeft}s</span>
+            <span className="font-mono font-bold text-lg">{formatTime(timeLeft)}</span>
           </motion.div>
         )}
 

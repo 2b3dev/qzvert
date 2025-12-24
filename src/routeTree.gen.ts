@@ -17,6 +17,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as QuestPreviewRouteImport } from './routes/quest/preview'
 import { Route as QuestPlayRouteImport } from './routes/quest/play'
+import { Route as QuestEditRouteImport } from './routes/quest/edit'
 
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
@@ -58,6 +59,11 @@ const QuestPlayRoute = QuestPlayRouteImport.update({
   path: '/quest/play',
   getParentRoute: () => rootRouteImport,
 } as any)
+const QuestEditRoute = QuestEditRouteImport.update({
+  id: '/quest/edit',
+  path: '/quest/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
+  '/quest/edit': typeof QuestEditRoute
   '/quest/play': typeof QuestPlayRoute
   '/quest/preview': typeof QuestPreviewRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
+  '/quest/edit': typeof QuestEditRoute
   '/quest/play': typeof QuestPlayRoute
   '/quest/preview': typeof QuestPreviewRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
+  '/quest/edit': typeof QuestEditRoute
   '/quest/play': typeof QuestPlayRoute
   '/quest/preview': typeof QuestPreviewRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/login'
     | '/pricing'
+    | '/quest/edit'
     | '/quest/play'
     | '/quest/preview'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/login'
     | '/pricing'
+    | '/quest/edit'
     | '/quest/play'
     | '/quest/preview'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/login'
     | '/pricing'
+    | '/quest/edit'
     | '/quest/play'
     | '/quest/preview'
   fileRoutesById: FileRoutesById
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   ExploreRoute: typeof ExploreRoute
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
+  QuestEditRoute: typeof QuestEditRoute
   QuestPlayRoute: typeof QuestPlayRoute
   QuestPreviewRoute: typeof QuestPreviewRoute
 }
@@ -192,6 +205,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof QuestPlayRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/quest/edit': {
+      id: '/quest/edit'
+      path: '/quest/edit'
+      fullPath: '/quest/edit'
+      preLoaderRoute: typeof QuestEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -202,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExploreRoute: ExploreRoute,
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
+  QuestEditRoute: QuestEditRoute,
   QuestPlayRoute: QuestPlayRoute,
   QuestPreviewRoute: QuestPreviewRoute,
 }

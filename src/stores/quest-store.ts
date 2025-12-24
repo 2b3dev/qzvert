@@ -10,9 +10,10 @@ interface QuestState {
   lives: number
   themeConfig: ThemeConfig
   isPlaying: boolean
+  rawContent: string | null
 
   // Actions
-  setQuest: (quest: GeneratedQuest) => void
+  setQuest: (quest: GeneratedQuest, rawContent?: string) => void
   setCurrentStage: (index: number) => void
   setCurrentQuiz: (index: number) => void
   completeStage: (stageIndex: number) => void
@@ -26,7 +27,7 @@ interface QuestState {
 
 const defaultThemeConfig: ThemeConfig = {
   timerEnabled: false,
-  timerSeconds: 30,
+  timerSeconds: 300, // 5 minutes default total quiz time
   livesEnabled: true,
   maxLives: 3,
   theme: 'adventure'
@@ -41,14 +42,16 @@ export const useQuestStore = create<QuestState>((set) => ({
   lives: 3,
   themeConfig: defaultThemeConfig,
   isPlaying: false,
+  rawContent: null,
 
-  setQuest: (quest) => set({
+  setQuest: (quest, rawContent) => set({
     currentQuest: quest,
     currentStageIndex: 0,
     currentQuizIndex: 0,
     completedStages: new Set(),
     score: 0,
-    lives: defaultThemeConfig.maxLives
+    lives: defaultThemeConfig.maxLives,
+    rawContent: rawContent ?? null
   }),
 
   setCurrentStage: (index) => set({ currentStageIndex: index, currentQuizIndex: 0 }),
@@ -78,6 +81,7 @@ export const useQuestStore = create<QuestState>((set) => ({
     completedStages: new Set(),
     score: 0,
     lives: defaultThemeConfig.maxLives,
-    isPlaying: false
+    isPlaying: false,
+    rawContent: null
   })
 }))

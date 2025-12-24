@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import {
   BookOpen,
   ChevronDown,
+  Clock,
   FileText,
   Globe,
   GraduationCap,
@@ -17,7 +18,6 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { generateQuest } from '../server/gemini'
-import { saveQuest } from '../server/quests'
 import { useAuthStore } from '../stores/auth-store'
 import { useQuestStore } from '../stores/quest-store'
 import IconApp from './icon/icon-app'
@@ -120,10 +120,13 @@ export function QuestCreator() {
   const [isChoiceCountOpen, setIsChoiceCountOpen] = useState(false)
   const [questionCount, setQuestionCount] = useState(10)
   const [isQuestionCountOpen, setIsQuestionCountOpen] = useState(false)
+  const [timerEnabled, setTimerEnabled] = useState(false)
+  const [timerSeconds, setTimerSeconds] = useState(300) // 5 minutes default
+  const [isTimerSecondsOpen, setIsTimerSecondsOpen] = useState(false)
   const [content, setContent] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { setQuest, themeConfig } = useQuestStore()
+  const { setQuest, themeConfig, setThemeConfig } = useQuestStore()
   const { user, session, isLoading: isAuthLoading } = useAuthStore()
   const navigate = useNavigate()
 
@@ -209,19 +212,20 @@ export function QuestCreator() {
           questionCount: selectedOutput === 'quiz' ? questionCount : undefined,
         },
       })
-      setQuest(quest)
 
-      // Save quest to Supabase
-      await saveQuest({
-        data: {
-          quest,
-          rawContent: content,
-          themeConfig,
-          accessToken: session!.access_token,
-        },
-      })
+      // Store quest and raw content for editing
+      setQuest(quest, content)
 
-      navigate({ to: '/quest/preview' })
+      // Update theme config with timer settings
+      const updatedThemeConfig = {
+        ...themeConfig,
+        timerEnabled,
+        timerSeconds,
+      }
+      setThemeConfig(updatedThemeConfig)
+
+      // Navigate to edit page for review before saving
+      navigate({ to: '/quest/edit' })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate quest')
     } finally {
@@ -323,88 +327,204 @@ export function QuestCreator() {
                 transition={{ duration: 0.2 }}
                 className="space-y-4"
               >
-                {/* Number of Questions Dropdown */}
-                <div className="relative">
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Number of Questions
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsQuestionCountOpen(!isQuestionCountOpen)
-                      setIsQuizTypeOpen(false)
-                      setIsChoiceCountOpen(false)
-                    }}
-                    className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-border bg-secondary/50 hover:border-muted-foreground transition-all duration-200"
-                  >
-                    <span className="font-medium">{questionCount} questions</span>
-                    <ChevronDown
-                      className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${
-                        isQuestionCountOpen ? 'rotate-180' : ''
-                      }`}
-                    />
-                  </button>
+                {/* Number of Questions and Timer Settings Row */}
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Number of Questions Dropdown */}
+                  <div className="relative">
+                    <label className="text-sm font-medium text-foreground mb-2 block">
+                      Number of Questions
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsQuestionCountOpen(!isQuestionCountOpen)
+                        setIsQuizTypeOpen(false)
+                        setIsChoiceCountOpen(false)
+                        setIsTimerSecondsOpen(false)
+                      }}
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-border bg-secondary/50 hover:border-muted-foreground transition-all duration-200"
+                    >
+                      <span className="font-medium">{questionCount} questions</span>
+                      <ChevronDown
+                        className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${
+                          isQuestionCountOpen ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
 
-                  <AnimatePresence>
-                    {isQuestionCountOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg z-20 overflow-hidden max-h-60 overflow-y-auto"
-                      >
-                        {/* Custom number input */}
-                        <div className="px-4 py-3 border-b border-border">
-                          <label className="text-xs text-muted-foreground mb-1 block">
-                            Custom number
-                          </label>
-                          <input
-                            type="number"
-                            min={1}
-                            max={100}
-                            value={questionCount}
-                            onChange={(e) => {
-                              const value = parseInt(e.target.value, 10)
-                              if (!isNaN(value) && value >= 1 && value <= 100) {
-                                setQuestionCount(value)
-                              }
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                            onBlur={() => setIsQuestionCountOpen(false)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
+                    <AnimatePresence>
+                      {isQuestionCountOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.15 }}
+                          className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg z-20 overflow-hidden max-h-60 overflow-y-auto"
+                        >
+                          {/* Custom number input */}
+                          <div className="px-4 py-3 border-b border-border">
+                            <label className="text-xs text-muted-foreground mb-1 block">
+                              Custom number
+                            </label>
+                            <input
+                              type="number"
+                              min={1}
+                              max={100}
+                              value={questionCount}
+                              onChange={(e) => {
+                                const value = parseInt(e.target.value, 10)
+                                if (!isNaN(value) && value >= 1 && value <= 100) {
+                                  setQuestionCount(value)
+                                }
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              onBlur={() => setIsQuestionCountOpen(false)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  setIsQuestionCountOpen(false)
+                                }
+                              }}
+                              className="w-full px-3 py-2 rounded-lg border border-border bg-secondary/50 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                              placeholder="1-100"
+                            />
+                          </div>
+                          {/* Preset options */}
+                          {questionCountOptions.map((count) => (
+                            <button
+                              key={count}
+                              type="button"
+                              onClick={() => {
+                                setQuestionCount(count)
                                 setIsQuestionCountOpen(false)
-                              }
-                            }}
-                            className="w-full px-3 py-2 rounded-lg border border-border bg-secondary/50 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-                            placeholder="1-100"
-                          />
-                        </div>
-                        {/* Preset options */}
-                        {questionCountOptions.map((count) => (
+                              }}
+                              className={`w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors ${
+                                questionCount === count
+                                  ? 'bg-primary/10 text-primary'
+                                  : ''
+                              }`}
+                            >
+                              <span className="font-medium">{count} questions</span>
+                              {questionCount === count && (
+                                <span className="text-primary">✓</span>
+                              )}
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Timer Settings Dropdown */}
+                  <div className="relative">
+                    <label className="text-sm font-medium text-foreground mb-2 block">
+                      Time Limit
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsTimerSecondsOpen(!isTimerSecondsOpen)
+                        setIsQuestionCountOpen(false)
+                        setIsQuizTypeOpen(false)
+                        setIsChoiceCountOpen(false)
+                      }}
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-border bg-secondary/50 hover:border-muted-foreground transition-all duration-200"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-medium">
+                          {timerEnabled
+                            ? timerSeconds >= 60
+                              ? `${Math.floor(timerSeconds / 60)} min${timerSeconds % 60 > 0 ? ` ${timerSeconds % 60} sec` : ''}`
+                              : `${timerSeconds} sec`
+                            : 'No limit'}
+                        </span>
+                      </div>
+                      <ChevronDown
+                        className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${
+                          isTimerSecondsOpen ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+
+                    <AnimatePresence>
+                      {isTimerSecondsOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.15 }}
+                          className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg z-20 overflow-hidden max-h-72 overflow-y-auto"
+                        >
+                          {/* No limit option */}
                           <button
-                            key={count}
                             type="button"
                             onClick={() => {
-                              setQuestionCount(count)
-                              setIsQuestionCountOpen(false)
+                              setTimerEnabled(false)
+                              setIsTimerSecondsOpen(false)
                             }}
                             className={`w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors ${
-                              questionCount === count
-                                ? 'bg-primary/10 text-primary'
-                                : ''
+                              !timerEnabled ? 'bg-primary/10 text-primary' : ''
                             }`}
                           >
-                            <span className="font-medium">{count} questions</span>
-                            {questionCount === count && (
-                              <span className="text-primary">✓</span>
-                            )}
+                            <span className="font-medium">No limit</span>
+                            {!timerEnabled && <span className="text-primary">✓</span>}
                           </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+
+                          {/* Custom time input */}
+                          <div className="px-4 py-3 border-t border-border">
+                            <label className="text-xs text-muted-foreground mb-1 block">
+                              Total time (minutes)
+                            </label>
+                            <input
+                              type="number"
+                              min={1}
+                              max={180}
+                              value={Math.floor(timerSeconds / 60) || 1}
+                              onChange={(e) => {
+                                const value = parseInt(e.target.value, 10)
+                                if (!isNaN(value) && value >= 1 && value <= 180) {
+                                  setTimerSeconds(value * 60)
+                                  setTimerEnabled(true)
+                                }
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              onBlur={() => setIsTimerSecondsOpen(false)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  setIsTimerSecondsOpen(false)
+                                }
+                              }}
+                              className="w-full px-3 py-2 rounded-lg border border-border bg-secondary/50 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                              placeholder="1-180"
+                            />
+                          </div>
+
+                          {/* Preset time options (in minutes) */}
+                          {[1, 2, 3, 5, 10, 15, 20, 30, 45, 60].map((minutes) => (
+                            <button
+                              key={minutes}
+                              type="button"
+                              onClick={() => {
+                                setTimerSeconds(minutes * 60)
+                                setTimerEnabled(true)
+                                setIsTimerSecondsOpen(false)
+                              }}
+                              className={`w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors ${
+                                timerEnabled && timerSeconds === minutes * 60
+                                  ? 'bg-primary/10 text-primary'
+                                  : ''
+                              }`}
+                            >
+                              <span className="font-medium">{minutes} {minutes === 1 ? 'minute' : 'minutes'}</span>
+                              {timerEnabled && timerSeconds === minutes * 60 && (
+                                <span className="text-primary">✓</span>
+                              )}
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -419,6 +539,7 @@ export function QuestCreator() {
                         setIsQuizTypeOpen(!isQuizTypeOpen)
                         setIsChoiceCountOpen(false)
                         setIsQuestionCountOpen(false)
+                        setIsTimerSecondsOpen(false)
                       }}
                       className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-border bg-secondary/50 hover:border-muted-foreground transition-all duration-200"
                     >
@@ -494,6 +615,7 @@ export function QuestCreator() {
                             setIsChoiceCountOpen(!isChoiceCountOpen)
                             setIsQuizTypeOpen(false)
                             setIsQuestionCountOpen(false)
+                            setIsTimerSecondsOpen(false)
                           }}
                           className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-border bg-secondary/50 hover:border-muted-foreground transition-all duration-200"
                         >
