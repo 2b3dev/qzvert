@@ -22,7 +22,7 @@ export const Route = createFileRoute('/quest/play')({
   component: QuestPlayPage
 })
 
-type GameState = 'lesson' | 'playing' | 'stage_complete' | 'game_over' | 'quest_complete'
+type GameState = 'lesson' | 'playing' | 'stage_complete' | 'game_over' | 'quest_complete' | 'quiz_complete'
 
 function QuestPlayPage() {
   const navigate = useNavigate()
@@ -36,7 +36,11 @@ function QuestPlayPage() {
     stopPlaying
   } = useQuestStore()
 
-  const [gameState, setGameState] = useState<GameState>('lesson')
+  // Check if it's Smart Quiz mode (no stages)
+  const isSmartQuizMode = currentQuest?.type === 'smart_quiz'
+
+  // For Smart Quiz, start directly in playing mode; for Quest Course, start with lesson
+  const [gameState, setGameState] = useState<GameState>(isSmartQuizMode ? 'playing' : 'lesson')
 
   if (!currentQuest) {
     return (
@@ -56,8 +60,10 @@ function QuestPlayPage() {
     )
   }
 
-  const stage = currentQuest.stages[currentStageIndex]
-  const isLastStage = currentStageIndex === currentQuest.stages.length - 1
+  // For Quest Course mode
+  const stage = isSmartQuizMode ? null : currentQuest.stages[currentStageIndex]
+  const isLastStage = isSmartQuizMode ? true : currentStageIndex === currentQuest.stages.length - 1
+  const totalQuizzes = isSmartQuizMode ? currentQuest.quizzes.length : 0
 
   const handleStageComplete = () => {
     if (isLastStage) {
@@ -65,6 +71,11 @@ function QuestPlayPage() {
     } else {
       setGameState('stage_complete')
     }
+  }
+
+  const handleQuizComplete = () => {
+    // For Smart Quiz mode - go directly to quiz_complete
+    setGameState('quiz_complete')
   }
 
   const handleNextStage = () => {
@@ -77,7 +88,7 @@ function QuestPlayPage() {
   }
 
   const handleRetry = () => {
-    setGameState('lesson')
+    setGameState(isSmartQuizMode ? 'playing' : 'lesson')
   }
 
   const handleQuit = () => {
@@ -109,21 +120,32 @@ function QuestPlayPage() {
           </div>
         </motion.div>
 
-        {/* Stage Title */}
+        {/* Title */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="text-center mb-8"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm mb-4">
-            Stage {currentStageIndex + 1} of {currentQuest.stages.length}
-          </div>
-          <h1 className="text-3xl font-bold text-foreground">{stage.title}</h1>
+          {isSmartQuizMode ? (
+            <>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm mb-4">
+                {totalQuizzes} Questions
+              </div>
+              <h1 className="text-3xl font-bold text-foreground">{currentQuest.title}</h1>
+            </>
+          ) : (
+            <>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm mb-4">
+                Stage {currentStageIndex + 1} of {currentQuest.stages.length}
+              </div>
+              <h1 className="text-3xl font-bold text-foreground">{stage?.title}</h1>
+            </>
+          )}
         </motion.div>
 
         <AnimatePresence mode="wait">
-          {/* Lesson View */}
-          {gameState === 'lesson' && (
+          {/* Lesson View - Only for Quest Course mode */}
+          {gameState === 'lesson' && !isSmartQuizMode && stage && (
             <motion.div
               key="lesson"
               initial={{ opacity: 0, y: 20 }}
@@ -162,6 +184,7 @@ function QuestPlayPage() {
               <QuizPlayer
                 onStageComplete={handleStageComplete}
                 onGameOver={handleGameOver}
+                onQuizComplete={handleQuizComplete}
               />
             </motion.div>
           )}
@@ -195,7 +218,68 @@ function QuestPlayPage() {
             </motion.div>
           )}
 
-          {/* Quest Complete */}
+          {/* Quiz Complete - For Smart Quiz mode */}
+          {gameState === 'quiz_complete' && (
+            <motion.div
+              key="quiz_complete"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+            >
+              <div className="text-center mb-8">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: [0, 1.2, 1] }}
+                  transition={{ delay: 0.2, type: 'spring' }}
+                  className="relative inline-block mb-6"
+                >
+                  <Trophy className="w-24 h-24 text-yellow-400" />
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5 }}
+                    className="absolute -top-2 -right-2 flex"
+                  >
+                    {[...Array(3)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.6 + i * 0.1 }}
+                      >
+                        <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </motion.div>
+                <h2 className="text-4xl font-black bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent mb-2">
+                  Quiz Complete!
+                </h2>
+                <p className="text-5xl font-bold text-primary mb-2">{score} pts</p>
+                <p className="text-muted-foreground">
+                  Answered {totalQuizzes} questions
+                </p>
+              </div>
+
+              <div className="flex justify-center gap-4">
+                <Button size="lg" variant="secondary" onClick={handleFinish}>
+                  <Home className="w-5 h-5" />
+                  Back to Home
+                </Button>
+                <Button
+                  size="lg"
+                  onClick={() => {
+                    resetGame()
+                    navigate({ to: '/' })
+                  }}
+                >
+                  Create New Quiz
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Quest Complete - For Quest Course mode */}
           {gameState === 'quest_complete' && (
             <motion.div
               key="quest_complete"
@@ -234,7 +318,7 @@ function QuestPlayPage() {
                 </h2>
                 <p className="text-5xl font-bold text-primary mb-2">{score} pts</p>
                 <p className="text-muted-foreground">
-                  Completed {currentQuest.stages.length} stages
+                  Completed {currentQuest.type === 'quest_course' ? currentQuest.stages.length : 0} stages
                 </p>
               </div>
 

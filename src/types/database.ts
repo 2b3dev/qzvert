@@ -9,6 +9,8 @@ export interface Database {
           title: string
           raw_content: string
           theme_config: ThemeConfig
+          is_published: boolean
+          play_count: number
         }
         Insert: {
           id?: string
@@ -17,6 +19,8 @@ export interface Database {
           title: string
           raw_content: string
           theme_config?: ThemeConfig
+          is_published?: boolean
+          play_count?: number
         }
         Update: {
           id?: string
@@ -25,6 +29,8 @@ export interface Database {
           title?: string
           raw_content?: string
           theme_config?: ThemeConfig
+          is_published?: boolean
+          play_count?: number
         }
       }
       stages: {
@@ -112,6 +118,8 @@ export interface Quest {
   title: string
   raw_content: string
   theme_config: ThemeConfig
+  is_published: boolean
+  play_count: number
   stages?: Stage[]
 }
 
@@ -133,18 +141,55 @@ export interface Quiz {
   explanation: string
 }
 
-export interface GeneratedQuest {
+export type QuizType = 'multiple_choice' | 'subjective'
+
+export interface GeneratedQuizBase {
+  question: string
+  explanation: string
+  type?: QuizType
+}
+
+export interface GeneratedMultipleChoiceQuiz extends GeneratedQuizBase {
+  type?: 'multiple_choice'
+  options: string[]
+  correct_answer: number
+}
+
+export interface GeneratedSubjectiveQuiz extends GeneratedQuizBase {
+  type: 'subjective'
+  model_answer: string
+}
+
+export type GeneratedQuiz = GeneratedMultipleChoiceQuiz | GeneratedSubjectiveQuiz
+
+// Smart Quiz format (flat quizzes, no stages)
+export interface GeneratedSmartQuiz {
   title: string
+  type: 'smart_quiz'
+  quizzes: GeneratedQuiz[]
+}
+
+// Quest Course format (stages + lessons + quizzes)
+export interface GeneratedQuestCourse {
+  title: string
+  type: 'quest_course'
   stages: {
     title: string
     lesson: string
-    quizzes: {
-      question: string
-      options: string[]
-      answer: number
-      explanation: string
-    }[]
+    quizzes: GeneratedQuiz[]
   }[]
+}
+
+// Union type for both formats
+export type GeneratedQuest = GeneratedSmartQuiz | GeneratedQuestCourse
+
+// Type guard helpers
+export function isSmartQuiz(quest: GeneratedQuest): quest is GeneratedSmartQuiz {
+  return quest.type === 'smart_quiz'
+}
+
+export function isQuestCourse(quest: GeneratedQuest): quest is GeneratedQuestCourse {
+  return quest.type === 'quest_course'
 }
 
 // Profile types

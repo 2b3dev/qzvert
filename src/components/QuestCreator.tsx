@@ -1,20 +1,26 @@
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
-  Sparkles,
-  FileText,
-  Video,
-  Type,
-  Loader2,
-  Wand2,
-  GraduationCap,
-  Map,
   BookOpen,
-  MessageSquare,
-  Lock,
-  Globe,
   ChevronDown,
+  FileText,
+  Globe,
+  GraduationCap,
+  Loader2,
+  Lock,
+  Map,
+  MessageSquare,
+  Sparkles,
+  Type,
+  Video,
+  Wand2,
 } from 'lucide-react'
+import { useState } from 'react'
+import { generateQuest } from '../server/gemini'
+import { saveQuest } from '../server/quests'
+import { useAuthStore } from '../stores/auth-store'
+import { useQuestStore } from '../stores/quest-store'
+import IconApp from './icon/icon-app'
 import { Button } from './ui/button'
 import {
   Card,
@@ -24,14 +30,27 @@ import {
   CardTitle,
 } from './ui/card'
 import { Textarea } from './ui/input'
-import { generateQuest } from '../server/gemini'
-import { useQuestStore } from '../stores/quest-store'
-import { useAuthStore } from '../stores/auth-store'
-import { useNavigate, Link } from '@tanstack/react-router'
 
 type ContentType = 'text' | 'pdf' | 'video_link'
 type OutputType = 'quiz' | 'quest' | 'flashcard' | 'roleplay'
 type Language = 'th' | 'en'
+type QuizType = 'multiple_choice' | 'subjective'
+
+const quizTypeOptions = [
+  {
+    type: 'multiple_choice' as QuizType,
+    label: 'Multiple Choice',
+    description: 'เลือกตอบ',
+  },
+  {
+    type: 'subjective' as QuizType,
+    label: 'Subjective',
+    description: 'เขียนตอบ',
+  },
+]
+
+const choiceCountOptions = [2, 3, 4, 5, 6, 7, 8, 9, 10]
+const questionCountOptions = [5, 10, 15, 20, 25, 30]
 
 const languages = [
   { code: 'th' as Language, label: 'ไทย', flag: '🇹🇭' },
@@ -92,14 +111,20 @@ const outputTypes = [
 
 export function QuestCreator() {
   const [selectedType, setSelectedType] = useState<ContentType>('text')
-  const [selectedOutput, setSelectedOutput] = useState<OutputType>('quest')
+  const [selectedOutput, setSelectedOutput] = useState<OutputType>('quiz')
   const [selectedLanguage, setSelectedLanguage] = useState<Language>('th')
   const [isLanguageOpen, setIsLanguageOpen] = useState(false)
+  const [quizType, setQuizType] = useState<QuizType>('multiple_choice')
+  const [choiceCount, setChoiceCount] = useState(4)
+  const [isQuizTypeOpen, setIsQuizTypeOpen] = useState(false)
+  const [isChoiceCountOpen, setIsChoiceCountOpen] = useState(false)
+  const [questionCount, setQuestionCount] = useState(10)
+  const [isQuestionCountOpen, setIsQuestionCountOpen] = useState(false)
   const [content, setContent] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const setQuest = useQuestStore((state) => state.setQuest)
-  const { user, isLoading: isAuthLoading } = useAuthStore()
+  const { setQuest, themeConfig } = useQuestStore()
+  const { user, session, isLoading: isAuthLoading } = useAuthStore()
   const navigate = useNavigate()
 
   // Auth gate - show login prompt if not authenticated
@@ -161,12 +186,41 @@ export function QuestCreator() {
       return
     }
 
+    if (!user) {
+      setError('Please login to create a quest')
+      return
+    }
+
     setIsGenerating(true)
     setError(null)
 
     try {
-      const quest = await generateQuest({ data: { content, contentType: selectedType } })
+      const quest = await generateQuest({
+        data: {
+          content,
+          contentType: selectedType,
+          language: selectedLanguage,
+          outputType: selectedOutput,
+          quizType: selectedOutput === 'quiz' ? quizType : undefined,
+          choiceCount:
+            selectedOutput === 'quiz' && quizType === 'multiple_choice'
+              ? choiceCount
+              : undefined,
+          questionCount: selectedOutput === 'quiz' ? questionCount : undefined,
+        },
+      })
       setQuest(quest)
+
+      // Save quest to Supabase
+      await saveQuest({
+        data: {
+          quest,
+          rawContent: content,
+          themeConfig,
+          accessToken: session!.access_token,
+        },
+      })
+
       navigate({ to: '/quest/preview' })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate quest')
@@ -184,19 +238,38 @@ export function QuestCreator() {
     >
       <Card className="border-primary/20 bg-gradient-to-br from-card via-card/80 to-card">
         <CardHeader className="text-center pb-2">
-          <div className="flex justify-center mb-4">
-            <motion.div
-              animate={{ rotate: [0, 10, -10, 0] }}
-              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-            >
-              <Sparkles className="w-12 h-12 text-primary" />
-            </motion.div>
+          <div className="flex items-center justify-center">
+            <div className="flex justify-center mr-4">
+              <motion.div
+                animate={{ rotate: [0, 10, -10, 0] }}
+                transition={{
+                  repeat: Infinity,
+                  duration: 2,
+                  ease: 'easeInOut',
+                }}
+              >
+                <IconApp className="w-8 h-8 text-primary" />
+              </motion.div>
+            </div>
+            <CardTitle className="text-3xl bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">
+              Create Your{' '}
+              {selectedOutput === 'quiz'
+                ? 'Quiz'
+                : selectedOutput === 'quest'
+                  ? 'Quest'
+                  : selectedOutput === 'flashcard'
+                    ? 'Flashcard'
+                    : 'Roleplay'}
+            </CardTitle>
           </div>
-          <CardTitle className="text-3xl bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">
-            Create Your Quest
-          </CardTitle>
           <CardDescription className="text-muted-foreground text-lg">
-            Transform any content into an epic learning adventure
+            {selectedOutput === 'quiz'
+              ? 'Generate smart quiz questions from any content'
+              : selectedOutput === 'quest'
+                ? 'Transform content into an epic learning adventure'
+                : selectedOutput === 'flashcard'
+                  ? 'Create flashcards for spaced repetition learning'
+                  : 'Practice with AI conversation scenarios'}
           </CardDescription>
         </CardHeader>
 
@@ -235,10 +308,246 @@ export function QuestCreator() {
                       {available ? description : 'Coming soon'}
                     </div>
                   </motion.button>
-                )
+                ),
               )}
             </div>
           </div>
+
+          {/* Quiz Options - Only show when Smart Quiz is selected */}
+          <AnimatePresence>
+            {selectedOutput === 'quiz' && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-4"
+              >
+                {/* Number of Questions Dropdown */}
+                <div className="relative">
+                  <label className="text-sm font-medium text-foreground mb-2 block">
+                    Number of Questions
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsQuestionCountOpen(!isQuestionCountOpen)
+                      setIsQuizTypeOpen(false)
+                      setIsChoiceCountOpen(false)
+                    }}
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-border bg-secondary/50 hover:border-muted-foreground transition-all duration-200"
+                  >
+                    <span className="font-medium">{questionCount} questions</span>
+                    <ChevronDown
+                      className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${
+                        isQuestionCountOpen ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+
+                  <AnimatePresence>
+                    {isQuestionCountOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg z-20 overflow-hidden max-h-60 overflow-y-auto"
+                      >
+                        {/* Custom number input */}
+                        <div className="px-4 py-3 border-b border-border">
+                          <label className="text-xs text-muted-foreground mb-1 block">
+                            Custom number
+                          </label>
+                          <input
+                            type="number"
+                            min={1}
+                            max={100}
+                            value={questionCount}
+                            onChange={(e) => {
+                              const value = parseInt(e.target.value, 10)
+                              if (!isNaN(value) && value >= 1 && value <= 100) {
+                                setQuestionCount(value)
+                              }
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            onBlur={() => setIsQuestionCountOpen(false)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                setIsQuestionCountOpen(false)
+                              }
+                            }}
+                            className="w-full px-3 py-2 rounded-lg border border-border bg-secondary/50 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                            placeholder="1-100"
+                          />
+                        </div>
+                        {/* Preset options */}
+                        {questionCountOptions.map((count) => (
+                          <button
+                            key={count}
+                            type="button"
+                            onClick={() => {
+                              setQuestionCount(count)
+                              setIsQuestionCountOpen(false)
+                            }}
+                            className={`w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors ${
+                              questionCount === count
+                                ? 'bg-primary/10 text-primary'
+                                : ''
+                            }`}
+                          >
+                            <span className="font-medium">{count} questions</span>
+                            {questionCount === count && (
+                              <span className="text-primary">✓</span>
+                            )}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Quiz Type Dropdown */}
+                  <div className="relative">
+                    <label className="text-sm font-medium text-foreground mb-2 block">
+                      Question Type
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsQuizTypeOpen(!isQuizTypeOpen)
+                        setIsChoiceCountOpen(false)
+                        setIsQuestionCountOpen(false)
+                      }}
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-border bg-secondary/50 hover:border-muted-foreground transition-all duration-200"
+                    >
+                      <span className="font-medium">
+                        {
+                          quizTypeOptions.find((q) => q.type === quizType)
+                            ?.label
+                        }
+                      </span>
+                      <ChevronDown
+                        className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${
+                          isQuizTypeOpen ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+
+                    <AnimatePresence>
+                      {isQuizTypeOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.15 }}
+                          className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg z-20 overflow-hidden"
+                        >
+                          {quizTypeOptions.map(
+                            ({ type, label, description }) => (
+                              <button
+                                key={type}
+                                type="button"
+                                onClick={() => {
+                                  setQuizType(type)
+                                  setIsQuizTypeOpen(false)
+                                }}
+                                className={`w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors ${
+                                  quizType === type
+                                    ? 'bg-primary/10 text-primary'
+                                    : ''
+                                }`}
+                              >
+                                <div>
+                                  <div className="font-medium">{label}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {description}
+                                  </div>
+                                </div>
+                                {quizType === type && (
+                                  <span className="text-primary">✓</span>
+                                )}
+                              </button>
+                            ),
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Choice Count Dropdown - Only for Multiple Choice */}
+                  <AnimatePresence>
+                    {quizType === 'multiple_choice' && (
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -10 }}
+                        className="relative"
+                      >
+                        <label className="text-sm font-medium text-foreground mb-2 block">
+                          Number of Choices
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsChoiceCountOpen(!isChoiceCountOpen)
+                            setIsQuizTypeOpen(false)
+                            setIsQuestionCountOpen(false)
+                          }}
+                          className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-border bg-secondary/50 hover:border-muted-foreground transition-all duration-200"
+                        >
+                          <span className="font-medium">
+                            {choiceCount} choices
+                          </span>
+                          <ChevronDown
+                            className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${
+                              isChoiceCountOpen ? 'rotate-180' : ''
+                            }`}
+                          />
+                        </button>
+
+                        <AnimatePresence>
+                          {isChoiceCountOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              transition={{ duration: 0.15 }}
+                              className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg z-20 overflow-hidden"
+                            >
+                              {choiceCountOptions.map((count) => (
+                                <button
+                                  key={count}
+                                  type="button"
+                                  onClick={() => {
+                                    setChoiceCount(count)
+                                    setIsChoiceCountOpen(false)
+                                  }}
+                                  className={`w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors ${
+                                    choiceCount === count
+                                      ? 'bg-primary/10 text-primary'
+                                      : ''
+                                  }`}
+                                >
+                                  <span className="font-medium">
+                                    {count} choices
+                                  </span>
+                                  {choiceCount === count && (
+                                    <span className="text-primary">✓</span>
+                                  )}
+                                </button>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Content Type Selector */}
           <div>
@@ -289,7 +598,9 @@ export function QuestCreator() {
               className="min-h-[200px] text-base"
             />
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Tip: The more detailed your content, the better the quest!</span>
+              <span>
+                Tip: The more detailed your content, the better the quest!
+              </span>
               <span>{content.length} characters</span>
             </div>
           </div>
@@ -338,7 +649,9 @@ export function QuestCreator() {
                         setIsLanguageOpen(false)
                       }}
                       className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors ${
-                        selectedLanguage === code ? 'bg-primary/10 text-primary' : ''
+                        selectedLanguage === code
+                          ? 'bg-primary/10 text-primary'
+                          : ''
                       }`}
                     >
                       <span className="text-xl">{flag}</span>
@@ -377,12 +690,27 @@ export function QuestCreator() {
             {isGenerating ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Generating your quest...
+                Generating your{' '}
+                {selectedOutput === 'quiz'
+                  ? 'quiz'
+                  : selectedOutput === 'quest'
+                    ? 'quest'
+                    : selectedOutput === 'flashcard'
+                      ? 'flashcard'
+                      : 'roleplay'}
+                ...
               </>
             ) : (
               <>
                 <Wand2 className="w-5 h-5" />
-                Generate Learning Quest
+                Generate{' '}
+                {selectedOutput === 'quiz'
+                  ? 'Quiz'
+                  : selectedOutput === 'quest'
+                    ? 'Quest'
+                    : selectedOutput === 'flashcard'
+                      ? 'Flashcard'
+                      : 'Roleplay'}
               </>
             )}
           </Button>

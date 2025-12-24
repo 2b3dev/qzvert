@@ -1,18 +1,39 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Heart, Timer, CheckCircle, XCircle, ArrowRight, Trophy, Star } from 'lucide-react'
+import { Heart, Timer, CheckCircle, XCircle, ArrowRight, Trophy, Star, Send } from 'lucide-react'
 import { useQuestStore } from '../stores/quest-store'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
 import { Progress } from './ui/progress'
+import { Textarea } from './ui/input'
 import { cn } from '../lib/utils'
+import type { GeneratedQuiz, GeneratedSubjectiveQuiz, GeneratedQuest, isSmartQuiz } from '../types/database'
 
 interface QuizPlayerProps {
   onStageComplete: () => void
   onGameOver: () => void
+  onQuizComplete?: () => void  // For Smart Quiz mode
 }
 
-export function QuizPlayer({ onStageComplete, onGameOver }: QuizPlayerProps) {
+// Type guard for subjective quiz
+function isSubjectiveQuiz(quiz: GeneratedQuiz): quiz is GeneratedSubjectiveQuiz {
+  return quiz.type === 'subjective'
+}
+
+// Helper to get quizzes from quest (handles both formats)
+function getQuizzesFromQuest(quest: GeneratedQuest | null, stageIndex: number): GeneratedQuiz[] {
+  if (!quest) return []
+
+  if (quest.type === 'smart_quiz') {
+    // Smart Quiz: flat quizzes array
+    return quest.quizzes
+  } else {
+    // Quest Course: quizzes within stages
+    return quest.stages[stageIndex]?.quizzes || []
+  }
+}
+
+export function QuizPlayer({ onStageComplete, onGameOver, onQuizComplete }: QuizPlayerProps) {
   const {
     currentQuest,
     currentStageIndex,
@@ -26,14 +47,19 @@ export function QuizPlayer({ onStageComplete, onGameOver }: QuizPlayerProps) {
   } = useQuestStore()
 
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
+  const [subjectiveAnswer, setSubjectiveAnswer] = useState('')
   const [showResult, setShowResult] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
   const [timeLeft, setTimeLeft] = useState(themeConfig.timerSeconds)
 
-  const stage = currentQuest?.stages[currentStageIndex]
-  const quiz = stage?.quizzes[currentQuizIndex]
-  const totalQuizzes = stage?.quizzes.length || 0
+  // Handle both Smart Quiz and Quest Course formats
+  const isSmartQuizMode = currentQuest?.type === 'smart_quiz'
+  const quizzes = getQuizzesFromQuest(currentQuest, currentStageIndex)
+  const quiz = quizzes[currentQuizIndex]
+  const totalQuizzes = quizzes.length
   const progress = ((currentQuizIndex + 1) / totalQuizzes) * 100
+
+  const isSubjective = quiz ? isSubjectiveQuiz(quiz) : false
 
   // Timer logic
   useEffect(() => {
@@ -66,10 +92,10 @@ export function QuizPlayer({ onStageComplete, onGameOver }: QuizPlayerProps) {
   }, [lives, loseLife, onGameOver, themeConfig.livesEnabled])
 
   const handleAnswer = (answerIndex: number) => {
-    if (showResult) return
+    if (showResult || !quiz || isSubjective) return
 
     setSelectedAnswer(answerIndex)
-    const correct = answerIndex === quiz?.correct_answer
+    const correct = answerIndex === (quiz as any).correct_answer
     setIsCorrect(correct)
 
     if (correct) {
@@ -88,15 +114,32 @@ export function QuizPlayer({ onStageComplete, onGameOver }: QuizPlayerProps) {
     setShowResult(true)
   }
 
+  const handleSubjectiveSubmit = () => {
+    if (showResult || !subjectiveAnswer.trim()) return
+
+    // For subjective questions, we always give points for submitting an answer
+    // In a real app, you might want to use AI to grade the answer
+    const basePoints = 50
+    addScore(basePoints)
+    setIsCorrect(true)
+    setShowResult(true)
+  }
+
   const handleNext = () => {
     if (currentQuizIndex < totalQuizzes - 1) {
       setCurrentQuiz(currentQuizIndex + 1)
       setSelectedAnswer(null)
+      setSubjectiveAnswer('')
       setShowResult(false)
       setTimeLeft(themeConfig.timerSeconds)
     } else {
-      completeStage(currentStageIndex)
-      onStageComplete()
+      // For Smart Quiz, call onQuizComplete; for Quest Course, complete stage
+      if (isSmartQuizMode) {
+        onQuizComplete?.()
+      } else {
+        completeStage(currentStageIndex)
+        onStageComplete()
+      }
     }
   }
 
@@ -107,7 +150,7 @@ export function QuizPlayer({ onStageComplete, onGameOver }: QuizPlayerProps) {
       {/* Header with Lives and Timer */}
       <div className="flex items-center justify-between mb-6">
         {/* Lives */}
-        {themeConfig.livesEnabled && (
+        {themeConfig.livesEnabled && !isSubjective && (
           <div className="flex items-center gap-1">
             {Array.from({ length: themeConfig.maxLives }).map((_, i) => (
               <motion.div
@@ -127,7 +170,7 @@ export function QuizPlayer({ onStageComplete, onGameOver }: QuizPlayerProps) {
         )}
 
         {/* Timer */}
-        {themeConfig.timerEnabled && (
+        {themeConfig.timerEnabled && !isSubjective && (
           <motion.div
             animate={{ scale: timeLeft <= 5 ? [1, 1.1, 1] : 1 }}
             transition={{ repeat: timeLeft <= 5 ? Infinity : 0, duration: 0.5 }}
@@ -164,60 +207,88 @@ export function QuizPlayer({ onStageComplete, onGameOver }: QuizPlayerProps) {
             <h2 className="text-2xl font-bold text-foreground mb-2">
               {quiz.question}
             </h2>
+            {isSubjective && (
+              <p className="text-sm text-muted-foreground">
+                เขียนคำตอบของคุณด้านล่าง
+              </p>
+            )}
           </CardContent>
         </Card>
 
-        {/* Answer Options */}
-        <div className="grid gap-3 mb-6">
-          {quiz.options.map((option, index) => {
-            const isSelected = selectedAnswer === index
-            const isCorrectAnswer = index === quiz.correct_answer
-            const showAsCorrect = showResult && isCorrectAnswer
-            const showAsWrong = showResult && isSelected && !isCorrect
+        {/* Multiple Choice Options */}
+        {!isSubjective && 'options' in quiz && (
+          <div className="grid gap-3 mb-6">
+            {quiz.options.map((option, index) => {
+              const isSelected = selectedAnswer === index
+              const isCorrectAnswer = index === quiz.correct_answer
+              const showAsCorrect = showResult && isCorrectAnswer
+              const showAsWrong = showResult && isSelected && !isCorrect
 
-            return (
-              <motion.button
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={!showResult ? { scale: 1.02 } : {}}
-                whileTap={!showResult ? { scale: 0.98 } : {}}
-                onClick={() => handleAnswer(index)}
-                disabled={showResult}
-                className={cn(
-                  "w-full p-4 rounded-xl border-2 text-left font-medium transition-all duration-300",
-                  !showResult && "hover:border-primary hover:bg-primary/10",
-                  !showResult && isSelected && "border-primary bg-primary/20",
-                  !showResult && !isSelected && "border-border bg-secondary/50",
-                  showAsCorrect && "border-emerald-500 bg-emerald-500/20 text-emerald-300",
-                  showAsWrong && "border-destructive bg-destructive/20 text-destructive",
-                  showResult && !showAsCorrect && !showAsWrong && "border-border bg-secondary/30 opacity-50"
-                )}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm",
-                      showAsCorrect && "bg-emerald-500 text-white",
-                      showAsWrong && "bg-destructive text-white",
-                      !showResult && "bg-muted text-muted-foreground"
-                    )}>
-                      {String.fromCharCode(65 + index)}
-                    </span>
-                    <span className={cn(
-                      showResult ? (showAsCorrect ? "text-emerald-300" : showAsWrong ? "text-destructive" : "text-muted-foreground") : "text-foreground"
-                    )}>
-                      {option}
-                    </span>
+              return (
+                <motion.button
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  whileHover={!showResult ? { scale: 1.02 } : {}}
+                  whileTap={!showResult ? { scale: 0.98 } : {}}
+                  onClick={() => handleAnswer(index)}
+                  disabled={showResult}
+                  className={cn(
+                    "w-full p-4 rounded-xl border-2 text-left font-medium transition-all duration-300",
+                    !showResult && "hover:border-primary hover:bg-primary/10",
+                    !showResult && isSelected && "border-primary bg-primary/20",
+                    !showResult && !isSelected && "border-border bg-secondary/50",
+                    showAsCorrect && "border-emerald-500 bg-emerald-500/20 text-emerald-300",
+                    showAsWrong && "border-destructive bg-destructive/20 text-destructive",
+                    showResult && !showAsCorrect && !showAsWrong && "border-border bg-secondary/30 opacity-50"
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm",
+                        showAsCorrect && "bg-emerald-500 text-white",
+                        showAsWrong && "bg-destructive text-white",
+                        !showResult && "bg-muted text-muted-foreground"
+                      )}>
+                        {index + 1}
+                      </span>
+                      <span className={cn(
+                        showResult ? (showAsCorrect ? "text-emerald-300" : showAsWrong ? "text-destructive" : "text-muted-foreground") : "text-foreground"
+                      )}>
+                        {option}
+                      </span>
+                    </div>
+                    {showAsCorrect && <CheckCircle className="w-6 h-6 text-emerald-400" />}
+                    {showAsWrong && <XCircle className="w-6 h-6 text-destructive" />}
                   </div>
-                  {showAsCorrect && <CheckCircle className="w-6 h-6 text-emerald-400" />}
-                  {showAsWrong && <XCircle className="w-6 h-6 text-destructive" />}
-                </div>
-              </motion.button>
-            )
-          })}
-        </div>
+                </motion.button>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Subjective Answer Input */}
+        {isSubjective && !showResult && (
+          <div className="space-y-4 mb-6">
+            <Textarea
+              placeholder="พิมพ์คำตอบของคุณที่นี่..."
+              value={subjectiveAnswer}
+              onChange={(e) => setSubjectiveAnswer(e.target.value)}
+              className="min-h-[150px] text-base"
+            />
+            <Button
+              size="lg"
+              className="w-full"
+              onClick={handleSubjectiveSubmit}
+              disabled={!subjectiveAnswer.trim()}
+            >
+              <Send className="w-5 h-5" />
+              ส่งคำตอบ
+            </Button>
+          </div>
+        )}
 
         {/* Result Feedback */}
         <AnimatePresence>
@@ -242,13 +313,22 @@ export function QuizPlayer({ onStageComplete, onGameOver }: QuizPlayerProps) {
                         <Star className="w-6 h-6 text-amber-400" />
                       </div>
                     )}
-                    <div>
+                    <div className="flex-1">
                       <h3 className={cn(
                         "font-bold text-lg mb-2",
                         isCorrect ? "text-emerald-300" : "text-amber-300"
                       )}>
                         {isCorrect ? "Excellent!" : "Almost there!"}
                       </h3>
+
+                      {/* Show model answer for subjective questions */}
+                      {isSubjective && 'model_answer' in quiz && (
+                        <div className="mb-4 p-4 bg-secondary/50 rounded-lg">
+                          <p className="text-sm font-medium text-foreground mb-2">คำตอบตัวอย่าง:</p>
+                          <p className="text-muted-foreground">{quiz.model_answer}</p>
+                        </div>
+                      )}
+
                       <p className="text-muted-foreground">{quiz.explanation}</p>
                     </div>
                   </div>
@@ -265,6 +345,11 @@ export function QuizPlayer({ onStageComplete, onGameOver }: QuizPlayerProps) {
                   <>
                     Next Question
                     <ArrowRight className="w-5 h-5" />
+                  </>
+                ) : isSmartQuizMode ? (
+                  <>
+                    Complete Quiz
+                    <Trophy className="w-5 h-5" />
                   </>
                 ) : (
                   <>

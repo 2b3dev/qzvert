@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
-import { Play, ArrowLeft, Settings, BookOpen } from 'lucide-react'
+import { Play, ArrowLeft, Settings, BookOpen, GraduationCap } from 'lucide-react'
 import { useQuestStore } from '../../stores/quest-store'
 import { LearningMap } from '../../components/LearningMap'
 import { Button } from '../../components/ui/button'
@@ -32,6 +32,8 @@ function QuestPreviewPage() {
     )
   }
 
+  const isSmartQuizMode = currentQuest.type === 'smart_quiz'
+
   const handleStageSelect = (stageIndex: number) => {
     setCurrentStage(stageIndex)
     startPlaying()
@@ -44,6 +46,68 @@ function QuestPreviewPage() {
     navigate({ to: '/quest/play' })
   }
 
+  // Smart Quiz mode - simpler preview
+  if (isSmartQuizMode) {
+    return (
+      <div className="min-h-screen bg-background py-8 px-6">
+        <div className="max-w-3xl mx-auto">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-between mb-8"
+          >
+            <Button variant="ghost" onClick={() => navigate({ to: '/' })}>
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </Button>
+          </motion.div>
+
+          {/* Quiz Info Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card className="mb-8 bg-gradient-to-br from-card to-secondary/50">
+              <CardHeader className="text-center pb-4">
+                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
+                  <GraduationCap className="w-8 h-8 text-primary" />
+                </div>
+                <CardTitle className="text-3xl md:text-4xl font-black bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">
+                  {currentQuest.title}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-center space-y-4">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary">
+                  <span className="font-bold">{currentQuest.quizzes.length}</span>
+                  <span>Questions</span>
+                </div>
+                <p className="text-muted-foreground">
+                  Test your knowledge with this quick quiz!
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Start Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="flex justify-center"
+          >
+            <Button size="lg" onClick={handleStartQuest} className="px-12">
+              <Play className="w-5 h-5" />
+              Start Quiz
+            </Button>
+          </motion.div>
+        </div>
+      </div>
+    )
+  }
+
+  // Quest Course mode - full preview with learning map
   return (
     <div className="min-h-screen bg-background py-8 px-6">
       <div className="max-w-6xl mx-auto">
