@@ -12,44 +12,45 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import { useState } from 'react'
-import { useQuestStore } from '../../stores/quest-store'
+import { useCreationStore } from '../../stores/creation-store'
 import { QuizPlayer } from '../../components/QuizPlayer'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
 import { Progress } from '../../components/ui/progress'
 
-export const Route = createFileRoute('/quest/play')({
-  component: QuestPlayPage
+export const Route = createFileRoute('/creation/play')({
+  component: CreationPlayPage
 })
 
 type GameState = 'lesson' | 'playing' | 'stage_complete' | 'game_over' | 'quest_complete' | 'quiz_complete'
 
-function QuestPlayPage() {
+function CreationPlayPage() {
   const navigate = useNavigate()
   const {
-    currentQuest,
+    currentCreation,
+    currentCreationId,
     currentStageIndex,
     setCurrentStage,
     score,
     completedStages,
     resetGame,
     stopPlaying
-  } = useQuestStore()
+  } = useCreationStore()
 
-  // Check if it's Smart Quiz mode (no stages)
-  const isSmartQuizMode = currentQuest?.type === 'smart_quiz'
+  // Check if it's Quiz mode (no stages)
+  const isSmartQuizMode = currentCreation?.type === 'quiz'
 
   // For Smart Quiz, start directly in playing mode; for Quest Course, start with lesson
   const [gameState, setGameState] = useState<GameState>(isSmartQuizMode ? 'playing' : 'lesson')
 
-  if (!currentQuest) {
+  if (!currentCreation) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-foreground mb-2">No Quest Found</h2>
-            <p className="text-muted-foreground mb-6">Create a new quest to get started</p>
+            <h2 className="text-xl font-semibold text-foreground mb-2">No Content Found</h2>
+            <p className="text-muted-foreground mb-6">Create a new quiz or quest to get started</p>
             <Button onClick={() => navigate({ to: '/' })}>
               <Home className="w-4 h-4" />
               Back to Home
@@ -61,9 +62,9 @@ function QuestPlayPage() {
   }
 
   // For Quest Course mode
-  const stage = isSmartQuizMode ? null : currentQuest.stages[currentStageIndex]
-  const isLastStage = isSmartQuizMode ? true : currentStageIndex === currentQuest.stages.length - 1
-  const totalQuizzes = isSmartQuizMode ? currentQuest.quizzes.length : 0
+  const stage = isSmartQuizMode ? null : currentCreation.stages[currentStageIndex]
+  const isLastStage = isSmartQuizMode ? true : currentStageIndex === currentCreation.stages.length - 1
+  const totalQuizzes = isSmartQuizMode ? currentCreation.quizzes.length : 0
 
   const handleStageComplete = () => {
     if (isLastStage) {
@@ -93,7 +94,11 @@ function QuestPlayPage() {
 
   const handleQuit = () => {
     stopPlaying()
-    navigate({ to: '/quest/preview' })
+    if (currentCreationId) {
+      navigate({ to: '/creation/$id/preview', params: { id: currentCreationId } })
+    } else {
+      navigate({ to: '/' })
+    }
   }
 
   const handleFinish = () => {
@@ -112,7 +117,7 @@ function QuestPlayPage() {
         >
           <Button variant="ghost" onClick={handleQuit}>
             <ArrowLeft className="w-4 h-4" />
-            Back to Map
+            Back
           </Button>
           <div className="flex items-center gap-2 text-primary">
             <Trophy className="w-5 h-5" />
@@ -131,12 +136,12 @@ function QuestPlayPage() {
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm mb-4">
                 {totalQuizzes} Questions
               </div>
-              <h1 className="text-3xl font-bold text-foreground">{currentQuest.title}</h1>
+              <h1 className="text-3xl font-bold text-foreground">{currentCreation.title}</h1>
             </>
           ) : (
             <>
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm mb-4">
-                Stage {currentStageIndex + 1} of {currentQuest.stages.length}
+                Stage {currentStageIndex + 1} of {currentCreation.stages.length}
               </div>
               <h1 className="text-3xl font-bold text-foreground">{stage?.title}</h1>
             </>
@@ -318,7 +323,7 @@ function QuestPlayPage() {
                 </h2>
                 <p className="text-5xl font-bold text-primary mb-2">{score} pts</p>
                 <p className="text-muted-foreground">
-                  Completed {currentQuest.type === 'quest_course' ? currentQuest.stages.length : 0} stages
+                  Completed {currentCreation.type === 'quest' ? currentCreation.stages.length : 0} stages
                 </p>
               </div>
 

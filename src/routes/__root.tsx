@@ -7,8 +7,10 @@ import {
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { useEffect } from 'react'
+import { Toaster } from 'sonner'
 
 import Header from '../components/Header'
+import Footer from '../components/Footer'
 import { getTheme } from '../server/theme'
 import { useAuthStore } from '../stores/auth-store'
 
@@ -79,7 +81,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className="antialiased transition-colors duration-300">
         <Header />
-        <main>{children}</main>
+        <main className="min-h-screen">{children}</main>
+        <Footer />
         {IS_SHOW_DEVTOOL && (
           <TanStackDevtools
             config={{
@@ -93,6 +96,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             ]}
           />
         )}
+        <Toaster richColors position="top-center" />
         <Scripts />
       </body>
     </html>

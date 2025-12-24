@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { Lock, CheckCircle2, Play, Star } from 'lucide-react'
-import { useQuestStore } from '../stores/quest-store'
+import { useCreationStore } from '../stores/creation-store'
 import { cn } from '../lib/utils'
 
 interface LearningMapProps {
@@ -8,11 +8,11 @@ interface LearningMapProps {
 }
 
 export function LearningMap({ onStageSelect }: LearningMapProps) {
-  const { currentQuest, completedStages, currentStageIndex } = useQuestStore()
+  const { currentCreation, completedStages, currentStageIndex } = useCreationStore()
 
-  if (!currentQuest) return null
+  if (!currentCreation) return null
 
-  const stages = currentQuest.stages
+  const stages = currentCreation.stages
 
   return (
     <div className="relative w-full max-w-4xl mx-auto py-8">

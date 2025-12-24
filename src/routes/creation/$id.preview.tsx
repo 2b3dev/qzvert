@@ -1,27 +1,68 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
-import { Play, ArrowLeft, Settings, BookOpen, GraduationCap } from 'lucide-react'
-import { useQuestStore } from '../../stores/quest-store'
+import { Eye, ArrowLeft, Settings, BookOpen, GraduationCap, Play } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
+import { useCreationStore } from '../../stores/creation-store'
+import { useAuthStore } from '../../stores/auth-store'
 import { LearningMap } from '../../components/LearningMap'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
+import { getCreationById } from '../../server/creations'
+import { Loader2 } from 'lucide-react'
 
-export const Route = createFileRoute('/quest/preview')({
-  component: QuestPreviewPage
+export const Route = createFileRoute('/creation/$id/preview')({
+  component: CreationPreviewPage
 })
 
-function QuestPreviewPage() {
+function CreationPreviewPage() {
   const navigate = useNavigate()
-  const { currentQuest, setCurrentStage, startPlaying } = useQuestStore()
+  const { id: creationId } = Route.useParams()
+  const { currentCreation, currentCreationId, setCreation, setCurrentStage, startPlaying, setThemeConfig } = useCreationStore()
+  const [isLoading, setIsLoading] = useState(false)
 
-  if (!currentQuest) {
+  // Load creation if not already loaded or if different id
+  useEffect(() => {
+    const loadCreation = async () => {
+      if (currentCreationId === creationId && currentCreation) return
+
+      setIsLoading(true)
+      try {
+        const data = await getCreationById({ data: { creationId } })
+        if (data) {
+          setCreation(data.generatedQuest, data.creation.raw_content, creationId)
+          setThemeConfig(data.themeConfig)
+        }
+      } catch (error) {
+        toast.error('Failed to load creation')
+        navigate({ to: '/' })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadCreation()
+  }, [creationId, currentCreationId, currentCreation, setCreation, setThemeConfig, navigate])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!currentCreation) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-foreground mb-2">No Quest Found</h2>
-            <p className="text-muted-foreground mb-6">Create a new quest to get started</p>
+            <h2 className="text-xl font-semibold text-foreground mb-2">Content Not Found</h2>
+            <p className="text-muted-foreground mb-6">This creation doesn't exist or has been removed</p>
             <Button onClick={() => navigate({ to: '/' })}>
               <ArrowLeft className="w-4 h-4" />
               Back to Home
@@ -32,18 +73,28 @@ function QuestPreviewPage() {
     )
   }
 
-  const isSmartQuizMode = currentQuest.type === 'smart_quiz'
+  const isSmartQuizMode = currentCreation.type === 'quiz'
 
   const handleStageSelect = (stageIndex: number) => {
     setCurrentStage(stageIndex)
     startPlaying()
-    navigate({ to: '/quest/play' })
+    navigate({ to: '/creation/play' })
   }
 
   const handleStartQuest = () => {
     setCurrentStage(0)
     startPlaying()
-    navigate({ to: '/quest/play' })
+    navigate({ to: '/creation/play' })
+  }
+
+  const handleStartQuiz = () => {
+    setCurrentStage(0)
+    startPlaying()
+    navigate({ to: '/creation/play' })
+  }
+
+  const handleEditQuiz = () => {
+    navigate({ to: '/creation/$id/edit', params: { id: creationId } })
   }
 
   // Smart Quiz mode - simpler preview
@@ -61,6 +112,10 @@ function QuestPreviewPage() {
               <ArrowLeft className="w-4 h-4" />
               Back
             </Button>
+            <Button variant="ghost" onClick={handleEditQuiz}>
+              <Eye className="w-4 h-4" />
+              Edit
+            </Button>
           </motion.div>
 
           {/* Quiz Info Card */}
@@ -75,12 +130,12 @@ function QuestPreviewPage() {
                   <GraduationCap className="w-8 h-8 text-primary" />
                 </div>
                 <CardTitle className="text-3xl md:text-4xl font-black bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">
-                  {currentQuest.title}
+                  {currentCreation.title}
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-center space-y-4">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary">
-                  <span className="font-bold">{currentQuest.quizzes.length}</span>
+                  <span className="font-bold">{currentCreation.quizzes.length}</span>
                   <span>Questions</span>
                 </div>
                 <p className="text-muted-foreground">
@@ -97,7 +152,7 @@ function QuestPreviewPage() {
             transition={{ delay: 0.2 }}
             className="flex justify-center"
           >
-            <Button size="lg" onClick={handleStartQuest} className="px-12">
+            <Button size="lg" onClick={handleStartQuiz} className="px-12">
               <Play className="w-5 h-5" />
               Start Quiz
             </Button>
@@ -135,10 +190,10 @@ function QuestPreviewPage() {
           className="text-center mb-12"
         >
           <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent mb-4">
-            {currentQuest.title}
+            {currentCreation.title}
           </h1>
           <p className="text-muted-foreground text-lg">
-            {currentQuest.stages.length} Stages to Master
+            {currentCreation.stages.length} Stages to Master
           </p>
         </motion.div>
 
@@ -167,7 +222,7 @@ function QuestPreviewPage() {
           transition={{ delay: 0.3 }}
           className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8"
         >
-          {currentQuest.stages.map((stage, index) => (
+          {currentCreation.stages.map((stage, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}

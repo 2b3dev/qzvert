@@ -1,8 +1,9 @@
 import { create } from 'zustand'
 import type { GeneratedQuest, ThemeConfig } from '../types/database'
 
-interface QuestState {
-  currentQuest: GeneratedQuest | null
+interface CreationState {
+  currentCreation: GeneratedQuest | null
+  currentCreationId: string | null
   currentStageIndex: number
   currentQuizIndex: number
   completedStages: Set<number>
@@ -13,7 +14,7 @@ interface QuestState {
   rawContent: string | null
 
   // Actions
-  setQuest: (quest: GeneratedQuest, rawContent?: string) => void
+  setCreation: (creation: GeneratedQuest, rawContent?: string, creationId?: string) => void
   setCurrentStage: (index: number) => void
   setCurrentQuiz: (index: number) => void
   completeStage: (stageIndex: number) => void
@@ -33,8 +34,9 @@ const defaultThemeConfig: ThemeConfig = {
   theme: 'adventure'
 }
 
-export const useQuestStore = create<QuestState>((set) => ({
-  currentQuest: null,
+export const useCreationStore = create<CreationState>((set) => ({
+  currentCreation: null,
+  currentCreationId: null,
   currentStageIndex: 0,
   currentQuizIndex: 0,
   completedStages: new Set(),
@@ -44,8 +46,9 @@ export const useQuestStore = create<QuestState>((set) => ({
   isPlaying: false,
   rawContent: null,
 
-  setQuest: (quest, rawContent) => set({
-    currentQuest: quest,
+  setCreation: (creation, rawContent, creationId) => set({
+    currentCreation: creation,
+    currentCreationId: creationId ?? null,
     currentStageIndex: 0,
     currentQuizIndex: 0,
     completedStages: new Set(),
@@ -75,7 +78,8 @@ export const useQuestStore = create<QuestState>((set) => ({
   stopPlaying: () => set({ isPlaying: false }),
 
   resetGame: () => set({
-    currentQuest: null,
+    currentCreation: null,
+    currentCreationId: null,
     currentStageIndex: 0,
     currentQuizIndex: 0,
     completedStages: new Set(),

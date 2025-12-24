@@ -5,8 +5,8 @@ import { Search, Compass, BookOpen, Clock, Users, ArrowRight, Sparkles, Loader2 
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card'
 import { Input } from '../components/ui/input'
-import { getPublishedQuests, getQuestById } from '../server/quests'
-import { useQuestStore } from '../stores/quest-store'
+import { getPublishedCreations, getCreationById } from '../server/creations'
+import { useCreationStore } from '../stores/creation-store'
 
 export const Route = createFileRoute('/explore')({
   component: ExplorePage
@@ -30,13 +30,13 @@ function ExplorePage() {
   const [error, setError] = useState<string | null>(null)
 
   const navigate = useNavigate()
-  const { setQuest, setThemeConfig } = useQuestStore()
+  const { setCreation, setThemeConfig } = useCreationStore()
 
   useEffect(() => {
     async function fetchQuests() {
       try {
         setLoading(true)
-        const data = await getPublishedQuests()
+        const data = await getPublishedCreations()
         setQuests(data || [])
       } catch (err) {
         console.error('Failed to fetch quests:', err)
@@ -55,10 +55,10 @@ function ExplorePage() {
   const handlePlayQuest = async (questId: string) => {
     try {
       setLoadingQuestId(questId)
-      const { generatedQuest, themeConfig } = await getQuestById({ questId })
-      setQuest(generatedQuest)
+      const { generatedQuest, themeConfig } = await getCreationById({ data: { creationId: questId } })
+      setCreation(generatedQuest, undefined, questId)
       setThemeConfig(themeConfig)
-      navigate({ to: '/quest/preview' })
+      navigate({ to: '/creation/$id/preview', params: { id: questId } })
     } catch (err) {
       console.error('Failed to load quest:', err)
       setError('Failed to load quest. Please try again.')

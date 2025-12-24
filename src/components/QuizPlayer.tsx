@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, Timer, CheckCircle, XCircle, ArrowRight, Trophy, Star, Send } from 'lucide-react'
-import { useQuestStore } from '../stores/quest-store'
+import { useCreationStore } from '../stores/creation-store'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
 import { Progress } from './ui/progress'
@@ -24,7 +24,7 @@ function isSubjectiveQuiz(quiz: GeneratedQuiz): quiz is GeneratedSubjectiveQuiz 
 function getQuizzesFromQuest(quest: GeneratedQuest | null, stageIndex: number): GeneratedQuiz[] {
   if (!quest) return []
 
-  if (quest.type === 'smart_quiz') {
+  if (quest.type === 'quiz') {
     // Smart Quiz: flat quizzes array
     return quest.quizzes
   } else {
@@ -35,7 +35,7 @@ function getQuizzesFromQuest(quest: GeneratedQuest | null, stageIndex: number): 
 
 export function QuizPlayer({ onStageComplete, onGameOver, onQuizComplete }: QuizPlayerProps) {
   const {
-    currentQuest,
+    currentCreation,
     currentStageIndex,
     currentQuizIndex,
     setCurrentQuiz,
@@ -44,7 +44,7 @@ export function QuizPlayer({ onStageComplete, onGameOver, onQuizComplete }: Quiz
     addScore,
     themeConfig,
     completeStage
-  } = useQuestStore()
+  } = useCreationStore()
 
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
   const [subjectiveAnswer, setSubjectiveAnswer] = useState('')
@@ -53,9 +53,9 @@ export function QuizPlayer({ onStageComplete, onGameOver, onQuizComplete }: Quiz
   const [timeLeft, setTimeLeft] = useState(themeConfig.timerSeconds)
   const [timedOut, setTimedOut] = useState(false)
 
-  // Handle both Smart Quiz and Quest Course formats
-  const isSmartQuizMode = currentQuest?.type === 'smart_quiz'
-  const quizzes = getQuizzesFromQuest(currentQuest, currentStageIndex)
+  // Handle both Quiz and Quest formats
+  const isSmartQuizMode = currentCreation?.type === 'quiz'
+  const quizzes = getQuizzesFromQuest(currentCreation, currentStageIndex)
   const quiz = quizzes[currentQuizIndex]
   const totalQuizzes = quizzes.length
   const progress = ((currentQuizIndex + 1) / totalQuizzes) * 100
@@ -104,7 +104,8 @@ export function QuizPlayer({ onStageComplete, onGameOver, onQuizComplete }: Quiz
     setIsCorrect(correct)
 
     if (correct) {
-      const basePoints = 100
+      // Use custom points if set, otherwise default to 100
+      const basePoints = quiz.points ?? 100
       // Time bonus based on percentage of time remaining
       const timeBonus = themeConfig.timerEnabled
         ? Math.floor((timeLeft / themeConfig.timerSeconds) * 50)
@@ -123,11 +124,11 @@ export function QuizPlayer({ onStageComplete, onGameOver, onQuizComplete }: Quiz
   }
 
   const handleSubjectiveSubmit = () => {
-    if (showResult || !subjectiveAnswer.trim()) return
+    if (showResult || !subjectiveAnswer.trim() || !quiz) return
 
     // For subjective questions, we always give points for submitting an answer
-    // In a real app, you might want to use AI to grade the answer
-    const basePoints = 50
+    // Use custom points if set, otherwise default to 50 for subjective
+    const basePoints = quiz.points ?? 50
     addScore(basePoints)
     setIsCorrect(true)
     setShowResult(true)

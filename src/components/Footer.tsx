@@ -1,0 +1,122 @@
+import IconApp from '@/components/icon/icon-app'
+import { Link } from '@tanstack/react-router'
+import { Github, Twitter, Mail, Heart } from 'lucide-react'
+
+export default function Footer() {
+  const currentYear = new Date().getFullYear()
+
+  const productLinks = [
+    { to: '/explore', label: 'Explore' },
+    { to: '/', hash: 'create', label: 'Create Quest' },
+    { to: '/pricing', label: 'Pricing' },
+  ]
+
+  const companyLinks = [
+    { to: '/about', label: 'About Us' },
+    { to: '/contact', label: 'Contact' },
+    { to: '/privacy', label: 'Privacy Policy' },
+  ]
+
+  const socialLinks = [
+    { href: 'https://github.com/qzvert', icon: Github, label: 'GitHub' },
+    { href: 'https://twitter.com/qzvert', icon: Twitter, label: 'Twitter' },
+    { href: 'mailto:hello@qzvert.com', icon: Mail, label: 'Email' },
+  ]
+
+  return (
+    <footer className="bg-muted/30 border-t border-border">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {/* Brand */}
+          <div className="md:col-span-1">
+            <Link to="/" className="flex items-center gap-2 group mb-4">
+              <IconApp className="w-6 h-6" color={'hsl(var(--foreground))'} />
+              <span className="font-black text-xl text-foreground">
+                QzVert
+              </span>
+            </Link>
+            <p className="text-sm text-muted-foreground mb-4">
+              Transform any content into gamified learning quests with AI.
+            </p>
+            <div className="flex items-center gap-3">
+              {socialLinks.map(({ href, icon: Icon, label }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                  aria-label={label}
+                >
+                  <Icon className="w-4 h-4" />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* Product Links */}
+          <div>
+            <h3 className="font-semibold text-foreground mb-4">Product</h3>
+            <ul className="space-y-3">
+              {productLinks.map(({ to, hash, label }) => (
+                <li key={label}>
+                  <Link
+                    to={to}
+                    hash={hash}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Company Links */}
+          <div>
+            <h3 className="font-semibold text-foreground mb-4">Company</h3>
+            <ul className="space-y-3">
+              {companyLinks.map(({ to, label }) => (
+                <li key={label}>
+                  <Link
+                    to={to}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Newsletter / CTA */}
+          <div>
+            <h3 className="font-semibold text-foreground mb-4">
+              Start Learning
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Turn boring content into exciting adventures.
+            </p>
+            <Link
+              to="/"
+              hash="create"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+            >
+              Create Free Quest
+            </Link>
+          </div>
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-muted-foreground">
+            &copy; {currentYear} QzVert. All rights reserved.
+          </p>
+          <p className="text-sm text-muted-foreground flex items-center gap-1">
+            Made with <Heart className="w-4 h-4 text-destructive fill-destructive" /> in Thailand
+          </p>
+        </div>
+      </div>
+    </footer>
+  )
+}

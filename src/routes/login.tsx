@@ -1,12 +1,13 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
-import { Mail, Lock, Loader2, Sparkles } from 'lucide-react'
+import { Mail, Lock, Loader2, Sparkles, Check } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '../stores/auth-store'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import IconApp from '@/components/icon/icon-app'
+import { cn } from '../lib/utils'
 
 export const Route = createFileRoute('/login')({
   component: LoginPage
@@ -20,6 +21,7 @@ function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -46,6 +48,10 @@ function LoginPage() {
       }
       if (password.length < 6) {
         setError('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร')
+        return
+      }
+      if (!acceptedPrivacy) {
+        setError('กรุณายอมรับนโยบายความเป็นส่วนตัว')
         return
       }
     }
@@ -201,6 +207,34 @@ function LoginPage() {
                       className="pl-10"
                     />
                   </div>
+                </div>
+              )}
+
+              {isSignUp && (
+                <div className="flex items-start gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setAcceptedPrivacy(!acceptedPrivacy)}
+                    className={cn(
+                      "w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors",
+                      acceptedPrivacy
+                        ? "bg-primary border-primary"
+                        : "border-muted-foreground/50 hover:border-primary"
+                    )}
+                  >
+                    {acceptedPrivacy && <Check className="w-3 h-3 text-white" />}
+                  </button>
+                  <label className="text-sm text-muted-foreground">
+                    ฉันยอมรับ{' '}
+                    <Link
+                      to="/privacy"
+                      className="text-primary hover:underline font-medium"
+                      target="_blank"
+                    >
+                      นโยบายความเป็นส่วนตัว
+                    </Link>{' '}
+                    และยินยอมให้เก็บรวบรวมข้อมูลตามที่ระบุ
+                  </label>
                 </div>
               )}
 

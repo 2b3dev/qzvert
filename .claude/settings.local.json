@@ -3,7 +3,9 @@
     "allow": [
       "Bash(dir:*)",
       "Bash(npx supabase --version)",
-      "Bash(bun run build:*)"
+      "Bash(bun run build:*)",
+      "Bash(bun add:*)",
+      "Bash(pnpm add:*)"
     ]
   }
 }

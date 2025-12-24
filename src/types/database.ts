@@ -1,7 +1,7 @@
 export interface Database {
   public: {
     Tables: {
-      quests: {
+      creations: {
         Row: {
           id: string
           created_at: string
@@ -11,6 +11,7 @@ export interface Database {
           theme_config: ThemeConfig
           is_published: boolean
           play_count: number
+          type: 'quiz' | 'quest' | 'flashcard' | 'roleplay'
         }
         Insert: {
           id?: string
@@ -21,6 +22,7 @@ export interface Database {
           theme_config?: ThemeConfig
           is_published?: boolean
           play_count?: number
+          type: 'quiz' | 'quest' | 'flashcard' | 'roleplay'
         }
         Update: {
           id?: string
@@ -31,32 +33,33 @@ export interface Database {
           theme_config?: ThemeConfig
           is_published?: boolean
           play_count?: number
+          type?: 'quiz' | 'quest' | 'flashcard'
         }
       }
       stages: {
         Row: {
           id: string
-          quest_id: string
+          creation_id: string
           title: string
           lesson_summary: string
           order_index: number
         }
         Insert: {
           id?: string
-          quest_id: string
+          creation_id: string
           title: string
           lesson_summary: string
           order_index: number
         }
         Update: {
           id?: string
-          quest_id?: string
+          creation_id?: string
           title?: string
           lesson_summary?: string
           order_index?: number
         }
       }
-      quizzes: {
+      questions: {
         Row: {
           id: string
           stage_id: string
@@ -85,17 +88,17 @@ export interface Database {
       embeddings: {
         Row: {
           id: string
-          quest_id: string
+          creation_id: string
           vector_data: number[]
         }
         Insert: {
           id?: string
-          quest_id: string
+          creation_id: string
           vector_data: number[]
         }
         Update: {
           id?: string
-          quest_id?: string
+          creation_id?: string
           vector_data?: number[]
         }
       }
@@ -111,7 +114,7 @@ export interface ThemeConfig {
   theme: 'adventure' | 'space' | 'fantasy' | 'science'
 }
 
-export interface Quest {
+export interface Creation {
   id: string
   created_at: string
   user_id: string | null
@@ -120,19 +123,20 @@ export interface Quest {
   theme_config: ThemeConfig
   is_published: boolean
   play_count: number
+  type: 'quiz' | 'quest' | 'flashcard' | 'roleplay'
   stages?: Stage[]
 }
 
 export interface Stage {
   id: string
-  quest_id: string
+  creation_id: string
   title: string
   lesson_summary: string
   order_index: number
-  quizzes?: Quiz[]
+  questions?: Question[]
 }
 
-export interface Quiz {
+export interface Question {
   id: string
   stage_id: string
   question: string
@@ -147,6 +151,7 @@ export interface GeneratedQuizBase {
   question: string
   explanation: string
   type?: QuizType
+  points?: number // Custom points for this question (default: 100)
 }
 
 export interface GeneratedMultipleChoiceQuiz extends GeneratedQuizBase {
@@ -162,19 +167,25 @@ export interface GeneratedSubjectiveQuiz extends GeneratedQuizBase {
 
 export type GeneratedQuiz = GeneratedMultipleChoiceQuiz | GeneratedSubjectiveQuiz
 
-// Smart Quiz format (flat quizzes, no stages)
+// Quiz format (flat quizzes, no stages)
 export interface GeneratedSmartQuiz {
   title: string
-  type: 'smart_quiz'
+  description?: string
+  thumbnail?: string
+  type: 'quiz'
   tags?: string[]
+  age_range?: string
   quizzes: GeneratedQuiz[]
 }
 
-// Quest Course format (stages + lessons + quizzes)
+// Quest format (stages + lessons + quizzes)
 export interface GeneratedQuestCourse {
   title: string
-  type: 'quest_course'
+  description?: string
+  thumbnail?: string
+  type: 'quest'
   tags?: string[]
+  age_range?: string
   stages: {
     title: string
     lesson: string
@@ -187,11 +198,11 @@ export type GeneratedQuest = GeneratedSmartQuiz | GeneratedQuestCourse
 
 // Type guard helpers
 export function isSmartQuiz(quest: GeneratedQuest): quest is GeneratedSmartQuiz {
-  return quest.type === 'smart_quiz'
+  return quest.type === 'quiz'
 }
 
 export function isQuestCourse(quest: GeneratedQuest): quest is GeneratedQuestCourse {
-  return quest.type === 'quest_course'
+  return quest.type === 'quest'
 }
 
 // Profile types

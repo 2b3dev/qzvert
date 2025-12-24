@@ -9,16 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as CreatorRouteImport } from './routes/creator'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as QuestPreviewRouteImport } from './routes/quest/preview'
-import { Route as QuestPlayRouteImport } from './routes/quest/play'
-import { Route as QuestEditRouteImport } from './routes/quest/edit'
+import { Route as CreationPlayRouteImport } from './routes/creation/play'
+import { Route as CreationNewRouteImport } from './routes/creation/new'
+import { Route as CreationIdPreviewRouteImport } from './routes/creation/$id.preview'
+import { Route as CreationIdEditRouteImport } from './routes/creation/$id.edit'
 
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
@@ -32,6 +40,11 @@ const LoginRoute = LoginRouteImport.update({
 const ExploreRoute = ExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CreatorRoute = CreatorRouteImport.update({
+  id: '/creator',
+  path: '/creator',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -49,19 +62,24 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const QuestPreviewRoute = QuestPreviewRouteImport.update({
-  id: '/quest/preview',
-  path: '/quest/preview',
+const CreationPlayRoute = CreationPlayRouteImport.update({
+  id: '/creation/play',
+  path: '/creation/play',
   getParentRoute: () => rootRouteImport,
 } as any)
-const QuestPlayRoute = QuestPlayRouteImport.update({
-  id: '/quest/play',
-  path: '/quest/play',
+const CreationNewRoute = CreationNewRouteImport.update({
+  id: '/creation/new',
+  path: '/creation/new',
   getParentRoute: () => rootRouteImport,
 } as any)
-const QuestEditRoute = QuestEditRouteImport.update({
-  id: '/quest/edit',
-  path: '/quest/edit',
+const CreationIdPreviewRoute = CreationIdPreviewRouteImport.update({
+  id: '/creation/$id/preview',
+  path: '/creation/$id/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CreationIdEditRoute = CreationIdEditRouteImport.update({
+  id: '/creation/$id/edit',
+  path: '/creation/$id/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -69,35 +87,44 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
+  '/creator': typeof CreatorRoute
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
-  '/quest/edit': typeof QuestEditRoute
-  '/quest/play': typeof QuestPlayRoute
-  '/quest/preview': typeof QuestPreviewRoute
+  '/privacy': typeof PrivacyRoute
+  '/creation/new': typeof CreationNewRoute
+  '/creation/play': typeof CreationPlayRoute
+  '/creation/$id/edit': typeof CreationIdEditRoute
+  '/creation/$id/preview': typeof CreationIdPreviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
+  '/creator': typeof CreatorRoute
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
-  '/quest/edit': typeof QuestEditRoute
-  '/quest/play': typeof QuestPlayRoute
-  '/quest/preview': typeof QuestPreviewRoute
+  '/privacy': typeof PrivacyRoute
+  '/creation/new': typeof CreationNewRoute
+  '/creation/play': typeof CreationPlayRoute
+  '/creation/$id/edit': typeof CreationIdEditRoute
+  '/creation/$id/preview': typeof CreationIdPreviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
+  '/creator': typeof CreatorRoute
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
-  '/quest/edit': typeof QuestEditRoute
-  '/quest/play': typeof QuestPlayRoute
-  '/quest/preview': typeof QuestPreviewRoute
+  '/privacy': typeof PrivacyRoute
+  '/creation/new': typeof CreationNewRoute
+  '/creation/play': typeof CreationPlayRoute
+  '/creation/$id/edit': typeof CreationIdEditRoute
+  '/creation/$id/preview': typeof CreationIdPreviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -105,50 +132,69 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/contact'
+    | '/creator'
     | '/explore'
     | '/login'
     | '/pricing'
-    | '/quest/edit'
-    | '/quest/play'
-    | '/quest/preview'
+    | '/privacy'
+    | '/creation/new'
+    | '/creation/play'
+    | '/creation/$id/edit'
+    | '/creation/$id/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/contact'
+    | '/creator'
     | '/explore'
     | '/login'
     | '/pricing'
-    | '/quest/edit'
-    | '/quest/play'
-    | '/quest/preview'
+    | '/privacy'
+    | '/creation/new'
+    | '/creation/play'
+    | '/creation/$id/edit'
+    | '/creation/$id/preview'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/contact'
+    | '/creator'
     | '/explore'
     | '/login'
     | '/pricing'
-    | '/quest/edit'
-    | '/quest/play'
-    | '/quest/preview'
+    | '/privacy'
+    | '/creation/new'
+    | '/creation/play'
+    | '/creation/$id/edit'
+    | '/creation/$id/preview'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   ContactRoute: typeof ContactRoute
+  CreatorRoute: typeof CreatorRoute
   ExploreRoute: typeof ExploreRoute
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
-  QuestEditRoute: typeof QuestEditRoute
-  QuestPlayRoute: typeof QuestPlayRoute
-  QuestPreviewRoute: typeof QuestPreviewRoute
+  PrivacyRoute: typeof PrivacyRoute
+  CreationNewRoute: typeof CreationNewRoute
+  CreationPlayRoute: typeof CreationPlayRoute
+  CreationIdEditRoute: typeof CreationIdEditRoute
+  CreationIdPreviewRoute: typeof CreationIdPreviewRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pricing': {
       id: '/pricing'
       path: '/pricing'
@@ -168,6 +214,13 @@ declare module '@tanstack/react-router' {
       path: '/explore'
       fullPath: '/explore'
       preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/creator': {
+      id: '/creator'
+      path: '/creator'
+      fullPath: '/creator'
+      preLoaderRoute: typeof CreatorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -191,25 +244,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/quest/preview': {
-      id: '/quest/preview'
-      path: '/quest/preview'
-      fullPath: '/quest/preview'
-      preLoaderRoute: typeof QuestPreviewRouteImport
+    '/creation/play': {
+      id: '/creation/play'
+      path: '/creation/play'
+      fullPath: '/creation/play'
+      preLoaderRoute: typeof CreationPlayRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/quest/play': {
-      id: '/quest/play'
-      path: '/quest/play'
-      fullPath: '/quest/play'
-      preLoaderRoute: typeof QuestPlayRouteImport
+    '/creation/new': {
+      id: '/creation/new'
+      path: '/creation/new'
+      fullPath: '/creation/new'
+      preLoaderRoute: typeof CreationNewRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/quest/edit': {
-      id: '/quest/edit'
-      path: '/quest/edit'
-      fullPath: '/quest/edit'
-      preLoaderRoute: typeof QuestEditRouteImport
+    '/creation/$id/preview': {
+      id: '/creation/$id/preview'
+      path: '/creation/$id/preview'
+      fullPath: '/creation/$id/preview'
+      preLoaderRoute: typeof CreationIdPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/creation/$id/edit': {
+      id: '/creation/$id/edit'
+      path: '/creation/$id/edit'
+      fullPath: '/creation/$id/edit'
+      preLoaderRoute: typeof CreationIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -219,12 +279,15 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   ContactRoute: ContactRoute,
+  CreatorRoute: CreatorRoute,
   ExploreRoute: ExploreRoute,
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
-  QuestEditRoute: QuestEditRoute,
-  QuestPlayRoute: QuestPlayRoute,
-  QuestPreviewRoute: QuestPreviewRoute,
+  PrivacyRoute: PrivacyRoute,
+  CreationNewRoute: CreationNewRoute,
+  CreationPlayRoute: CreationPlayRoute,
+  CreationIdEditRoute: CreationIdEditRoute,
+  CreationIdPreviewRoute: CreationIdPreviewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

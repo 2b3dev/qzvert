@@ -1,61 +1,81 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
+  AlertCircle,
   ArrowLeft,
   Check,
   ChevronDown,
   ChevronUp,
-  GripVertical,
+  FileText,
+  ImageIcon,
+  Loader2,
   Plus,
   Save,
+  Star,
+  Tag,
   Trash2,
   X,
-  AlertCircle,
-  Loader2,
-  Tag
 } from 'lucide-react'
-import { useQuestStore } from '../../stores/quest-store'
-import { useAuthStore } from '../../stores/auth-store'
-import { saveQuest } from '../../server/quests'
+import { useState } from 'react'
+import { toast } from 'sonner'
 import { Button } from '../../components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '../../components/ui/card'
+import { ImageInput } from '../../components/ui/image-input'
 import { Input, Textarea } from '../../components/ui/input'
+import { RichTextEditor } from '../../components/ui/rich-text-editor'
 import { cn } from '../../lib/utils'
-import type { GeneratedQuiz, GeneratedMultipleChoiceQuiz, GeneratedSubjectiveQuiz } from '../../types/database'
+import { saveQuest } from '../../server/creations'
+import { useAuthStore } from '../../stores/auth-store'
+import { useCreationStore } from '../../stores/creation-store'
+import type {
+  GeneratedMultipleChoiceQuiz,
+  GeneratedQuiz,
+  GeneratedSubjectiveQuiz,
+} from '../../types/database'
 
-export const Route = createFileRoute('/quest/edit')({
-  component: QuestEditPage
+export const Route = createFileRoute('/creation/new')({
+  component: CreationNewPage,
 })
 
-function QuestEditPage() {
+function CreationNewPage() {
   const navigate = useNavigate()
-  const { currentQuest, setQuest, themeConfig, rawContent } = useQuestStore()
+  const { currentCreation, setCreation, themeConfig, setThemeConfig, rawContent } =
+    useCreationStore()
   const { session } = useAuthStore()
   const [isSaving, setIsSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [expandedQuiz, setExpandedQuiz] = useState<number | null>(0)
 
   // Local state for editing
-  const [title, setTitle] = useState(currentQuest?.title || '')
-  const [tags, setTags] = useState<string[]>(currentQuest?.tags || [])
+  const [title, setTitle] = useState(currentCreation?.title || '')
+  const [description, setDescription] = useState(
+    currentCreation?.description || '',
+  )
+  const [thumbnail, setThumbnail] = useState(currentCreation?.thumbnail || '')
+  const [tags, setTags] = useState<Array<string>>(currentCreation?.tags || [])
   const [tagInput, setTagInput] = useState('')
-  const [quizzes, setQuizzes] = useState<GeneratedQuiz[]>(() => {
-    if (!currentQuest) return []
-    if (currentQuest.type === 'smart_quiz') {
-      return [...currentQuest.quizzes]
+  const [quizzes, setQuizzes] = useState<Array<GeneratedQuiz>>(() => {
+    if (!currentCreation) return []
+    if (currentCreation.type === 'quiz') {
+      return [...currentCreation.quizzes]
     }
-    // For quest_course, flatten all quizzes (for now, focus on smart_quiz)
-    return currentQuest.stages.flatMap(stage => stage.quizzes)
+    // For quest, flatten all quizzes (for now, focus on quiz)
+    return currentCreation.stages.flatMap((stage) => stage.quizzes)
   })
 
-  if (!currentQuest) {
+  if (!currentCreation) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-foreground mb-2">No Quiz to Edit</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-2">
+              No Quiz to Edit
+            </h2>
             <p className="text-muted-foreground mb-6">Generate a quiz first</p>
             <Button onClick={() => navigate({ to: '/' })}>
               <ArrowLeft className="w-4 h-4" />
@@ -67,18 +87,18 @@ function QuestEditPage() {
     )
   }
 
-  const isSmartQuiz = currentQuest.type === 'smart_quiz'
+  const isSmartQuiz = currentCreation.type === 'quiz'
 
   const addTag = (tag: string) => {
     const trimmed = tag.trim().toLowerCase()
     if (trimmed && !tags.includes(trimmed)) {
-      setTags(prev => [...prev, trimmed])
+      setTags((prev) => [...prev, trimmed])
     }
     setTagInput('')
   }
 
   const removeTag = (tagToRemove: string) => {
-    setTags(prev => prev.filter(t => t !== tagToRemove))
+    setTags((prev) => prev.filter((t) => t !== tagToRemove))
   }
 
   const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -91,45 +111,59 @@ function QuestEditPage() {
   }
 
   const updateQuiz = (index: number, updates: Partial<GeneratedQuiz>) => {
-    setQuizzes(prev => prev.map((q, i) => i === index ? { ...q, ...updates } : q))
+    setQuizzes((prev) =>
+      prev.map((q, i) => (i === index ? { ...q, ...updates } : q)),
+    )
   }
 
-  const updateOption = (quizIndex: number, optionIndex: number, value: string) => {
-    setQuizzes(prev => prev.map((q, i) => {
-      if (i !== quizIndex || q.type !== 'multiple_choice') return q
-      const newOptions = [...q.options]
-      newOptions[optionIndex] = value
-      return { ...q, options: newOptions }
-    }))
+  const updateOption = (
+    quizIndex: number,
+    optionIndex: number,
+    value: string,
+  ) => {
+    setQuizzes((prev) =>
+      prev.map((q, i) => {
+        if (i !== quizIndex || q.type !== 'multiple_choice') return q
+        const newOptions = [...q.options]
+        newOptions[optionIndex] = value
+        return { ...q, options: newOptions }
+      }),
+    )
   }
 
   const addOption = (quizIndex: number) => {
-    setQuizzes(prev => prev.map((q, i) => {
-      if (i !== quizIndex || q.type !== 'multiple_choice') return q
-      return { ...q, options: [...q.options, ''] }
-    }))
+    setQuizzes((prev) =>
+      prev.map((q, i) => {
+        if (i !== quizIndex || q.type !== 'multiple_choice') return q
+        return { ...q, options: [...q.options, ''] }
+      }),
+    )
   }
 
   const removeOption = (quizIndex: number, optionIndex: number) => {
-    setQuizzes(prev => prev.map((q, i) => {
-      if (i !== quizIndex || q.type !== 'multiple_choice') return q
-      const newOptions = q.options.filter((_, oi) => oi !== optionIndex)
-      // Adjust correct_answer if needed
-      let newCorrectAnswer = q.correct_answer
-      if (optionIndex === q.correct_answer) {
-        newCorrectAnswer = 0
-      } else if (optionIndex < q.correct_answer) {
-        newCorrectAnswer = q.correct_answer - 1
-      }
-      return { ...q, options: newOptions, correct_answer: newCorrectAnswer }
-    }))
+    setQuizzes((prev) =>
+      prev.map((q, i) => {
+        if (i !== quizIndex || q.type !== 'multiple_choice') return q
+        const newOptions = q.options.filter((_, oi) => oi !== optionIndex)
+        // Adjust correct_answer if needed
+        let newCorrectAnswer = q.correct_answer
+        if (optionIndex === q.correct_answer) {
+          newCorrectAnswer = 0
+        } else if (optionIndex < q.correct_answer) {
+          newCorrectAnswer = q.correct_answer - 1
+        }
+        return { ...q, options: newOptions, correct_answer: newCorrectAnswer }
+      }),
+    )
   }
 
   const setCorrectAnswer = (quizIndex: number, optionIndex: number) => {
-    setQuizzes(prev => prev.map((q, i) => {
-      if (i !== quizIndex || q.type !== 'multiple_choice') return q
-      return { ...q, correct_answer: optionIndex }
-    }))
+    setQuizzes((prev) =>
+      prev.map((q, i) => {
+        if (i !== quizIndex || q.type !== 'multiple_choice') return q
+        return { ...q, correct_answer: optionIndex }
+      }),
+    )
   }
 
   const addQuiz = () => {
@@ -138,15 +172,15 @@ function QuestEditPage() {
       question: '',
       options: ['', '', '', ''],
       correct_answer: 0,
-      explanation: ''
+      explanation: '',
     }
-    setQuizzes(prev => [...prev, newQuiz])
+    setQuizzes((prev) => [...prev, newQuiz])
     setExpandedQuiz(quizzes.length)
   }
 
   const removeQuiz = (index: number) => {
     if (quizzes.length <= 1) return
-    setQuizzes(prev => prev.filter((_, i) => i !== index))
+    setQuizzes((prev) => prev.filter((_, i) => i !== index))
     if (expandedQuiz === index) {
       setExpandedQuiz(null)
     } else if (expandedQuiz !== null && expandedQuiz > index) {
@@ -158,7 +192,7 @@ function QuestEditPage() {
     const newIndex = direction === 'up' ? index - 1 : index + 1
     if (newIndex < 0 || newIndex >= quizzes.length) return
 
-    setQuizzes(prev => {
+    setQuizzes((prev) => {
       const newQuizzes = [...prev]
       const temp = newQuizzes[index]
       newQuizzes[index] = newQuizzes[newIndex]
@@ -177,10 +211,15 @@ function QuestEditPage() {
       if (!quiz.question.trim()) return `Question ${i + 1} is empty`
 
       if (quiz.type === 'multiple_choice') {
-        if (quiz.options.length < 2) return `Question ${i + 1} needs at least 2 options`
-        const emptyOptions = quiz.options.filter(o => !o.trim())
-        if (emptyOptions.length > 0) return `Question ${i + 1} has empty options`
-        if (quiz.correct_answer < 0 || quiz.correct_answer >= quiz.options.length) {
+        if (quiz.options.length < 2)
+          return `Question ${i + 1} needs at least 2 options`
+        const emptyOptions = quiz.options.filter((o) => !o.trim())
+        if (emptyOptions.length > 0)
+          return `Question ${i + 1} has empty options`
+        if (
+          quiz.correct_answer < 0 ||
+          quiz.correct_answer >= quiz.options.length
+        ) {
           return `Question ${i + 1} has invalid correct answer`
         }
       }
@@ -191,34 +230,40 @@ function QuestEditPage() {
   const handleSave = async () => {
     const validationError = validateQuizzes()
     if (validationError) {
-      setError(validationError)
+      toast.error(validationError)
+      return
+    }
+
+    if (!session?.access_token) {
+      toast.error('Please login to save')
+      navigate({ to: '/login' })
       return
     }
 
     setIsSaving(true)
-    setError(null)
 
     try {
       // Update the quest with edited data
       const updatedQuest = isSmartQuiz
-        ? { ...currentQuest, title, tags, quizzes }
-        : { ...currentQuest, title, tags } // Include tags for quest_course too
+        ? { ...currentCreation, title, description, thumbnail, tags, quizzes }
+        : { ...currentCreation, title, description, thumbnail, tags }
 
-      setQuest(updatedQuest)
+      setCreation(updatedQuest)
 
       // Save to database
-      await saveQuest({
+      const result = await saveQuest({
         data: {
           quest: updatedQuest,
           rawContent: rawContent || '',
           themeConfig,
-          accessToken: session!.access_token
-        }
+          accessToken: session.access_token,
+        },
       })
 
-      navigate({ to: '/quest/preview' })
+      toast.success('Saved successfully!')
+      navigate({ to: '/creation/$id/preview', params: { id: result.creationId } })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save quiz')
+      toast.error(err instanceof Error ? err.message : 'Failed to save')
     } finally {
       setIsSaving(false)
     }
@@ -241,7 +286,7 @@ function QuestEditPage() {
             <X className="w-4 h-4" />
             Discard
           </Button>
-          <h1 className="text-xl font-bold text-foreground">Edit Quiz</h1>
+          <h1 className="text-xl font-bold text-foreground">Review & Save</h1>
           <Button onClick={handleSave} disabled={isSaving}>
             {isSaving ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -251,21 +296,6 @@ function QuestEditPage() {
             Save & Continue
           </Button>
         </motion.div>
-
-        {/* Error Message */}
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="mb-6 p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive flex items-center gap-2"
-            >
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
-              {error}
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Quiz Title */}
         <motion.div
@@ -283,6 +313,41 @@ function QuestEditPage() {
             placeholder="Enter quiz title..."
             className="text-lg font-semibold"
           />
+        </motion.div>
+
+        {/* Description & Thumbnail */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
+          className="mb-6 grid grid-cols-1 md:grid-cols-[1fr,280px] gap-6"
+        >
+          {/* Thumbnail & Description */}
+          <div className="flex gap-4">
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                <ImageIcon className="w-4 h-4 inline-block mr-1" />
+                Thumbnail
+              </label>
+              <ImageInput
+                value={thumbnail}
+                onChange={setThumbnail}
+                placeholder="Add a thumbnail image"
+                aspectRatio="video"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                <FileText className="w-4 h-4 inline-block mr-1" />
+                Description
+              </label>
+              <RichTextEditor
+                value={description}
+                onChange={setDescription}
+                placeholder="Add a description for your quiz..."
+              />
+            </div>
+          </div>
         </motion.div>
 
         {/* Tags */}
@@ -321,7 +386,9 @@ function QuestEditPage() {
               onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={handleTagKeyDown}
               onBlur={() => tagInput && addTag(tagInput)}
-              placeholder={tags.length === 0 ? "Add tags (press Enter or comma)" : ""}
+              placeholder={
+                tags.length === 0 ? 'Add tags (press Enter or comma)' : ''
+              }
               className="flex-1 min-w-[120px] bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground"
             />
           </div>
@@ -355,25 +422,35 @@ function QuestEditPage() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
             >
-              <Card className={cn(
-                "transition-all duration-200",
-                expandedQuiz === index ? "ring-2 ring-primary" : ""
-              )}>
+              <Card
+                className={cn(
+                  'transition-all duration-200',
+                  expandedQuiz === index ? 'ring-2 ring-primary' : '',
+                )}
+              >
                 <CardHeader
                   className="cursor-pointer"
-                  onClick={() => setExpandedQuiz(expandedQuiz === index ? null : index)}
+                  onClick={() =>
+                    setExpandedQuiz(expandedQuiz === index ? null : index)
+                  }
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex flex-col gap-1">
                       <button
-                        onClick={(e) => { e.stopPropagation(); moveQuiz(index, 'up') }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          moveQuiz(index, 'up')
+                        }}
                         disabled={index === 0}
                         className="p-0.5 hover:bg-muted rounded disabled:opacity-30"
                       >
                         <ChevronUp className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={(e) => { e.stopPropagation(); moveQuiz(index, 'down') }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          moveQuiz(index, 'down')
+                        }}
                         disabled={index === quizzes.length - 1}
                         className="p-0.5 hover:bg-muted rounded disabled:opacity-30"
                       >
@@ -391,20 +468,26 @@ function QuestEditPage() {
                         {quiz.type === 'multiple_choice'
                           ? `${quiz.options.length} options`
                           : 'Subjective'}
+                        {quiz.points && ` • ${quiz.points} pts`}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={(e) => { e.stopPropagation(); removeQuiz(index) }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          removeQuiz(index)
+                        }}
                         disabled={quizzes.length <= 1}
                         className="p-2 hover:bg-destructive/10 rounded-lg text-destructive disabled:opacity-30"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
-                      <ChevronDown className={cn(
-                        "w-5 h-5 text-muted-foreground transition-transform",
-                        expandedQuiz === index ? "rotate-180" : ""
-                      )} />
+                      <ChevronDown
+                        className={cn(
+                          'w-5 h-5 text-muted-foreground transition-transform',
+                          expandedQuiz === index ? 'rotate-180' : '',
+                        )}
+                      />
                     </div>
                   </div>
                 </CardHeader>
@@ -425,7 +508,9 @@ function QuestEditPage() {
                           </label>
                           <Textarea
                             value={quiz.question}
-                            onChange={(e) => updateQuiz(index, { question: e.target.value })}
+                            onChange={(e) =>
+                              updateQuiz(index, { question: e.target.value })
+                            }
                             placeholder="Enter your question..."
                             className="min-h-[80px]"
                           />
@@ -439,15 +524,20 @@ function QuestEditPage() {
                             </label>
                             <div className="space-y-2">
                               {quiz.options.map((option, optIndex) => (
-                                <div key={optIndex} className="flex items-center gap-2">
+                                <div
+                                  key={optIndex}
+                                  className="flex items-center gap-2"
+                                >
                                   <button
                                     type="button"
-                                    onClick={() => setCorrectAnswer(index, optIndex)}
+                                    onClick={() =>
+                                      setCorrectAnswer(index, optIndex)
+                                    }
                                     className={cn(
-                                      "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 transition-all",
+                                      'w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 transition-all',
                                       quiz.correct_answer === optIndex
-                                        ? "bg-emerald-500 text-white"
-                                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                        ? 'bg-emerald-500 text-white'
+                                        : 'bg-muted text-muted-foreground hover:bg-muted/80',
                                     )}
                                   >
                                     {quiz.correct_answer === optIndex ? (
@@ -458,15 +548,24 @@ function QuestEditPage() {
                                   </button>
                                   <Input
                                     value={option}
-                                    onChange={(e) => updateOption(index, optIndex, e.target.value)}
+                                    onChange={(e) =>
+                                      updateOption(
+                                        index,
+                                        optIndex,
+                                        e.target.value,
+                                      )
+                                    }
                                     placeholder={`Option ${optIndex + 1}`}
                                     className={cn(
-                                      "flex-1",
-                                      quiz.correct_answer === optIndex && "border-emerald-500"
+                                      'flex-1',
+                                      quiz.correct_answer === optIndex &&
+                                        'border-emerald-500',
                                     )}
                                   />
                                   <button
-                                    onClick={() => removeOption(index, optIndex)}
+                                    onClick={() =>
+                                      removeOption(index, optIndex)
+                                    }
                                     disabled={quiz.options.length <= 2}
                                     className="p-2 hover:bg-destructive/10 rounded-lg text-destructive disabled:opacity-30"
                                   >
@@ -494,8 +593,12 @@ function QuestEditPage() {
                               Model Answer
                             </label>
                             <Textarea
-                              value={(quiz as GeneratedSubjectiveQuiz).model_answer}
-                              onChange={(e) => updateQuiz(index, { model_answer: e.target.value } as Partial<GeneratedSubjectiveQuiz>)}
+                              value={quiz.model_answer}
+                              onChange={(e) =>
+                                updateQuiz(index, {
+                                  model_answer: e.target.value,
+                                } as Partial<GeneratedSubjectiveQuiz>)
+                              }
                               placeholder="Enter the model answer..."
                               className="min-h-[100px]"
                             />
@@ -509,10 +612,39 @@ function QuestEditPage() {
                           </label>
                           <Textarea
                             value={quiz.explanation}
-                            onChange={(e) => updateQuiz(index, { explanation: e.target.value })}
+                            onChange={(e) =>
+                              updateQuiz(index, { explanation: e.target.value })
+                            }
                             placeholder="Explain why the answer is correct..."
                             className="min-h-[80px]"
                           />
+                        </div>
+
+                        {/* Points */}
+                        <div>
+                          <label className="text-sm font-medium text-foreground mb-2 block">
+                            <Star className="w-4 h-4 inline-block mr-1" />
+                            Points
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              min={1}
+                              value={quiz.points ?? ''}
+                              onChange={(e) => {
+                                const value =
+                                  e.target.value === ''
+                                    ? undefined
+                                    : parseInt(e.target.value, 10)
+                                updateQuiz(index, { points: value })
+                              }}
+                              placeholder="100"
+                              className="w-32"
+                            />
+                            <span className="text-sm text-muted-foreground">
+                              (default: 100)
+                            </span>
+                          </div>
                         </div>
                       </CardContent>
                     </motion.div>
