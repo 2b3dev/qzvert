@@ -16,7 +16,8 @@
       "Bash(supabase db pull --help:*)",
       "Bash(supabase init:*)",
       "Bash(supabase migration:*)",
-      "Bash(supabase db pull:*)"
+      "Bash(supabase db pull:*)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\derle\\\\Documents\\\\bucket\\\\qzvert\\\\supabase\" -Recurse -Name)"
     ]
   }
 }

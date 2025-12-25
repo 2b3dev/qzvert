@@ -1,9 +1,17 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { ImagePlus, Link as LinkIcon, Upload, X } from 'lucide-react'
+import {
+  ImagePlus,
+  Link as LinkIcon,
+  Loader2,
+  Upload,
+  X,
+} from 'lucide-react'
 import { useRef, useState } from 'react'
 import { cn } from '../../lib/utils'
+import { deleteImage, uploadImage } from '../../server/storage'
+import { useAuthStore } from '../../stores/auth-store'
 import { Button } from './button'
 
 export interface ImageInputProps {
@@ -12,6 +20,7 @@ export interface ImageInputProps {
   placeholder?: string
   className?: string
   aspectRatio?: 'square' | 'video' | 'wide'
+  allowExternalUrl?: boolean
 }
 
 export function ImageInput({
@@ -20,12 +29,15 @@ export function ImageInput({
   placeholder = 'Add an image',
   className,
   aspectRatio = 'video',
+  allowExternalUrl = false,
 }: ImageInputProps) {
   const [isUrlMode, setIsUrlMode] = useState(false)
   const [urlInput, setUrlInput] = useState('')
   const [isDragging, setIsDragging] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { session } = useAuthStore()
 
   const aspectRatioClass = {
     square: 'aspect-square',
@@ -40,7 +52,7 @@ export function ImageInput({
     }
   }
 
-  const handleFile = (file: File) => {
+  const handleFile = async (file: File) => {
     setError(null)
 
     // Validate file type
@@ -55,16 +67,46 @@ export function ImageInput({
       return
     }
 
-    // Convert to base64
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const result = e.target?.result as string
-      onChange(result)
+    // Check if user is authenticated
+    if (!session?.access_token) {
+      // Fallback to base64 if not authenticated
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const result = e.target?.result as string
+        onChange(result)
+      }
+      reader.onerror = () => {
+        setError('Failed to read file')
+      }
+      reader.readAsDataURL(file)
+      return
     }
-    reader.onerror = () => {
-      setError('Failed to read file')
+
+    // Upload to Supabase Storage
+    setIsUploading(true)
+    try {
+      // Convert file to base64 first
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = (e) => resolve(e.target?.result as string)
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+
+      const result = await uploadImage({
+        data: {
+          base64Data: base64,
+          fileName: file.name,
+          accessToken: session.access_token,
+        },
+      })
+
+      onChange(result.url)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload image')
+    } finally {
+      setIsUploading(false)
     }
-    reader.readAsDataURL(file)
   }
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -102,7 +144,21 @@ export function ImageInput({
     }
   }
 
-  const handleRemove = () => {
+  const handleRemove = async () => {
+    // If it's a storage URL, delete from storage
+    if (value.includes('/storage/v1/object/public/') && session?.access_token) {
+      try {
+        await deleteImage({
+          data: {
+            imageUrl: value,
+            accessToken: session.access_token,
+          },
+        })
+      } catch {
+        // Ignore delete errors, still remove from UI
+      }
+    }
+
     onChange('')
     setError(null)
   }
@@ -195,41 +251,53 @@ export function ImageInput({
               isDragging
                 ? 'border-primary bg-primary/10'
                 : 'border-border bg-secondary/30 hover:border-muted-foreground',
+              isUploading && 'pointer-events-none opacity-70',
             )}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4">
-              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                <ImagePlus className="w-6 h-6 text-muted-foreground" />
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-medium text-foreground">
-                  {placeholder}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Drag and drop or click to upload
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Upload className="w-4 h-4" />
-                  Upload
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsUrlMode(true)}
-                >
-                  <LinkIcon className="w-4 h-4" />
-                  URL
-                </Button>
-              </div>
+              {isUploading ? (
+                <>
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">Uploading...</p>
+                </>
+              ) : (
+                <>
+                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                    <ImagePlus className="w-6 h-6 text-muted-foreground" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-foreground">
+                      {placeholder}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Drag and drop or click to upload
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="w-4 h-4" />
+                      Upload
+                    </Button>
+                    {allowExternalUrl && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsUrlMode(true)}
+                      >
+                        <LinkIcon className="w-4 h-4" />
+                        URL
+                      </Button>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </motion.div>
         )}

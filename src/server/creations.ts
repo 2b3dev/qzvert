@@ -61,6 +61,9 @@ export const saveQuest = createServerFn({ method: 'POST' })
       .insert({
         user_id: user.id,
         title: data.quest.title,
+        description: data.quest.description || null,
+        thumbnail: data.quest.thumbnail || null,
+        tags: data.quest.tags || null,
         raw_content: data.rawContent,
         theme_config: data.themeConfig as unknown as Database['public']['Tables']['creations']['Insert']['theme_config'],
         is_published: false,
@@ -251,6 +254,9 @@ export const getCreationById = createServerFn({ method: 'GET' })
       ? {
           type: 'quiz' as const,
           title: creation.title,
+          description: creation.description || undefined,
+          thumbnail: creation.thumbnail || undefined,
+          tags: creation.tags || undefined,
           quizzes: questions.map(q => ({
             type: 'multiple_choice' as const,
             question: q.question,
@@ -262,6 +268,9 @@ export const getCreationById = createServerFn({ method: 'GET' })
       : {
           type: 'quest' as const,
           title: creation.title,
+          description: creation.description || undefined,
+          thumbnail: creation.thumbnail || undefined,
+          tags: creation.tags || undefined,
           stages: (stages || []).map(stage => ({
             title: stage.title,
             lesson: stage.lesson_summary,
@@ -341,6 +350,9 @@ export const getCreationByIdForEdit = createServerFn({ method: 'GET' })
       ? {
           type: 'quiz' as const,
           title: creation.title,
+          description: creation.description || undefined,
+          thumbnail: creation.thumbnail || undefined,
+          tags: creation.tags || undefined,
           quizzes: questions.map(q => ({
             type: 'multiple_choice' as const,
             question: q.question,
@@ -352,6 +364,9 @@ export const getCreationByIdForEdit = createServerFn({ method: 'GET' })
       : {
           type: 'quest' as const,
           title: creation.title,
+          description: creation.description || undefined,
+          thumbnail: creation.thumbnail || undefined,
+          tags: creation.tags || undefined,
           stages: (stages || []).map(stage => ({
             title: stage.title,
             lesson: stage.lesson_summary,
@@ -418,6 +433,142 @@ export const incrementPlayCount = createServerFn({ method: 'POST' })
 
     if (error) {
       throw new Error(`Failed to increment play count: ${error.message}`)
+    }
+
+    return { success: true }
+  })
+
+interface UpdateQuestInput {
+  creationId: string
+  quest: GeneratedQuest
+  rawContent: string
+  themeConfig: ThemeConfig
+  accessToken: string
+}
+
+export const updateQuest = createServerFn({ method: 'POST' })
+  .inputValidator((data: UpdateQuestInput) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    const supabase = getSupabaseWithAuth(data.accessToken)
+
+    // Verify user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      throw new Error('Authentication failed')
+    }
+
+    // 1. Update the creation metadata
+    const { error: updateError } = await supabase
+      .from('creations')
+      .update({
+        title: data.quest.title,
+        description: data.quest.description || null,
+        thumbnail: data.quest.thumbnail || null,
+        tags: data.quest.tags || null,
+        raw_content: data.rawContent,
+        theme_config: data.themeConfig as unknown as Database['public']['Tables']['creations']['Update']['theme_config'],
+      })
+      .eq('id', data.creationId)
+
+    if (updateError) {
+      throw new Error(`Failed to update creation: ${updateError.message}`)
+    }
+
+    // 2. Delete existing stages and questions (they will be recreated)
+    const { data: existingStages } = await supabase
+      .from('stages')
+      .select('id')
+      .eq('creation_id', data.creationId)
+
+    if (existingStages && existingStages.length > 0) {
+      const stageIds = existingStages.map(s => s.id)
+
+      // Delete questions first (foreign key constraint)
+      await supabase
+        .from('questions')
+        .delete()
+        .in('stage_id', stageIds)
+
+      // Delete stages
+      await supabase
+        .from('stages')
+        .delete()
+        .eq('creation_id', data.creationId)
+    }
+
+    // 3. Recreate stages and questions
+    if (data.quest.type === 'quiz') {
+      // Smart Quiz: Create a single stage to hold all questions
+      const { data: stageData, error: stageError } = await supabase
+        .from('stages')
+        .insert({
+          creation_id: data.creationId,
+          title: data.quest.title,
+          lesson_summary: '',
+          order_index: 0
+        })
+        .select('id')
+        .single()
+
+      if (stageError || !stageData) {
+        throw new Error(`Failed to save stage: ${stageError?.message}`)
+      }
+
+      // Insert questions for this stage
+      const questionInserts = data.quest.quizzes.map((quiz, quizIndex) => ({
+        stage_id: stageData.id,
+        question: quiz.question,
+        options: quiz.type === 'multiple_choice' ? quiz.options : [],
+        correct_answer: quiz.type === 'multiple_choice' ? quiz.correct_answer : 0,
+        explanation: quiz.explanation,
+        order_index: quizIndex
+      }))
+
+      const { error: questionError } = await supabase
+        .from('questions')
+        .insert(questionInserts)
+
+      if (questionError) {
+        throw new Error(`Failed to save questions: ${questionError.message}`)
+      }
+    } else {
+      // Quest Course: Insert stages with their questions
+      for (let stageIndex = 0; stageIndex < data.quest.stages.length; stageIndex++) {
+        const stage = data.quest.stages[stageIndex]
+
+        const { data: stageData, error: stageError } = await supabase
+          .from('stages')
+          .insert({
+            creation_id: data.creationId,
+            title: stage.title,
+            lesson_summary: stage.lesson,
+            order_index: stageIndex
+          })
+          .select('id')
+          .single()
+
+        if (stageError || !stageData) {
+          throw new Error(`Failed to save stage: ${stageError?.message}`)
+        }
+
+        // Insert questions for this stage
+        const questionInserts = stage.quizzes.map((quiz, quizIndex) => ({
+          stage_id: stageData.id,
+          question: quiz.question,
+          options: quiz.type === 'multiple_choice' ? quiz.options : [],
+          correct_answer: quiz.type === 'multiple_choice' ? quiz.correct_answer : 0,
+          explanation: quiz.explanation,
+          order_index: quizIndex
+        }))
+
+        const { error: questionError } = await supabase
+          .from('questions')
+          .insert(questionInserts)
+
+        if (questionError) {
+          throw new Error(`Failed to save questions: ${questionError.message}`)
+        }
+      }
     }
 
     return { success: true }

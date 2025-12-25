@@ -7,6 +7,9 @@ export interface Database {
           created_at: string
           user_id: string | null
           title: string
+          description: string | null
+          thumbnail: string | null
+          tags: string[] | null
           raw_content: string
           theme_config: ThemeConfig
           is_published: boolean
@@ -18,6 +21,9 @@ export interface Database {
           created_at?: string
           user_id?: string | null
           title: string
+          description?: string | null
+          thumbnail?: string | null
+          tags?: string[] | null
           raw_content: string
           theme_config?: ThemeConfig
           is_published?: boolean
@@ -29,6 +35,9 @@ export interface Database {
           created_at?: string
           user_id?: string | null
           title?: string
+          description?: string | null
+          thumbnail?: string | null
+          tags?: string[] | null
           raw_content?: string
           theme_config?: ThemeConfig
           is_published?: boolean
@@ -119,6 +128,9 @@ export interface Creation {
   created_at: string
   user_id: string | null
   title: string
+  description: string | null
+  thumbnail: string | null
+  tags: string[] | null
   raw_content: string
   theme_config: ThemeConfig
   is_published: boolean

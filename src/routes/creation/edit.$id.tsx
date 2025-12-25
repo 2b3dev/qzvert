@@ -29,7 +29,7 @@ import { ImageInput } from '../../components/ui/image-input'
 import { Input, Textarea } from '../../components/ui/input'
 import { RichTextEditor } from '../../components/ui/rich-text-editor'
 import { cn } from '../../lib/utils'
-import { getCreationByIdForEdit, saveQuest } from '../../server/creations'
+import { getCreationByIdForEdit, updateQuest } from '../../server/creations'
 import { useAuthStore } from '../../stores/auth-store'
 import { useCreationStore } from '../../stores/creation-store'
 import type {
@@ -309,8 +309,9 @@ function CreationEditPage() {
       setCreation(updatedQuest)
 
       // Save to database
-      await saveQuest({
+      await updateQuest({
         data: {
+          creationId,
           quest: updatedQuest,
           rawContent: rawContent || '',
           themeConfig,
