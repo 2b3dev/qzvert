@@ -8,7 +8,9 @@ import {
   ChevronUp,
   FileText,
   ImageIcon,
+  List,
   Loader2,
+  MessageSquare,
   Plus,
   Save,
   Star,
@@ -264,6 +266,42 @@ function CreationEditPage() {
     )
   }
 
+  const changeQuizType = (index: number, newType: 'multiple_choice' | 'subjective') => {
+    setQuizzes((prev) => {
+      const newQuizzes = prev.map((q, i) => {
+        if (i !== index) return q
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const anyQ = q as any
+        if (newType === 'subjective') {
+          // Convert to subjective - keep options/correct_answer as hidden fields
+          return {
+            type: 'subjective' as const,
+            question: q.question,
+            explanation: q.explanation,
+            points: q.points,
+            model_answer: anyQ.model_answer || anyQ._preserved_model_answer || '',
+            // Preserve MC data for switching back
+            _preserved_options: anyQ.options,
+            _preserved_correct_answer: anyQ.correct_answer,
+          }
+        } else {
+          // Convert to multiple choice - restore preserved options if available
+          return {
+            type: 'multiple_choice' as const,
+            question: q.question,
+            explanation: q.explanation,
+            points: q.points,
+            options: anyQ._preserved_options || anyQ.options || ['', '', '', ''],
+            correct_answer: anyQ._preserved_correct_answer ?? anyQ.correct_answer ?? 0,
+            // Preserve subjective data for switching back
+            _preserved_model_answer: anyQ.model_answer,
+          }
+        }
+      })
+      return newQuizzes as GeneratedQuiz[]
+    })
+  }
+
   const addQuiz = () => {
     const newQuiz: GeneratedMultipleChoiceQuiz = {
       type: 'multiple_choice',
@@ -323,6 +361,9 @@ function CreationEditPage() {
         ) {
           return `Question ${i + 1} has invalid correct answer`
         }
+      } else if (quiz.type === 'subjective') {
+        if (!quiz.model_answer?.trim())
+          return `Question ${i + 1} needs a model answer`
       }
     }
     return null
@@ -659,6 +700,41 @@ function CreationEditPage() {
                       transition={{ duration: 0.2 }}
                     >
                       <CardContent className="pt-0 space-y-4">
+                        {/* Question Type Selector */}
+                        <div>
+                          <label className="text-sm font-medium text-foreground mb-2 block">
+                            Question Type
+                          </label>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => changeQuizType(index, 'multiple_choice')}
+                              className={cn(
+                                'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                                quiz.type !== 'subjective'
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground',
+                              )}
+                            >
+                              <List className="w-4 h-4" />
+                              Multiple Choice
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => changeQuizType(index, 'subjective')}
+                              className={cn(
+                                'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                                quiz.type === 'subjective'
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground',
+                              )}
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                              Subjective
+                            </button>
+                          </div>
+                        </div>
+
                         {/* Question */}
                         <div>
                           <label className="text-sm font-medium text-foreground mb-2 block">
