@@ -58,7 +58,7 @@ function ExplorePage() {
       const { generatedQuest, themeConfig } = await getCreationById({ data: { creationId: questId } })
       setCreation(generatedQuest, undefined, questId)
       setThemeConfig(themeConfig)
-      navigate({ to: '/creation/$id/preview', params: { id: questId } })
+      navigate({ to: '/creation/play/$id', params: { id: questId } })
     } catch (err) {
       console.error('Failed to load quest:', err)
       setError('Failed to load quest. Please try again.')

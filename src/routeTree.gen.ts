@@ -17,10 +17,9 @@ import { Route as CreatorRouteImport } from './routes/creator'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as CreationPlayRouteImport } from './routes/creation/play'
 import { Route as CreationNewRouteImport } from './routes/creation/new'
-import { Route as CreationIdPreviewRouteImport } from './routes/creation/$id.preview'
-import { Route as CreationIdEditRouteImport } from './routes/creation/$id.edit'
+import { Route as CreationPlayIdRouteImport } from './routes/creation/play/$id'
+import { Route as CreationEditIdRouteImport } from './routes/creation/edit/$id'
 
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
@@ -62,24 +61,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CreationPlayRoute = CreationPlayRouteImport.update({
-  id: '/creation/play',
-  path: '/creation/play',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CreationNewRoute = CreationNewRouteImport.update({
   id: '/creation/new',
   path: '/creation/new',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CreationIdPreviewRoute = CreationIdPreviewRouteImport.update({
-  id: '/creation/$id/preview',
-  path: '/creation/$id/preview',
+const CreationPlayIdRoute = CreationPlayIdRouteImport.update({
+  id: '/creation/play/$id',
+  path: '/creation/play/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CreationIdEditRoute = CreationIdEditRouteImport.update({
-  id: '/creation/$id/edit',
-  path: '/creation/$id/edit',
+const CreationEditIdRoute = CreationEditIdRouteImport.update({
+  id: '/creation/edit/$id',
+  path: '/creation/edit/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -93,9 +87,8 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/creation/new': typeof CreationNewRoute
-  '/creation/play': typeof CreationPlayRoute
-  '/creation/$id/edit': typeof CreationIdEditRoute
-  '/creation/$id/preview': typeof CreationIdPreviewRoute
+  '/creation/edit/$id': typeof CreationEditIdRoute
+  '/creation/play/$id': typeof CreationPlayIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -107,9 +100,8 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/creation/new': typeof CreationNewRoute
-  '/creation/play': typeof CreationPlayRoute
-  '/creation/$id/edit': typeof CreationIdEditRoute
-  '/creation/$id/preview': typeof CreationIdPreviewRoute
+  '/creation/edit/$id': typeof CreationEditIdRoute
+  '/creation/play/$id': typeof CreationPlayIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -122,9 +114,8 @@ export interface FileRoutesById {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/creation/new': typeof CreationNewRoute
-  '/creation/play': typeof CreationPlayRoute
-  '/creation/$id/edit': typeof CreationIdEditRoute
-  '/creation/$id/preview': typeof CreationIdPreviewRoute
+  '/creation/edit/$id': typeof CreationEditIdRoute
+  '/creation/play/$id': typeof CreationPlayIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -138,9 +129,8 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/creation/new'
-    | '/creation/play'
-    | '/creation/$id/edit'
-    | '/creation/$id/preview'
+    | '/creation/edit/$id'
+    | '/creation/play/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -152,9 +142,8 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/creation/new'
-    | '/creation/play'
-    | '/creation/$id/edit'
-    | '/creation/$id/preview'
+    | '/creation/edit/$id'
+    | '/creation/play/$id'
   id:
     | '__root__'
     | '/'
@@ -166,9 +155,8 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/creation/new'
-    | '/creation/play'
-    | '/creation/$id/edit'
-    | '/creation/$id/preview'
+    | '/creation/edit/$id'
+    | '/creation/play/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -181,9 +169,8 @@ export interface RootRouteChildren {
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   CreationNewRoute: typeof CreationNewRoute
-  CreationPlayRoute: typeof CreationPlayRoute
-  CreationIdEditRoute: typeof CreationIdEditRoute
-  CreationIdPreviewRoute: typeof CreationIdPreviewRoute
+  CreationEditIdRoute: typeof CreationEditIdRoute
+  CreationPlayIdRoute: typeof CreationPlayIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -244,13 +231,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/creation/play': {
-      id: '/creation/play'
-      path: '/creation/play'
-      fullPath: '/creation/play'
-      preLoaderRoute: typeof CreationPlayRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/creation/new': {
       id: '/creation/new'
       path: '/creation/new'
@@ -258,18 +238,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CreationNewRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/creation/$id/preview': {
-      id: '/creation/$id/preview'
-      path: '/creation/$id/preview'
-      fullPath: '/creation/$id/preview'
-      preLoaderRoute: typeof CreationIdPreviewRouteImport
+    '/creation/play/$id': {
+      id: '/creation/play/$id'
+      path: '/creation/play/$id'
+      fullPath: '/creation/play/$id'
+      preLoaderRoute: typeof CreationPlayIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/creation/$id/edit': {
-      id: '/creation/$id/edit'
-      path: '/creation/$id/edit'
-      fullPath: '/creation/$id/edit'
-      preLoaderRoute: typeof CreationIdEditRouteImport
+    '/creation/edit/$id': {
+      id: '/creation/edit/$id'
+      path: '/creation/edit/$id'
+      fullPath: '/creation/edit/$id'
+      preLoaderRoute: typeof CreationEditIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -285,9 +265,8 @@ const rootRouteChildren: RootRouteChildren = {
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   CreationNewRoute: CreationNewRoute,
-  CreationPlayRoute: CreationPlayRoute,
-  CreationIdEditRoute: CreationIdEditRoute,
-  CreationIdPreviewRoute: CreationIdPreviewRoute,
+  CreationEditIdRoute: CreationEditIdRoute,
+  CreationPlayIdRoute: CreationPlayIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

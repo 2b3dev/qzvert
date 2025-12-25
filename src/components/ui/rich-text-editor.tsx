@@ -1,20 +1,21 @@
 'use client'
 
-import { useEditor, EditorContent, type Editor } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import Underline from '@tiptap/extension-underline'
 import Placeholder from '@tiptap/extension-placeholder'
+import Underline from '@tiptap/extension-underline'
+import type { Editor } from '@tiptap/react'
+import { EditorContent, useEditor } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
 import {
   Bold,
+  Code,
   Italic,
-  Underline as UnderlineIcon,
-  Strikethrough,
   List,
   ListOrdered,
   Quote,
-  Undo,
   Redo,
-  Code,
+  Strikethrough,
+  Underline as UnderlineIcon,
+  Undo,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
@@ -42,7 +43,7 @@ function ToolbarButton({
       className={cn(
         'p-1.5 rounded hover:bg-muted transition-colors',
         isActive && 'bg-primary/20 text-primary',
-        disabled && 'opacity-50 cursor-not-allowed'
+        disabled && 'opacity-50 cursor-not-allowed',
       )}
     >
       {children}
@@ -187,7 +188,7 @@ export function RichTextEditor({
     <div
       className={cn(
         'rounded-lg border border-border bg-secondary/30 overflow-hidden',
-        className
+        className,
       )}
     >
       <Toolbar editor={editor} />

@@ -261,7 +261,7 @@ function CreationNewPage() {
       })
 
       toast.success('Saved successfully!')
-      navigate({ to: '/creation/$id/preview', params: { id: result.creationId } })
+      navigate({ to: '/creation/play/$id', params: { id: result.creationId } })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to save')
     } finally {

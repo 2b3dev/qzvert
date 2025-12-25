@@ -309,7 +309,7 @@ function CreatorPage() {
                             asChild
                           >
                             <Link
-                              to="/creation/$id/edit"
+                              to="/creation/edit/$id"
                               params={{ id: quest.id }}
                             >
                               <Pencil className="w-4 h-4" />
@@ -317,7 +317,7 @@ function CreatorPage() {
                             </Link>
                           </Button>
                           <Button size="sm" className="flex-1" asChild>
-                            <Link to="/creation/$id/preview" params={{ id: quest.id }}>
+                            <Link to="/creation/play/$id" params={{ id: quest.id }}>
                               <Play className="w-4 h-4" />
                               Play
                             </Link>

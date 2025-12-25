@@ -5,7 +5,14 @@
       "Bash(npx supabase --version)",
       "Bash(bun run build:*)",
       "Bash(bun add:*)",
-      "Bash(pnpm add:*)"
+      "Bash(pnpm add:*)",
+      "Bash(del \"c:\\\\Users\\\\derle\\\\Documents\\\\bucket\\\\qzvert\\\\src\\\\routes\\\\creation$id.preview.tsx\")",
+      "Bash(del \"c:\\\\Users\\\\derle\\\\Documents\\\\bucket\\\\qzvert\\\\src\\\\routes\\\\creation\\\\play.tsx\")",
+      "Bash(ls -la \"c:\\\\Users\\\\derle\\\\Documents\\\\bucket\\\\qzvert\\\\supabase\"\" 2>/dev/null || dir \"c:UsersderleDocumentsbucketqzvertsupabase \")",
+      "Bash(del \"c:\\\\Users\\\\derle\\\\Documents\\\\bucket\\\\qzvert\\\\supabase\\\\migrations\\\\001_create_profiles.sql\")",
+      "Bash(del \"c:\\\\Users\\\\derle\\\\Documents\\\\bucket\\\\qzvert\\\\supabase\\\\migrations\\\\002_create_quests.sql\")",
+      "Bash(del \"c:\\\\Users\\\\derle\\\\Documents\\\\bucket\\\\qzvert\\\\supabase\\\\migrations\\\\003_rename_tables.sql\")",
+      "Bash(mkdir:*)"
     ]
   }
 }

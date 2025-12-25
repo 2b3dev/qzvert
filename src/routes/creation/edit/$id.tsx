@@ -18,35 +18,40 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { Button } from '../../components/ui/button'
+import { Button } from '../../../components/ui/button'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '../../components/ui/card'
-import { ImageInput } from '../../components/ui/image-input'
-import { Input, Textarea } from '../../components/ui/input'
-import { RichTextEditor } from '../../components/ui/rich-text-editor'
-import { cn } from '../../lib/utils'
-import { getCreationByIdForEdit, saveQuest } from '../../server/creations'
-import { useAuthStore } from '../../stores/auth-store'
-import { useCreationStore } from '../../stores/creation-store'
+} from '../../../components/ui/card'
+import { ImageInput } from '../../../components/ui/image-input'
+import { Input, Textarea } from '../../../components/ui/input'
+import { RichTextEditor } from '../../../components/ui/rich-text-editor'
+import { cn } from '../../../lib/utils'
+import { getCreationByIdForEdit, saveQuest } from '../../../server/creations'
+import { useAuthStore } from '../../../stores/auth-store'
+import { useCreationStore } from '../../../stores/creation-store'
 import type {
   GeneratedMultipleChoiceQuiz,
   GeneratedQuiz,
   GeneratedSubjectiveQuiz,
-} from '../../types/database'
+} from '../../../types/database'
 
-export const Route = createFileRoute('/creation/$id/edit')({
+export const Route = createFileRoute('/creation/edit/$id')({
   component: CreationEditPage,
 })
 
 function CreationEditPage() {
   const navigate = useNavigate()
   const { id: creationId } = Route.useParams()
-  const { currentCreation, setCreation, themeConfig, setThemeConfig, rawContent } =
-    useCreationStore()
+  const {
+    currentCreation,
+    setCreation,
+    themeConfig,
+    setThemeConfig,
+    rawContent,
+  } = useCreationStore()
   const { session } = useAuthStore()
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -107,7 +112,7 @@ function CreationEditPage() {
     creationId,
     loadedCreationId,
     session,
-    setQuest,
+    setCreation,
     setThemeConfig,
     navigate,
   ])
@@ -378,7 +383,7 @@ function CreationEditPage() {
           className="mb-6 grid grid-cols-1 md:grid-cols-[1fr,280px] gap-6"
         >
           <div className="flex gap-4">
-            <div>
+            <div className="w-[263px] relative">
               <label className="text-sm font-medium text-foreground mb-2 block">
                 <ImageIcon className="w-4 h-4 inline-block mr-1" />
                 Thumbnail
