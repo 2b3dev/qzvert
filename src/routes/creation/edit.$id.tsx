@@ -18,25 +18,25 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { Button } from '../../../components/ui/button'
+import { Button } from '../../components/ui/button'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '../../../components/ui/card'
-import { ImageInput } from '../../../components/ui/image-input'
-import { Input, Textarea } from '../../../components/ui/input'
-import { RichTextEditor } from '../../../components/ui/rich-text-editor'
-import { cn } from '../../../lib/utils'
-import { getCreationByIdForEdit, saveQuest } from '../../../server/creations'
-import { useAuthStore } from '../../../stores/auth-store'
-import { useCreationStore } from '../../../stores/creation-store'
+} from '../../components/ui/card'
+import { ImageInput } from '../../components/ui/image-input'
+import { Input, Textarea } from '../../components/ui/input'
+import { RichTextEditor } from '../../components/ui/rich-text-editor'
+import { cn } from '../../lib/utils'
+import { getCreationByIdForEdit, saveQuest } from '../../server/creations'
+import { useAuthStore } from '../../stores/auth-store'
+import { useCreationStore } from '../../stores/creation-store'
 import type {
   GeneratedMultipleChoiceQuiz,
   GeneratedQuiz,
   GeneratedSubjectiveQuiz,
-} from '../../../types/database'
+} from '../../types/database'
 
 export const Route = createFileRoute('/creation/edit/$id')({
   component: CreationEditPage,

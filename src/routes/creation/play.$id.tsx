@@ -17,14 +17,14 @@ import {
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { useCreationStore } from '../../../stores/creation-store'
-import { useAuthStore } from '../../../stores/auth-store'
-import { QuizPlayer } from '../../../components/QuizPlayer'
-import { LearningMap } from '../../../components/LearningMap'
-import { Button } from '../../../components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card'
-import { Progress } from '../../../components/ui/progress'
-import { getCreationById } from '../../../server/creations'
+import { useCreationStore } from '../../stores/creation-store'
+import { useAuthStore } from '../../stores/auth-store'
+import { QuizPlayer } from '../../components/QuizPlayer'
+import { LearningMap } from '../../components/LearningMap'
+import { Button } from '../../components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
+import { Progress } from '../../components/ui/progress'
+import { getCreationById } from '../../server/creations'
 
 export const Route = createFileRoute('/creation/play/$id')({
   component: CreationPlayPage

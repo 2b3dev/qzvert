@@ -18,8 +18,8 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CreationNewRouteImport } from './routes/creation/new'
-import { Route as CreationPlayIdRouteImport } from './routes/creation/play/$id'
-import { Route as CreationEditIdRouteImport } from './routes/creation/edit/$id'
+import { Route as CreationPlayIdRouteImport } from './routes/creation/play.$id'
+import { Route as CreationEditIdRouteImport } from './routes/creation/edit.$id'
 
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
