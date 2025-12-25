@@ -12,7 +12,11 @@
       "Bash(del \"c:\\\\Users\\\\derle\\\\Documents\\\\bucket\\\\qzvert\\\\supabase\\\\migrations\\\\001_create_profiles.sql\")",
       "Bash(del \"c:\\\\Users\\\\derle\\\\Documents\\\\bucket\\\\qzvert\\\\supabase\\\\migrations\\\\002_create_quests.sql\")",
       "Bash(del \"c:\\\\Users\\\\derle\\\\Documents\\\\bucket\\\\qzvert\\\\supabase\\\\migrations\\\\003_rename_tables.sql\")",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(supabase db pull --help:*)",
+      "Bash(supabase init:*)",
+      "Bash(supabase migration:*)",
+      "Bash(supabase db pull:*)"
     ]
   }
 }
