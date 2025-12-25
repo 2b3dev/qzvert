@@ -3,8 +3,7 @@
     "allow": [
       "Bash(dir:*)",
       "Bash(npx supabase --version)",
-      "Bash(bun run build:*)",
-      "Bash(bun add:*)",
+      "Bash(pnpm run build:*)",
       "Bash(pnpm add:*)",
       "Bash(del \"c:\\\\Users\\\\derle\\\\Documents\\\\bucket\\\\qzvert\\\\src\\\\routes\\\\creation$id.preview.tsx\")",
       "Bash(del \"c:\\\\Users\\\\derle\\\\Documents\\\\bucket\\\\qzvert\\\\src\\\\routes\\\\creation\\\\play.tsx\")",

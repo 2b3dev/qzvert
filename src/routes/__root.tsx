@@ -4,6 +4,7 @@ import {
   HeadContent,
   Outlet,
   Scripts,
+  useRouterState,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { useEffect } from 'react'
@@ -67,6 +68,10 @@ function RootComponent() {
 function RootDocument({ children }: { children: React.ReactNode }) {
   const { theme } = Route.useLoaderData()
   const { initialize, isInitialized } = useAuthStore()
+  const routerState = useRouterState()
+
+  // Hide default header on edit page (uses custom header)
+  const isEditPage = routerState.location.pathname.startsWith('/creation/edit/')
 
   useEffect(() => {
     if (!isInitialized) {
@@ -80,9 +85,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body className="antialiased transition-colors duration-300">
-        <Header />
-        <main className="min-h-screen">{children}</main>
-        <Footer />
+        {!isEditPage && <Header />}
+        <main className={isEditPage ? '' : 'min-h-screen'}>{children}</main>
+        {!isEditPage && <Footer />}
         {IS_SHOW_DEVTOOL && (
           <TanStackDevtools
             config={{

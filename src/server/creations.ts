@@ -579,6 +579,30 @@ export const deleteCreation = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const supabase = getSupabaseWithAuth(data.accessToken)
 
+    // Verify user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      throw new Error('Authentication failed')
+    }
+
+    // Get thumbnail before deleting
+    const { data: creation } = await supabase
+      .from('creations')
+      .select('thumbnail')
+      .eq('id', data.creationId)
+      .single()
+
+    // Delete thumbnail from storage if exists
+    if (creation?.thumbnail?.includes('/storage/v1/object/public/thumbnails/')) {
+      const urlParts = creation.thumbnail.split('/storage/v1/object/public/thumbnails/')
+      if (urlParts.length === 2) {
+        const filePath = urlParts[1]
+        if (filePath.startsWith(user.id)) {
+          await supabase.storage.from('thumbnails').remove([filePath])
+        }
+      }
+    }
+
     const { error } = await supabase
       .from('creations')
       .delete()

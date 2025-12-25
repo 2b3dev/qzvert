@@ -1,30 +1,31 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
-  Plus,
-  GraduationCap,
-  Map,
   BookOpen,
+  Calendar,
+  Globe,
+  GraduationCap,
   LayoutGrid,
   Loader2,
-  Play,
-  Pencil,
-  Trash2,
-  Calendar,
-  Users,
-  Globe,
   Lock,
+  Map,
+  Pencil,
+  Play,
+  Plus,
+  Trash2,
+  Users,
 } from 'lucide-react'
-import { useAuthStore } from '../stores/auth-store'
-import { getUserCreations, deleteCreation } from '../server/creations'
-import { Button } from '../components/ui/button'
-import { Card, CardContent } from '../components/ui/card'
-import { cn } from '../lib/utils'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { Button } from '../../components/ui/button'
+import { Card, CardContent } from '../../components/ui/card'
+import { ConfirmModal } from '../../components/ui/confirm-modal'
+import { cn } from '../../lib/utils'
+import { deleteCreation, getUserCreations } from '../../server/creations'
+import { useAuthStore } from '../../stores/auth-store'
 
-export const Route = createFileRoute('/creator')({
-  component: CreatorPage,
+export const Route = createFileRoute('/creation/me')({
+  component: MyCreationsPage,
 })
 
 type TabType = 'all' | 'quiz' | 'quest' | 'flashcard'
@@ -36,7 +37,7 @@ const tabs: { type: TabType; label: string; icon: React.ElementType }[] = [
   { type: 'flashcard', label: 'Flashcard', icon: BookOpen },
 ]
 
-interface QuestItem {
+interface CreationItem {
   id: string
   created_at: string
   title: string
@@ -45,27 +46,30 @@ interface QuestItem {
   stages: { id: string; title: string }[]
 }
 
-function CreatorPage() {
+function MyCreationsPage() {
   const navigate = useNavigate()
   const { user, session, isLoading: isAuthLoading } = useAuthStore()
   const [activeTab, setActiveTab] = useState<TabType>('all')
-  const [quests, setQuests] = useState<QuestItem[]>([])
+  const [creations, setCreations] = useState<CreationItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     if (!isAuthLoading && session) {
-      loadQuests()
+      loadCreations()
     }
   }, [isAuthLoading, session])
 
-  const loadQuests = async () => {
+  const loadCreations = async () => {
     if (!session) return
 
     setIsLoading(true)
     try {
-      const data = await getUserCreations({ data: { accessToken: session.access_token } })
-      setQuests(data || [])
+      const data = await getUserCreations({
+        data: { accessToken: session.access_token },
+      })
+      setCreations(data || [])
     } catch (error) {
       toast.error('Failed to load your creations')
     } finally {
@@ -73,18 +77,21 @@ function CreatorPage() {
     }
   }
 
-  const handleDelete = async (questId: string) => {
-    if (!session) return
+  const handleDelete = async () => {
+    if (!session || !deleteId) return
 
-    setDeletingId(questId)
+    setIsDeleting(true)
     try {
-      await deleteCreation({ data: { creationId: questId, accessToken: session.access_token } })
-      setQuests((prev) => prev.filter((q) => q.id !== questId))
+      await deleteCreation({
+        data: { creationId: deleteId, accessToken: session.access_token },
+      })
+      setCreations((prev) => prev.filter((c) => c.id !== deleteId))
       toast.success('Deleted successfully')
+      setDeleteId(null)
     } catch (error) {
       toast.error('Failed to delete')
     } finally {
-      setDeletingId(null)
+      setIsDeleting(false)
     }
   }
 
@@ -110,13 +117,13 @@ function CreatorPage() {
     )
   }
 
-  // Filter quests based on active tab
-  const filteredQuests = quests.filter((quest) => {
+  // Filter creations based on active tab
+  const filteredCreations = creations.filter((creation) => {
     if (activeTab === 'all') return true
     // For now, all are quizzes/quests - flashcard coming soon
     if (activeTab === 'flashcard') return false
     // Determine type by number of stages
-    const isQuest = quest.stages.length > 1
+    const isQuest = creation.stages.length > 1
     if (activeTab === 'quest') return isQuest
     if (activeTab === 'quiz') return !isQuest
     return true
@@ -130,6 +137,8 @@ function CreatorPage() {
       year: 'numeric',
     })
   }
+
+  const deletingCreation = creations.find((c) => c.id === deleteId)
 
   return (
     <div className="min-h-screen bg-background py-8 px-6">
@@ -169,7 +178,7 @@ function CreatorPage() {
                 'flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap',
                 activeTab === type
                   ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground'
+                  : 'bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground',
               )}
             >
               <Icon className="w-4 h-4" />
@@ -183,7 +192,7 @@ function CreatorPage() {
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
-        ) : filteredQuests.length === 0 ? (
+        ) : filteredCreations.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -227,11 +236,11 @@ function CreatorPage() {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
           >
             <AnimatePresence mode="popLayout">
-              {filteredQuests.map((quest, index) => {
-                const isQuest = quest.stages.length > 1
+              {filteredCreations.map((creation, index) => {
+                const isQuest = creation.stages.length > 1
                 return (
                   <motion.div
-                    key={quest.id}
+                    key={creation.id}
                     layout
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -248,7 +257,7 @@ function CreatorPage() {
                                 'w-8 h-8 rounded-lg flex items-center justify-center',
                                 isQuest
                                   ? 'bg-purple-500/20 text-purple-500'
-                                  : 'bg-blue-500/20 text-blue-500'
+                                  : 'bg-blue-500/20 text-blue-500',
                               )}
                             >
                               {isQuest ? (
@@ -264,12 +273,12 @@ function CreatorPage() {
                           <div
                             className={cn(
                               'flex items-center gap-1 text-xs px-2 py-1 rounded-full',
-                              quest.is_published
+                              creation.is_published
                                 ? 'bg-emerald-500/20 text-emerald-500'
-                                : 'bg-muted text-muted-foreground'
+                                : 'bg-muted text-muted-foreground',
                             )}
                           >
-                            {quest.is_published ? (
+                            {creation.is_published ? (
                               <>
                                 <Globe className="w-3 h-3" />
                                 Published
@@ -285,18 +294,18 @@ function CreatorPage() {
 
                         {/* Title */}
                         <h3 className="font-semibold text-foreground line-clamp-2 mb-3">
-                          {quest.title}
+                          {creation.title}
                         </h3>
 
                         {/* Meta */}
                         <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
                           <div className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
-                            {formatDate(quest.created_at)}
+                            {formatDate(creation.created_at)}
                           </div>
                           <div className="flex items-center gap-1">
                             <Users className="w-3 h-3" />
-                            {quest.play_count} plays
+                            {creation.play_count} plays
                           </div>
                         </div>
 
@@ -310,14 +319,17 @@ function CreatorPage() {
                           >
                             <Link
                               to="/creation/edit/$id"
-                              params={{ id: quest.id }}
+                              params={{ id: creation.id }}
                             >
                               <Pencil className="w-4 h-4" />
                               Edit
                             </Link>
                           </Button>
                           <Button size="sm" className="flex-1" asChild>
-                            <Link to="/creation/play/$id" params={{ id: quest.id }}>
+                            <Link
+                              to="/creation/play/$id"
+                              params={{ id: creation.id }}
+                            >
                               <Play className="w-4 h-4" />
                               Play
                             </Link>
@@ -325,15 +337,10 @@ function CreatorPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDelete(quest.id)}
-                            disabled={deletingId === quest.id}
+                            onClick={() => setDeleteId(creation.id)}
                             className="text-destructive hover:text-destructive hover:bg-destructive/10"
                           >
-                            {deletingId === quest.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="w-4 h-4" />
-                            )}
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       </CardContent>
@@ -345,6 +352,19 @@ function CreatorPage() {
           </motion.div>
         )}
       </div>
+
+      {/* Delete Confirm Modal */}
+      <ConfirmModal
+        open={deleteId !== null}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Delete Creation"
+        description={`Are you sure you want to delete "${deletingCreation?.title || 'this creation'}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={handleDelete}
+        isLoading={isDeleting}
+      />
     </div>
   )
 }

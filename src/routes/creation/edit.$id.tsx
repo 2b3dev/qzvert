@@ -25,12 +25,15 @@ import {
   CardHeader,
   CardTitle,
 } from '../../components/ui/card'
+import { ConfirmModal } from '../../components/ui/confirm-modal'
 import { ImageInput } from '../../components/ui/image-input'
 import { Input, Textarea } from '../../components/ui/input'
 import { RichTextEditor } from '../../components/ui/rich-text-editor'
 import { cn } from '../../lib/utils'
 import { getCreationByIdForEdit, updateQuest } from '../../server/creations'
+import { deleteImage } from '../../server/storage'
 import { useAuthStore } from '../../stores/auth-store'
+import { supabase } from '../../lib/supabase'
 import { useCreationStore } from '../../stores/creation-store'
 import type {
   GeneratedMultipleChoiceQuiz,
@@ -62,15 +65,21 @@ function CreationEditPage() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [thumbnail, setThumbnail] = useState('')
+  const [originalThumbnail, setOriginalThumbnail] = useState('') // Track original for deletion
   const [tags, setTags] = useState<Array<string>>([])
   const [tagInput, setTagInput] = useState('')
   const [quizzes, setQuizzes] = useState<Array<GeneratedQuiz>>([])
+  const [deleteQuizIndex, setDeleteQuizIndex] = useState<number | null>(null)
+  const [totalPoints, setTotalPoints] = useState(0)
 
   // Load creation from database
   useEffect(() => {
     const loadCreation = async () => {
       if (!creationId || loadedCreationId === creationId) return
-      if (!session?.access_token) {
+
+      // Get session directly from supabase (handles cookies/localStorage)
+      const { data: { session: currentSession } } = await supabase.auth.getSession()
+      if (!currentSession?.access_token) {
         toast.error('Please login to edit')
         navigate({ to: '/login' })
         return
@@ -79,7 +88,7 @@ function CreationEditPage() {
       setIsLoading(true)
       try {
         const data = await getCreationByIdForEdit({
-          data: { creationId, accessToken: session.access_token },
+          data: { creationId, accessToken: currentSession.access_token },
         })
         if (data) {
           const quest = data.generatedQuest
@@ -91,17 +100,23 @@ function CreationEditPage() {
           setTitle(quest.title)
           setDescription(quest.description || '')
           setThumbnail(quest.thumbnail || '')
+          setOriginalThumbnail(quest.thumbnail || '') // Store original for later comparison
           setTags(quest.tags || [])
 
+          let loadedQuizzes: GeneratedQuiz[]
           if (quest.type === 'quiz') {
-            setQuizzes([...quest.quizzes])
+            loadedQuizzes = [...quest.quizzes]
           } else {
-            setQuizzes(quest.stages.flatMap((stage) => stage.quizzes))
+            loadedQuizzes = quest.stages.flatMap((stage) => stage.quizzes)
           }
+          setQuizzes(loadedQuizzes)
+          // Calculate total points from loaded quizzes
+          const total = loadedQuizzes.reduce((sum, q) => sum + (q.points ?? 100), 0)
+          setTotalPoints(total)
         }
       } catch (error) {
         toast.error('Failed to load creation')
-        navigate({ to: '/creator' })
+        navigate({ to: '/creation/me' })
       } finally {
         setIsLoading(false)
       }
@@ -111,7 +126,6 @@ function CreationEditPage() {
   }, [
     creationId,
     loadedCreationId,
-    session,
     setCreation,
     setThemeConfig,
     navigate,
@@ -141,7 +155,7 @@ function CreationEditPage() {
             <p className="text-muted-foreground mb-6">
               This creation doesn't exist or you don't have access
             </p>
-            <Button onClick={() => navigate({ to: '/creator' })}>
+            <Button onClick={() => navigate({ to: '/creation/me' })}>
               <ArrowLeft className="w-4 h-4" />
               Back to My Creations
             </Button>
@@ -174,10 +188,30 @@ function CreationEditPage() {
     }
   }
 
-  const updateQuiz = (index: number, updates: Partial<GeneratedQuiz>) => {
+  const redistributePoints = () => {
+    if (quizzes.length === 0 || totalPoints < 0) return
+    // Distribute points evenly across all quizzes
+    const pointsPerQuiz = Math.floor(totalPoints / quizzes.length)
+    const remainder = totalPoints % quizzes.length
     setQuizzes((prev) =>
-      prev.map((q, i) => (i === index ? { ...q, ...updates } : q)),
+      prev.map((q, i) => ({
+        ...q,
+        // Add remainder to last question
+        points: pointsPerQuiz + (i === prev.length - 1 ? remainder : 0),
+      })) as GeneratedQuiz[],
     )
+  }
+
+  const updateQuiz = (index: number, updates: Partial<GeneratedQuiz>) => {
+    setQuizzes((prev) => {
+      const newQuizzes = prev.map((q, i) => (i === index ? { ...q, ...updates } : q))
+      // If points changed, update total
+      if ('points' in updates) {
+        const newTotal = newQuizzes.reduce((sum, q) => sum + (q.points ?? 100), 0)
+        setTotalPoints(newTotal)
+      }
+      return newQuizzes
+    })
   }
 
   const updateOption = (
@@ -237,19 +271,22 @@ function CreationEditPage() {
       options: ['', '', '', ''],
       correct_answer: 0,
       explanation: '',
+      points: 100,
     }
     setQuizzes((prev) => [...prev, newQuiz])
+    setTotalPoints((prev) => prev + 100)
     setExpandedQuiz(quizzes.length)
   }
 
-  const removeQuiz = (index: number) => {
-    if (quizzes.length <= 1) return
-    setQuizzes((prev) => prev.filter((_, i) => i !== index))
-    if (expandedQuiz === index) {
+  const confirmRemoveQuiz = () => {
+    if (deleteQuizIndex === null || quizzes.length <= 1) return
+    setQuizzes((prev) => prev.filter((_, i) => i !== deleteQuizIndex))
+    if (expandedQuiz === deleteQuizIndex) {
       setExpandedQuiz(null)
-    } else if (expandedQuiz !== null && expandedQuiz > index) {
+    } else if (expandedQuiz !== null && expandedQuiz > deleteQuizIndex) {
       setExpandedQuiz(expandedQuiz - 1)
     }
+    setDeleteQuizIndex(null)
   }
 
   const moveQuiz = (index: number, direction: 'up' | 'down') => {
@@ -301,6 +338,24 @@ function CreationEditPage() {
     setIsSaving(true)
 
     try {
+      // Delete old thumbnail if it changed and was a storage URL
+      if (
+        originalThumbnail &&
+        originalThumbnail !== thumbnail &&
+        originalThumbnail.includes('/storage/v1/object/public/thumbnails/')
+      ) {
+        try {
+          await deleteImage({
+            data: {
+              imageUrl: originalThumbnail,
+              accessToken: session!.access_token,
+            },
+          })
+        } catch {
+          // Ignore deletion errors, continue with save
+        }
+      }
+
       // Update the quest with edited data
       const updatedQuest = isSmartQuiz
         ? { ...currentCreation, title, description, thumbnail, tags, quizzes }
@@ -320,7 +375,7 @@ function CreationEditPage() {
       })
 
       toast.success('Saved successfully!')
-      navigate({ to: '/creator' })
+      navigate({ to: '/creation/me' })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to save')
     } finally {
@@ -329,35 +384,41 @@ function CreationEditPage() {
   }
 
   const handleBack = () => {
-    navigate({ to: '/creator' })
+    navigate({ to: '/creation/me' })
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-6">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-8"
-        >
-          <Button variant="ghost" onClick={handleBack}>
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </Button>
-          <h1 className="text-xl font-bold text-foreground">
-            Edit {isSmartQuiz ? 'Quiz' : 'Quest'}
-          </h1>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            Save
-          </Button>
-        </motion.div>
+    <div className="min-h-screen bg-background">
+      {/* Custom Sticky Header */}
+      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="icon" onClick={handleBack}>
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <h1 className="text-xl font-bold text-foreground">
+                Edit {isSmartQuiz ? 'Quiz' : 'Quest'}
+              </h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" onClick={handleBack}>
+                Cancel
+              </Button>
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                Save
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
 
+      <div className="max-w-4xl mx-auto py-8 px-6">
         {/* Title */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -457,6 +518,43 @@ function CreationEditPage() {
           </p>
         </motion.div>
 
+        {/* Total Points */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.17 }}
+          className="mb-6"
+        >
+          <label className="text-sm font-medium text-foreground mb-2 block">
+            <Star className="w-4 h-4 inline-block mr-1" />
+            Total Points
+          </label>
+          <div className="flex items-center gap-3">
+            <Input
+              type="number"
+              min={0}
+              value={totalPoints || ''}
+              onChange={(e) => {
+                const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10)
+                if (!isNaN(val) && val >= 0) setTotalPoints(val)
+              }}
+              className="w-32"
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={redistributePoints}
+              disabled={quizzes.length === 0}
+            >
+              Distribute
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Click "Distribute" to evenly split points across all questions.
+          </p>
+        </motion.div>
+
         {/* Questions List */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -535,7 +633,7 @@ function CreationEditPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          removeQuiz(index)
+                          setDeleteQuizIndex(index)
                         }}
                         disabled={quizzes.length <= 1}
                         className="p-2 hover:bg-destructive/10 rounded-lg text-destructive disabled:opacity-30"
@@ -715,27 +813,19 @@ function CreationEditPage() {
           ))}
         </motion.div>
 
-        {/* Bottom Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mt-8 flex justify-center gap-4"
-        >
-          <Button variant="secondary" size="lg" onClick={handleBack}>
-            <ArrowLeft className="w-5 h-5" />
-            Cancel
-          </Button>
-          <Button size="lg" onClick={handleSave} disabled={isSaving}>
-            {isSaving ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Check className="w-5 h-5" />
-            )}
-            Save Changes
-          </Button>
-        </motion.div>
       </div>
+
+      {/* Delete Question Confirm Modal */}
+      <ConfirmModal
+        open={deleteQuizIndex !== null}
+        onOpenChange={(open) => !open && setDeleteQuizIndex(null)}
+        title="Delete Question"
+        description={`Are you sure you want to delete "${deleteQuizIndex !== null ? quizzes[deleteQuizIndex]?.question || 'this question' : ''}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={confirmRemoveQuiz}
+      />
     </div>
   )
 }

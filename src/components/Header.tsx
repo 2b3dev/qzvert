@@ -12,7 +12,7 @@ export default function Header() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const { theme } = Route.useLoaderData()
   const router = useRouter()
-  const { user, signOut } = useAuthStore()
+  const { user, signOut, isInitialized } = useAuthStore()
 
   const toggleTheme = async () => {
     const newTheme: Theme = theme === 'dark' ? 'light' : 'dark'
@@ -92,7 +92,9 @@ export default function Header() {
               </button>
 
               {/* User Menu */}
-              {user ? (
+              {!isInitialized ? (
+                <div className="ml-2 w-8 h-8 rounded-full bg-muted animate-pulse" />
+              ) : user ? (
                 <div className="relative ml-2">
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -116,7 +118,7 @@ export default function Header() {
                           </p>
                         </div>
                         <Link
-                          to="/creator"
+                          to="/creation/me"
                           onClick={() => setIsUserMenuOpen(false)}
                           className="w-full flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                         >
@@ -202,13 +204,15 @@ export default function Header() {
 
           {/* Mobile User Section */}
           <div className="mt-4 pt-4 border-t border-border">
-            {user ? (
+            {!isInitialized ? (
+              <div className="h-12 bg-muted animate-pulse rounded-lg" />
+            ) : user ? (
               <>
                 <div className="px-3 py-2 text-sm text-muted-foreground truncate">
                   {user.email}
                 </div>
                 <Link
-                  to="/creator"
+                  to="/creation/me"
                   onClick={() => setIsOpen(false)}
                   className="w-full flex items-center gap-3 p-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                 >
