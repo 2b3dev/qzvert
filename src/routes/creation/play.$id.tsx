@@ -207,9 +207,19 @@ function CreationPlayPage() {
                   >
                     <Card className="mb-8 bg-gradient-to-br from-card to-secondary/50">
                       <CardHeader className="text-center pb-4">
-                        <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
-                          <GraduationCap className="w-8 h-8 text-primary" />
-                        </div>
+                        {currentCreation.thumbnail ? (
+                          <div className="w-full max-w-xs mx-auto mb-4 rounded-xl overflow-hidden aspect-video">
+                            <img
+                              src={currentCreation.thumbnail}
+                              alt={currentCreation.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
+                            <GraduationCap className="w-8 h-8 text-primary" />
+                          </div>
+                        )}
                         <CardTitle className="text-3xl md:text-4xl font-black bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">
                           {currentCreation.title}
                         </CardTitle>
@@ -220,7 +230,10 @@ function CreationPlayPage() {
                           <span>Questions</span>
                         </div>
                         {currentCreation.description && (
-                          <p className="text-muted-foreground">{currentCreation.description}</p>
+                          <div
+                            className="text-muted-foreground prose prose-sm dark:prose-invert max-w-none"
+                            dangerouslySetInnerHTML={{ __html: currentCreation.description }}
+                          />
                         )}
                       </CardContent>
                     </Card>

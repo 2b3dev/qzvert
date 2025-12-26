@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, ChevronDown, EyeOff, Globe, Link2, Users } from 'lucide-react'
+import { Check, ChevronDown, Copy, EyeOff, Globe, Link2, Users } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '../../lib/utils'
 import type { CreationStatus } from '../../types/database'
 import { CREATION_STATUS_OPTIONS } from '../../types/database'
@@ -26,6 +27,7 @@ interface StatusDropdownProps {
   disabled?: boolean
   allowedEmails?: string[]
   onAllowedEmailsChange?: (emails: string[]) => void
+  creationId?: string
 }
 
 export function StatusDropdown({
@@ -33,10 +35,30 @@ export function StatusDropdown({
   onChange,
   disabled,
   allowedEmails = [],
-  onAllowedEmailsChange
+  onAllowedEmailsChange,
+  creationId
 }: StatusDropdownProps) {
   const [isOpen, setIsOpen] = React.useState(false)
+  const [copied, setCopied] = React.useState(false)
   const dropdownRef = React.useRef<HTMLDivElement>(null)
+
+  const playLink = creationId
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/creation/play/${creationId}`
+    : ''
+
+  const handleCopyLink = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!playLink) return
+
+    try {
+      await navigator.clipboard.writeText(playLink)
+      setCopied(true)
+      toast.success('Link copied!')
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      toast.error('Failed to copy link')
+    }
+  }
 
   const selectedOption = CREATION_STATUS_OPTIONS.find((opt) => opt.value === value)
 
@@ -152,6 +174,44 @@ export function StatusDropdown({
                         onChange={onAllowedEmailsChange}
                         placeholder="Enter email addresses..."
                       />
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Copy link for link status */}
+                {option.value === 'link' && value === 'link' && creationId && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="px-3 pb-3"
+                  >
+                    <div className="pt-2 border-t border-border mt-2">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 text-xs text-muted-foreground truncate bg-secondary/50 px-2 py-1.5 rounded">
+                          {playLink}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleCopyLink}
+                          className={cn(
+                            'flex items-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium',
+                            'bg-primary text-primary-foreground hover:bg-primary/90 transition-colors'
+                          )}
+                        >
+                          {copied ? (
+                            <>
+                              <Check className="w-3 h-3" />
+                              Copied
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3" />
+                              Copy
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </motion.div>
                 )}

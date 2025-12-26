@@ -12,6 +12,7 @@ import { Toaster } from 'sonner'
 
 import Header from '../components/Header'
 import Footer from '../components/Footer'
+import { NotFound } from '../components/ui/not-found'
 import { getTheme } from '../server/theme'
 import { useAuthStore } from '../stores/auth-store'
 
@@ -55,6 +56,7 @@ export const Route = createRootRoute({
   }),
 
   component: RootComponent,
+  notFoundComponent: NotFound,
 })
 
 function RootComponent() {

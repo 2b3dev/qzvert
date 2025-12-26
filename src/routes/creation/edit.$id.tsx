@@ -478,6 +478,7 @@ function CreationEditPage() {
                 onChange={setStatus}
                 allowedEmails={allowedEmails}
                 onAllowedEmailsChange={setAllowedEmails}
+                creationId={creationId}
               />
             </div>
             <div className="flex items-center gap-2">

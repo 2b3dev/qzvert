@@ -57,6 +57,15 @@ CREATE TABLE embeddings (
   vector_data float8[] NOT NULL
 );
 
+-- Table to store allowed emails for private_group creations
+CREATE TABLE creation_pending_invites (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  creation_id uuid NOT NULL REFERENCES creations(id) ON DELETE CASCADE,
+  email text NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(creation_id, email)
+);
+
 -- Create indexes for better query performance
 CREATE INDEX idx_creations_user_id ON creations(user_id);
 CREATE INDEX idx_creations_status ON creations(status);
@@ -65,3 +74,5 @@ CREATE INDEX idx_stages_order ON stages(creation_id, order_index);
 CREATE INDEX idx_questions_stage_id ON questions(stage_id);
 CREATE INDEX idx_questions_order ON questions(stage_id, order_index);
 CREATE INDEX idx_embeddings_creation_id ON embeddings(creation_id);
+CREATE INDEX idx_pending_invites_creation_id ON creation_pending_invites(creation_id);
+CREATE INDEX idx_pending_invites_email ON creation_pending_invites(email);
