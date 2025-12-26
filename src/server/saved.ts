@@ -7,47 +7,7 @@ const getSupabaseFromCookies = () => {
   return createSupabaseServerClient(getCookies, setCookie)
 }
 
-// Get or create default collection for user
-export const getOrCreateDefaultCollection = createServerFn({ method: 'POST' })
-  .handler(async (): Promise<Collection> => {
-    const supabase = getSupabaseFromCookies()
-
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) {
-      throw new Error('Authentication required')
-    }
-
-    // Check if default collection exists
-    const { data: existing } = await supabase
-      .from('collections')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('is_default', true)
-      .single()
-
-    if (existing) {
-      return existing as Collection
-    }
-
-    // Create default collection
-    const { data: created, error } = await supabase
-      .from('collections')
-      .insert({
-        user_id: user.id,
-        name: 'All Saved',
-        is_default: true
-      })
-      .select()
-      .single()
-
-    if (error || !created) {
-      throw new Error('Failed to create default collection')
-    }
-
-    return created as Collection
-  })
-
-// Get all collections for user
+// Get all collections for user (includes virtual "All Saved" as first item)
 export const getCollections = createServerFn({ method: 'GET' })
   .handler(async (): Promise<CollectionWithCount[]> => {
     const supabase = getSupabaseFromCookies()
@@ -57,12 +17,17 @@ export const getCollections = createServerFn({ method: 'GET' })
       throw new Error('Authentication required')
     }
 
-    // Single query with item count using left join aggregate
+    // Get total saved items count (all items regardless of collection)
+    const { count: totalCount } = await supabase
+      .from('saved_items')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+
+    // Get user's custom collections with item counts
     const { data: collections, error } = await supabase
       .from('collections')
       .select('*, saved_items(count)')
       .eq('user_id', user.id)
-      .order('is_default', { ascending: false })
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -78,7 +43,16 @@ export const getCollections = createServerFn({ method: 'GET' })
       } as CollectionWithCount
     })
 
-    return collectionsWithCount
+    // Add virtual "All Saved" collection at the beginning
+    const allSavedCollection: CollectionWithCount = {
+      id: 'all', // Special ID for "All Saved"
+      user_id: user.id,
+      name: 'All Saved',
+      created_at: new Date().toISOString(),
+      item_count: totalCount || 0
+    }
+
+    return [allSavedCollection, ...collectionsWithCount]
   })
 
 // Create a new collection
@@ -96,8 +70,7 @@ export const createCollection = createServerFn({ method: 'POST' })
       .from('collections')
       .insert({
         user_id: user.id,
-        name: data.name,
-        is_default: false
+        name: data.name
       })
       .select()
       .single()
@@ -135,7 +108,7 @@ export const updateCollection = createServerFn({ method: 'POST' })
     return updated as Collection
   })
 
-// Delete collection (cannot delete default)
+// Delete collection
 export const deleteCollection = createServerFn({ method: 'POST' })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }): Promise<{ success: boolean }> => {
@@ -146,7 +119,11 @@ export const deleteCollection = createServerFn({ method: 'POST' })
       throw new Error('Authentication required')
     }
 
-    // RLS policy prevents deleting default collection
+    // Cannot delete virtual "All Saved" collection
+    if (data.id === 'all') {
+      throw new Error('Cannot delete All Saved collection')
+    }
+
     const { error } = await supabase
       .from('collections')
       .delete()
@@ -160,10 +137,10 @@ export const deleteCollection = createServerFn({ method: 'POST' })
     return { success: true }
   })
 
-// Save activity to collection
+// Save activity to collection (null collection_id = "All Saved")
 export const saveActivity = createServerFn({ method: 'POST' })
-  .inputValidator((data: { activityId: string; collectionId?: string }) => data)
-  .handler(async ({ data }): Promise<{ success: boolean; itemId: string | null; collectionId: string; alreadySaved: boolean }> => {
+  .inputValidator((data: { activityId: string; collectionId?: string | null }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; itemId: string | null; collectionId: string | null; alreadySaved: boolean }> => {
     const supabase = getSupabaseFromCookies()
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -171,37 +148,8 @@ export const saveActivity = createServerFn({ method: 'POST' })
       throw new Error('Authentication required')
     }
 
-    // Get collection ID (use default if not specified)
-    let collectionId = data.collectionId
-    if (!collectionId) {
-      // Check if default collection exists
-      const { data: existing } = await supabase
-        .from('collections')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('is_default', true)
-        .single()
-
-      if (existing) {
-        collectionId = existing.id
-      } else {
-        // Create default collection
-        const { data: created, error: createError } = await supabase
-          .from('collections')
-          .insert({
-            user_id: user.id,
-            name: 'All Saved',
-            is_default: true
-          })
-          .select('id')
-          .single()
-
-        if (createError || !created) {
-          throw new Error('Failed to create default collection')
-        }
-        collectionId = created.id
-      }
-    }
+    // Use null for "All Saved" (virtual collection with id='all' or no collection specified)
+    const collectionId = data.collectionId === 'all' ? null : (data.collectionId ?? null)
 
     const { data: created, error } = await supabase
       .from('saved_items')
@@ -224,9 +172,9 @@ export const saveActivity = createServerFn({ method: 'POST' })
     return { success: true, itemId: created.id, collectionId, alreadySaved: false }
   })
 
-// Remove activity from collection
+// Remove activity from saved items
 export const unsaveActivity = createServerFn({ method: 'POST' })
-  .inputValidator((data: { activityId: string; collectionId: string }) => data)
+  .inputValidator((data: { activityId: string; collectionId?: string | null }) => data)
   .handler(async ({ data }): Promise<{ success: boolean }> => {
     const supabase = getSupabaseFromCookies()
 
@@ -235,12 +183,23 @@ export const unsaveActivity = createServerFn({ method: 'POST' })
       throw new Error('Authentication required')
     }
 
-    const { error } = await supabase
+    // Handle virtual "All Saved" collection (id='all' means null in DB)
+    const collectionId = data.collectionId === 'all' ? null : data.collectionId
+
+    let query = supabase
       .from('saved_items')
       .delete()
       .eq('activity_id', data.activityId)
-      .eq('collection_id', data.collectionId)
       .eq('user_id', user.id)
+
+    // Filter by collection_id (null for "All Saved")
+    if (collectionId === null || collectionId === undefined) {
+      query = query.is('collection_id', null)
+    } else {
+      query = query.eq('collection_id', collectionId)
+    }
+
+    const { error } = await query
 
     if (error) {
       throw new Error('Failed to remove activity')
@@ -250,8 +209,11 @@ export const unsaveActivity = createServerFn({ method: 'POST' })
   })
 
 // Get saved items (all or by collection)
+// collectionId = 'all' or undefined → all items
+// collectionId = null → items with null collection_id (no specific collection)
+// collectionId = uuid → items in that specific collection
 export const getSavedItems = createServerFn({ method: 'GET' })
-  .inputValidator((data: { collectionId?: string }) => data)
+  .inputValidator((data: { collectionId?: string | null }) => data)
   .handler(async ({ data }): Promise<SavedItemWithActivity[]> => {
     const supabase = getSupabaseFromCookies()
 
@@ -280,9 +242,11 @@ export const getSavedItems = createServerFn({ method: 'GET' })
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
-    if (data.collectionId) {
+    // Filter by collection
+    if (data.collectionId && data.collectionId !== 'all') {
       query = query.eq('collection_id', data.collectionId)
     }
+    // If collectionId is 'all' or undefined, return all items (no filter)
 
     const { data: items, error } = await query
 
@@ -296,7 +260,7 @@ export const getSavedItems = createServerFn({ method: 'GET' })
 // Check if activity is saved
 export const isActivitySaved = createServerFn({ method: 'GET' })
   .inputValidator((data: { activityId: string }) => data)
-  .handler(async ({ data }): Promise<{ saved: boolean; collectionIds: string[] }> => {
+  .handler(async ({ data }): Promise<{ saved: boolean; collectionIds: (string | null)[] }> => {
     const supabase = getSupabaseFromCookies()
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -310,13 +274,14 @@ export const isActivitySaved = createServerFn({ method: 'GET' })
       .eq('activity_id', data.activityId)
       .eq('user_id', user.id)
 
+    // collection_id can be null (for "All Saved" / no collection)
     const collectionIds = (items || []).map(item => item.collection_id)
     return { saved: collectionIds.length > 0, collectionIds }
   })
 
 // Move item to another collection
 export const moveToCollection = createServerFn({ method: 'POST' })
-  .inputValidator((data: { itemId: string; newCollectionId: string }) => data)
+  .inputValidator((data: { itemId: string; newCollectionId: string | null }) => data)
   .handler(async ({ data }): Promise<{ success: boolean }> => {
     const supabase = getSupabaseFromCookies()
 
@@ -337,6 +302,9 @@ export const moveToCollection = createServerFn({ method: 'POST' })
       throw new Error('Item not found')
     }
 
+    // Handle virtual "All Saved" collection (id='all' means null in DB)
+    const newCollectionId = data.newCollectionId === 'all' ? null : data.newCollectionId
+
     // Delete old item and create new one in target collection
     const { error: deleteError } = await supabase
       .from('saved_items')
@@ -353,7 +321,7 @@ export const moveToCollection = createServerFn({ method: 'POST' })
       .insert({
         user_id: user.id,
         activity_id: item.activity_id,
-        collection_id: data.newCollectionId
+        collection_id: newCollectionId
       })
 
     if (insertError) {

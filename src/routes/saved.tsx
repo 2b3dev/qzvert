@@ -129,7 +129,7 @@ function SavedPage() {
     }
   }
 
-  const handleUnsaveActivity = async (activityId: string, collectionId: string) => {
+  const handleUnsaveActivity = async (activityId: string, collectionId: string | null) => {
     try {
       await unsaveActivity({ data: { activityId, collectionId } })
       setSavedItems(prev => prev.filter(item => item.activity_id !== activityId || item.collection_id !== collectionId))
@@ -166,8 +166,9 @@ function SavedPage() {
   }
 
   const handleDeleteCollection = async (collection: CollectionWithCount) => {
-    if (collection.is_default) {
-      toast.error('Cannot delete default collection')
+    // Cannot delete virtual "All Saved" collection
+    if (collection.id === 'all') {
+      toast.error('Cannot delete All Saved collection')
       return
     }
 
@@ -361,7 +362,7 @@ function SavedPage() {
               transition={{ delay: 0.2 }}
               className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
             >
-              {collections.map((collection, index) => (
+              {collections.filter(c => c.id !== 'all').map((collection, index) => (
                 <motion.div
                   key={collection.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -383,9 +384,9 @@ function SavedPage() {
                         <div className="flex-1">
                           <CardTitle className="text-lg flex items-center gap-2">
                             {collection.name}
-                            {collection.is_default && (
+                            {collection.id === 'all' && (
                               <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                                Default
+                                All
                               </span>
                             )}
                           </CardTitle>
@@ -393,7 +394,7 @@ function SavedPage() {
                             {collection.item_count} {collection.item_count === 1 ? 'item' : 'items'}
                           </CardDescription>
                         </div>
-                        {!collection.is_default && (
+                        {collection.id !== 'all' && (
                           <div data-options-dropdown className="relative">
                             <Button
                               variant="ghost"

@@ -39,10 +39,10 @@ export function SaveToCollectionModal({
       getCollections()
         .then((data) => {
           setCollections(data)
-          // Auto-select default collection
-          const defaultCollection = data.find(c => c.is_default)
-          if (defaultCollection) {
-            setSelectedCollectionId(defaultCollection.id)
+          // Auto-select "All Saved" collection (first item with id='all')
+          const allSavedCollection = data.find(c => c.id === 'all')
+          if (allSavedCollection) {
+            setSelectedCollectionId(allSavedCollection.id)
           }
         })
         .catch(() => {
@@ -141,9 +141,9 @@ export function SaveToCollectionModal({
                       >
                         <div className={cn(
                           'w-10 h-10 rounded-lg flex items-center justify-center',
-                          collection.is_default ? 'bg-amber-500/20' : 'bg-primary/20'
+                          collection.id === 'all' ? 'bg-amber-500/20' : 'bg-primary/20'
                         )}>
-                          {collection.is_default ? (
+                          {collection.id === 'all' ? (
                             <Star className="w-5 h-5 text-amber-500" />
                           ) : (
                             <Folder className="w-5 h-5 text-primary" />

@@ -18,7 +18,8 @@ export function SaveButton({ activityId, size = 'icon', className, onSaveChange 
   const { user } = useAuthStore()
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [defaultCollectionId, setDefaultCollectionId] = useState<string | null>(null)
+  // collection_id can be null (for "All Saved" / no specific collection)
+  const [savedCollectionId, setSavedCollectionId] = useState<string | null | undefined>(undefined)
 
   useEffect(() => {
     if (!user) {
@@ -31,7 +32,8 @@ export function SaveButton({ activityId, size = 'icon', className, onSaveChange 
       .then(result => {
         setSaved(result.saved)
         if (result.collectionIds.length > 0) {
-          setDefaultCollectionId(result.collectionIds[0])
+          // First collection_id (can be null for "All Saved")
+          setSavedCollectionId(result.collectionIds[0])
         }
       })
       .catch(() => {
@@ -52,20 +54,19 @@ export function SaveButton({ activityId, size = 'icon', className, onSaveChange 
 
     try {
       if (saved) {
-        // Unsave
-        if (defaultCollectionId) {
-          await unsaveActivity({ data: { activityId, collectionId: defaultCollectionId } })
-        }
+        // Unsave - pass collection_id (can be null for "All Saved")
+        await unsaveActivity({ data: { activityId, collectionId: savedCollectionId } })
         setSaved(false)
+        setSavedCollectionId(undefined)
         onSaveChange?.(false)
         toast.success('Removed from saved')
       } else {
-        // Save to default collection
+        // Save without collection (null = "All Saved")
         const result = await saveActivity({ data: { activityId } })
-        setDefaultCollectionId(result.collectionId)
+        setSavedCollectionId(result.collectionId)
         setSaved(true)
         onSaveChange?.(true)
-        toast.success('Saved to collection')
+        toast.success('Saved')
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to save')

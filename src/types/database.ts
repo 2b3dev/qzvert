@@ -298,7 +298,6 @@ export interface Collection {
   id: string
   user_id: string
   name: string
-  is_default: boolean
   created_at: string
 }
 
@@ -306,7 +305,7 @@ export interface SavedItem {
   id: string
   user_id: string
   activity_id: string
-  collection_id: string
+  collection_id: string | null // null = "All Saved" (no specific collection)
   created_at: string
 }
 
