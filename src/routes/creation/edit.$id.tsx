@@ -31,13 +31,16 @@ import { ConfirmModal } from '../../components/ui/confirm-modal'
 import { ImageInput } from '../../components/ui/image-input'
 import { Input, Textarea } from '../../components/ui/input'
 import { RichTextEditor } from '../../components/ui/rich-text-editor'
+import { StatusDropdown } from '../../components/ui/status-dropdown'
+import type { SelectedUser } from '../../components/ui/user-search-select'
 import { cn } from '../../lib/utils'
-import { getCreationByIdForEdit, updateQuest } from '../../server/creations'
+import { getAllowedUsers, getCreationByIdForEdit, updateAllowedUsers, updateQuest } from '../../server/creations'
 import { deleteImage } from '../../server/storage'
 import { useAuthStore } from '../../stores/auth-store'
 import { supabase } from '../../lib/supabase'
 import { useCreationStore } from '../../stores/creation-store'
 import type {
+  CreationStatus,
   GeneratedMultipleChoiceQuiz,
   GeneratedQuiz,
   GeneratedSubjectiveQuiz,
@@ -73,6 +76,8 @@ function CreationEditPage() {
   const [quizzes, setQuizzes] = useState<Array<GeneratedQuiz>>([])
   const [deleteQuizIndex, setDeleteQuizIndex] = useState<number | null>(null)
   const [totalPoints, setTotalPoints] = useState(0)
+  const [status, setStatus] = useState<CreationStatus>('draft')
+  const [allowedUsers, setAllowedUsers] = useState<SelectedUser[]>([])
 
   // Load creation from database
   useEffect(() => {
@@ -115,6 +120,22 @@ function CreationEditPage() {
           // Calculate total points from loaded quizzes
           const total = loadedQuizzes.reduce((sum, q) => sum + (q.points ?? 100), 0)
           setTotalPoints(total)
+
+          // Load status (default to 'draft' for backwards compatibility)
+          const creationStatus = (data.creation as { status?: CreationStatus }).status
+          setStatus(creationStatus || 'draft')
+
+          // Load allowed users if private_group
+          if (creationStatus === 'private_group') {
+            try {
+              const users = await getAllowedUsers({
+                data: { creationId, accessToken: currentSession.access_token }
+              })
+              setAllowedUsers(users)
+            } catch {
+              // Ignore error, just use empty array
+            }
+          }
         }
       } catch (error) {
         toast.error('Failed to load creation')
@@ -412,8 +433,20 @@ function CreationEditPage() {
           rawContent: rawContent || '',
           themeConfig,
           accessToken: session!.access_token,
+          status,
         },
       })
+
+      // Save allowed users if private_group
+      if (status === 'private_group') {
+        await updateAllowedUsers({
+          data: {
+            creationId,
+            userIds: allowedUsers.map(u => u.id),
+            accessToken: session!.access_token,
+          },
+        })
+      }
 
       toast.success('Saved successfully!')
       navigate({ to: '/creation/me' })
@@ -441,6 +474,12 @@ function CreationEditPage() {
               <h1 className="text-xl font-bold text-foreground">
                 Edit {isSmartQuiz ? 'Quiz' : 'Quest'}
               </h1>
+              <StatusDropdown
+                value={status}
+                onChange={setStatus}
+                allowedUsers={allowedUsers}
+                onAllowedUsersChange={setAllowedUsers}
+              />
             </div>
             <div className="flex items-center gap-2">
               <Button variant="ghost" onClick={handleBack}>

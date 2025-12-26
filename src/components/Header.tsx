@@ -3,16 +3,34 @@ import { setTheme, type Theme } from '@/server/theme'
 import { Link, useRouter } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'framer-motion'
 import { LayoutGrid, LogIn, LogOut, Menu, Moon, Plus, Sun, User, X } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Route } from '../routes/__root'
 import { useAuthStore } from '../stores/auth-store'
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
   const { theme } = Route.useLoaderData()
   const router = useRouter()
   const { user, signOut, isInitialized } = useAuthStore()
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false)
+      }
+    }
+
+    if (isUserMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isUserMenuOpen])
 
   const toggleTheme = async () => {
     const newTheme: Theme = theme === 'dark' ? 'light' : 'dark'
@@ -95,7 +113,7 @@ export default function Header() {
               {!isInitialized ? (
                 <div className="ml-2 w-8 h-8 rounded-full bg-muted animate-pulse" />
               ) : user ? (
-                <div className="relative ml-2">
+                <div ref={userMenuRef} className="relative ml-2">
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                     className="flex items-center gap-2 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"

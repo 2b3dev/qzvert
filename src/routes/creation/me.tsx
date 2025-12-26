@@ -3,9 +3,11 @@ import { AnimatePresence, motion } from 'framer-motion'
 import {
   BookOpen,
   Calendar,
+  EyeOff,
   Globe,
   GraduationCap,
   LayoutGrid,
+  Link2,
   Loader2,
   Lock,
   Map,
@@ -37,11 +39,13 @@ const tabs: { type: TabType; label: string; icon: React.ElementType }[] = [
   { type: 'flashcard', label: 'Flashcard', icon: BookOpen },
 ]
 
+import type { CreationStatus } from '../../types/database'
+
 interface CreationItem {
   id: string
   created_at: string
   title: string
-  is_published: boolean
+  status: CreationStatus
   play_count: number
   stages: { id: string; title: string }[]
 }
@@ -273,19 +277,33 @@ function MyCreationsPage() {
                           <div
                             className={cn(
                               'flex items-center gap-1 text-xs px-2 py-1 rounded-full',
-                              creation.is_published
+                              creation.status === 'public'
                                 ? 'bg-emerald-500/20 text-emerald-500'
-                                : 'bg-muted text-muted-foreground',
+                                : creation.status === 'link'
+                                  ? 'bg-blue-500/20 text-blue-500'
+                                  : creation.status === 'private_group'
+                                    ? 'bg-amber-500/20 text-amber-500'
+                                    : 'bg-muted text-muted-foreground',
                             )}
                           >
-                            {creation.is_published ? (
+                            {creation.status === 'public' ? (
                               <>
                                 <Globe className="w-3 h-3" />
-                                Published
+                                Public
+                              </>
+                            ) : creation.status === 'link' ? (
+                              <>
+                                <Link2 className="w-3 h-3" />
+                                Link
+                              </>
+                            ) : creation.status === 'private_group' ? (
+                              <>
+                                <Users className="w-3 h-3" />
+                                Group
                               </>
                             ) : (
                               <>
-                                <Lock className="w-3 h-3" />
+                                <EyeOff className="w-3 h-3" />
                                 Draft
                               </>
                             )}

@@ -1,3 +1,6 @@
+// Creation visibility status (must be defined before Database interface)
+export type CreationStatus = 'draft' | 'private_group' | 'link' | 'public'
+
 export interface Database {
   public: {
     Tables: {
@@ -12,9 +15,9 @@ export interface Database {
           tags: string[] | null
           raw_content: string
           theme_config: ThemeConfig
-          is_published: boolean
           play_count: number
           type: 'quiz' | 'quest' | 'flashcard' | 'roleplay'
+          status: CreationStatus
         }
         Insert: {
           id?: string
@@ -26,9 +29,9 @@ export interface Database {
           tags?: string[] | null
           raw_content: string
           theme_config?: ThemeConfig
-          is_published?: boolean
           play_count?: number
           type: 'quiz' | 'quest' | 'flashcard' | 'roleplay'
+          status?: CreationStatus
         }
         Update: {
           id?: string
@@ -40,9 +43,9 @@ export interface Database {
           tags?: string[] | null
           raw_content?: string
           theme_config?: ThemeConfig
-          is_published?: boolean
           play_count?: number
           type?: 'quiz' | 'quest' | 'flashcard'
+          status?: CreationStatus
         }
       }
       stages: {
@@ -123,6 +126,13 @@ export interface ThemeConfig {
   theme: 'adventure' | 'space' | 'fantasy' | 'science'
 }
 
+export const CREATION_STATUS_OPTIONS: { value: CreationStatus; label: string; description: string }[] = [
+  { value: 'draft', label: 'Draft', description: 'Only you can see this' },
+  { value: 'private_group', label: 'Private Group', description: 'Share with specific users' },
+  { value: 'link', label: 'Link', description: 'Anyone with the link can access' },
+  { value: 'public', label: 'Public', description: 'Visible to everyone' },
+]
+
 export interface Creation {
   id: string
   created_at: string
@@ -133,7 +143,7 @@ export interface Creation {
   tags: string[] | null
   raw_content: string
   theme_config: ThemeConfig
-  is_published: boolean
+  status: CreationStatus
   play_count: number
   type: 'quiz' | 'quest' | 'flashcard' | 'roleplay'
   stages?: Stage[]

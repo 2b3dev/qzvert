@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import { createClient } from '@supabase/supabase-js'
-import type { Database, GeneratedQuest, ThemeConfig } from '../types/database'
+import type { CreationStatus, Database, GeneratedQuest, ThemeConfig } from '../types/database'
 
 // Create Supabase client with user's access token for RLS
 const getSupabaseWithAuth = (accessToken: string) => {
@@ -66,7 +66,7 @@ export const saveQuest = createServerFn({ method: 'POST' })
         tags: data.quest.tags || null,
         raw_content: data.rawContent,
         theme_config: data.themeConfig as unknown as Database['public']['Tables']['creations']['Insert']['theme_config'],
-        is_published: false,
+        status: 'draft',
         type: data.quest.type === 'quiz' ? 'quiz' : 'quest'
       })
       .select('id')
@@ -163,7 +163,7 @@ export const publishCreation = createServerFn({ method: 'POST' })
 
     const { error } = await supabase
       .from('creations')
-      .update({ is_published: true })
+      .update({ status: 'public' as CreationStatus })
       .eq('id', data.creationId)
 
     if (error) {
@@ -192,7 +192,7 @@ export const getPublishedCreations = createServerFn({ method: 'GET' })
           order_index
         )
       `)
-      .eq('is_published', true)
+      .eq('status', 'public')
       .order('created_at', { ascending: false })
       .limit(20)
 
@@ -405,7 +405,7 @@ export const getUserCreations = createServerFn({ method: 'GET' })
         id,
         created_at,
         title,
-        is_published,
+        status,
         play_count,
         stages (
           id,
@@ -444,6 +444,7 @@ interface UpdateQuestInput {
   rawContent: string
   themeConfig: ThemeConfig
   accessToken: string
+  status?: CreationStatus
 }
 
 export const updateQuest = createServerFn({ method: 'POST' })
@@ -458,16 +459,23 @@ export const updateQuest = createServerFn({ method: 'POST' })
     }
 
     // 1. Update the creation metadata
+    const updateData: Database['public']['Tables']['creations']['Update'] = {
+      title: data.quest.title,
+      description: data.quest.description || null,
+      thumbnail: data.quest.thumbnail || null,
+      tags: data.quest.tags || null,
+      raw_content: data.rawContent,
+      theme_config: data.themeConfig as unknown as Database['public']['Tables']['creations']['Update']['theme_config'],
+    }
+
+    // Add status if provided
+    if (data.status) {
+      updateData.status = data.status
+    }
+
     const { error: updateError } = await supabase
       .from('creations')
-      .update({
-        title: data.quest.title,
-        description: data.quest.description || null,
-        thumbnail: data.quest.thumbnail || null,
-        tags: data.quest.tags || null,
-        raw_content: data.rawContent,
-        theme_config: data.themeConfig as unknown as Database['public']['Tables']['creations']['Update']['theme_config'],
-      })
+      .update(updateData)
       .eq('id', data.creationId)
 
     if (updateError) {
@@ -568,6 +576,113 @@ export const updateQuest = createServerFn({ method: 'POST' })
         if (questionError) {
           throw new Error(`Failed to save questions: ${questionError.message}`)
         }
+      }
+    }
+
+    return { success: true }
+  })
+
+// Search users by display name
+export const searchUsers = createServerFn({ method: 'GET' })
+  .inputValidator((data: { query: string; accessToken: string; limit?: number }) => data)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseWithAuth(data.accessToken)
+
+    // Verify user is authenticated
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      throw new Error('Authentication failed')
+    }
+
+    const limit = data.limit || 10
+    const query = data.query.trim()
+
+    if (query.length < 2) {
+      return []
+    }
+
+    // Search profiles by display name
+    const { data: profiles, error } = await supabase
+      .from('profiles')
+      .select('id, display_name, avatar_url')
+      .neq('id', user.id)
+      .ilike('display_name', `%${query}%`)
+      .limit(limit)
+
+    if (error) {
+      throw new Error(`Failed to search users: ${error.message}`)
+    }
+
+    return profiles || []
+  })
+
+// Get allowed users for a creation
+export const getAllowedUsers = createServerFn({ method: 'GET' })
+  .inputValidator((data: { creationId: string; accessToken: string }) => data)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseWithAuth(data.accessToken)
+
+    // Verify user is authenticated
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      throw new Error('Authentication failed')
+    }
+
+    const { data: allowedUsers, error } = await supabase
+      .from('creation_allowed_users')
+      .select(`
+        user_id,
+        profiles!creation_allowed_users_user_id_fkey (
+          id,
+          display_name,
+          avatar_url
+        )
+      `)
+      .eq('creation_id', data.creationId)
+
+    if (error) {
+      throw new Error(`Failed to get allowed users: ${error.message}`)
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (allowedUsers || []).map((au: any) => ({
+      id: au.profiles?.id || au.user_id,
+      display_name: au.profiles?.display_name || 'Unknown User',
+      avatar_url: au.profiles?.avatar_url || null
+    }))
+  })
+
+// Update allowed users for a creation
+export const updateAllowedUsers = createServerFn({ method: 'POST' })
+  .inputValidator((data: { creationId: string; userIds: string[]; accessToken: string }) => data)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseWithAuth(data.accessToken)
+
+    // Verify user is authenticated
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      throw new Error('Authentication failed')
+    }
+
+    // Delete existing allowed users
+    await supabase
+      .from('creation_allowed_users')
+      .delete()
+      .eq('creation_id', data.creationId)
+
+    // Insert new allowed users
+    if (data.userIds.length > 0) {
+      const inserts = data.userIds.map(userId => ({
+        creation_id: data.creationId,
+        user_id: userId
+      }))
+
+      const { error: insertError } = await supabase
+        .from('creation_allowed_users')
+        .insert(inserts)
+
+      if (insertError) {
+        throw new Error(`Failed to update allowed users: ${insertError.message}`)
       }
     }
 
