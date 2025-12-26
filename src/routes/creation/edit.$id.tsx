@@ -32,9 +32,8 @@ import { ImageInput } from '../../components/ui/image-input'
 import { Input, Textarea } from '../../components/ui/input'
 import { RichTextEditor } from '../../components/ui/rich-text-editor'
 import { StatusDropdown } from '../../components/ui/status-dropdown'
-import type { SelectedUser } from '../../components/ui/user-search-select'
 import { cn } from '../../lib/utils'
-import { getAllowedUsers, getCreationByIdForEdit, updateAllowedUsers, updateQuest } from '../../server/creations'
+import { getAllowedEmails, getCreationByIdForEdit, updateAllowedEmails, updateQuest } from '../../server/creations'
 import { deleteImage } from '../../server/storage'
 import { useAuthStore } from '../../stores/auth-store'
 import { supabase } from '../../lib/supabase'
@@ -77,7 +76,7 @@ function CreationEditPage() {
   const [deleteQuizIndex, setDeleteQuizIndex] = useState<number | null>(null)
   const [totalPoints, setTotalPoints] = useState(0)
   const [status, setStatus] = useState<CreationStatus>('draft')
-  const [allowedUsers, setAllowedUsers] = useState<SelectedUser[]>([])
+  const [allowedEmails, setAllowedEmails] = useState<string[]>([])
 
   // Load creation from database
   useEffect(() => {
@@ -125,13 +124,13 @@ function CreationEditPage() {
           const creationStatus = (data.creation as { status?: CreationStatus }).status
           setStatus(creationStatus || 'draft')
 
-          // Load allowed users if private_group
+          // Load allowed emails if private_group
           if (creationStatus === 'private_group') {
             try {
-              const users = await getAllowedUsers({
+              const emails = await getAllowedEmails({
                 data: { creationId, accessToken: currentSession.access_token }
               })
-              setAllowedUsers(users)
+              setAllowedEmails(emails)
             } catch {
               // Ignore error, just use empty array
             }
@@ -437,12 +436,12 @@ function CreationEditPage() {
         },
       })
 
-      // Save allowed users if private_group
+      // Save allowed emails if private_group
       if (status === 'private_group') {
-        await updateAllowedUsers({
+        await updateAllowedEmails({
           data: {
             creationId,
-            userIds: allowedUsers.map(u => u.id),
+            emails: allowedEmails,
             accessToken: session!.access_token,
           },
         })
@@ -477,8 +476,8 @@ function CreationEditPage() {
               <StatusDropdown
                 value={status}
                 onChange={setStatus}
-                allowedUsers={allowedUsers}
-                onAllowedUsersChange={setAllowedUsers}
+                allowedEmails={allowedEmails}
+                onAllowedEmailsChange={setAllowedEmails}
               />
             </div>
             <div className="flex items-center gap-2">

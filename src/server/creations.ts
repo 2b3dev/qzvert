@@ -582,42 +582,8 @@ export const updateQuest = createServerFn({ method: 'POST' })
     return { success: true }
   })
 
-// Search users by display name
-export const searchUsers = createServerFn({ method: 'GET' })
-  .inputValidator((data: { query: string; accessToken: string; limit?: number }) => data)
-  .handler(async ({ data }) => {
-    const supabase = getSupabaseWithAuth(data.accessToken)
-
-    // Verify user is authenticated
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) {
-      throw new Error('Authentication failed')
-    }
-
-    const limit = data.limit || 10
-    const query = data.query.trim()
-
-    if (query.length < 2) {
-      return []
-    }
-
-    // Search profiles by display name
-    const { data: profiles, error } = await supabase
-      .from('profiles')
-      .select('id, display_name, avatar_url')
-      .neq('id', user.id)
-      .ilike('display_name', `%${query}%`)
-      .limit(limit)
-
-    if (error) {
-      throw new Error(`Failed to search users: ${error.message}`)
-    }
-
-    return profiles || []
-  })
-
-// Get allowed users for a creation
-export const getAllowedUsers = createServerFn({ method: 'GET' })
+// Get allowed emails for a private_group creation
+export const getAllowedEmails = createServerFn({ method: 'GET' })
   .inputValidator((data: { creationId: string; accessToken: string }) => data)
   .handler(async ({ data }) => {
     const supabase = getSupabaseWithAuth(data.accessToken)
@@ -628,33 +594,26 @@ export const getAllowedUsers = createServerFn({ method: 'GET' })
       throw new Error('Authentication failed')
     }
 
-    const { data: allowedUsers, error } = await supabase
-      .from('creation_allowed_users')
-      .select(`
-        user_id,
-        profiles!creation_allowed_users_user_id_fkey (
-          id,
-          display_name,
-          avatar_url
-        )
-      `)
+    // Get pending email invites
+    const { data: pendingInvites, error } = await supabase
+      .from('creation_pending_invites')
+      .select('email')
       .eq('creation_id', data.creationId)
 
     if (error) {
-      throw new Error(`Failed to get allowed users: ${error.message}`)
+      throw new Error(`Failed to get allowed emails: ${error.message}`)
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (allowedUsers || []).map((au: any) => ({
-      id: au.profiles?.id || au.user_id,
-      display_name: au.profiles?.display_name || 'Unknown User',
-      avatar_url: au.profiles?.avatar_url || null
-    }))
+    return (pendingInvites || []).map(inv => inv.email)
   })
 
-// Update allowed users for a creation
-export const updateAllowedUsers = createServerFn({ method: 'POST' })
-  .inputValidator((data: { creationId: string; userIds: string[]; accessToken: string }) => data)
+// Update allowed emails for a private_group creation
+export const updateAllowedEmails = createServerFn({ method: 'POST' })
+  .inputValidator((data: {
+    creationId: string
+    emails: string[]
+    accessToken: string
+  }) => data)
   .handler(async ({ data }) => {
     const supabase = getSupabaseWithAuth(data.accessToken)
 
@@ -664,25 +623,25 @@ export const updateAllowedUsers = createServerFn({ method: 'POST' })
       throw new Error('Authentication failed')
     }
 
-    // Delete existing allowed users
+    // Delete existing pending invites
     await supabase
-      .from('creation_allowed_users')
+      .from('creation_pending_invites')
       .delete()
       .eq('creation_id', data.creationId)
 
-    // Insert new allowed users
-    if (data.userIds.length > 0) {
-      const inserts = data.userIds.map(userId => ({
+    // Insert new email invites
+    if (data.emails.length > 0) {
+      const emailInserts = data.emails.map(email => ({
         creation_id: data.creationId,
-        user_id: userId
+        email: email.toLowerCase()
       }))
 
-      const { error: insertError } = await supabase
-        .from('creation_allowed_users')
-        .insert(inserts)
+      const { error: emailError } = await supabase
+        .from('creation_pending_invites')
+        .insert(emailInserts)
 
-      if (insertError) {
-        throw new Error(`Failed to update allowed users: ${insertError.message}`)
+      if (emailError) {
+        throw new Error(`Failed to save allowed emails: ${emailError.message}`)
       }
     }
 

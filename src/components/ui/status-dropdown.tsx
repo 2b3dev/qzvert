@@ -4,7 +4,7 @@ import { Check, ChevronDown, EyeOff, Globe, Link2, Users } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import type { CreationStatus } from '../../types/database'
 import { CREATION_STATUS_OPTIONS } from '../../types/database'
-import { UserSearchSelect, type SelectedUser } from './user-search-select'
+import { EmailListInput } from './email-list-input'
 
 const statusIcons: Record<CreationStatus, React.ReactNode> = {
   draft: <EyeOff className="w-4 h-4" />,
@@ -24,16 +24,16 @@ interface StatusDropdownProps {
   value: CreationStatus
   onChange: (value: CreationStatus) => void
   disabled?: boolean
-  allowedUsers?: SelectedUser[]
-  onAllowedUsersChange?: (users: SelectedUser[]) => void
+  allowedEmails?: string[]
+  onAllowedEmailsChange?: (emails: string[]) => void
 }
 
 export function StatusDropdown({
   value,
   onChange,
   disabled,
-  allowedUsers = [],
-  onAllowedUsersChange
+  allowedEmails = [],
+  onAllowedEmailsChange
 }: StatusDropdownProps) {
   const [isOpen, setIsOpen] = React.useState(false)
   const dropdownRef = React.useRef<HTMLDivElement>(null)
@@ -80,9 +80,9 @@ export function StatusDropdown({
         <span className={statusColors[value]}>{statusIcons[value]}</span>
         <span className="text-foreground">
           {selectedOption?.label}
-          {value === 'private_group' && allowedUsers.length > 0 && (
+          {value === 'private_group' && allowedEmails.length > 0 && (
             <span className="ml-1 text-xs text-muted-foreground">
-              ({allowedUsers.length})
+              ({allowedEmails.length})
             </span>
           )}
         </span>
@@ -138,8 +138,8 @@ export function StatusDropdown({
                   </div>
                 </button>
 
-                {/* User selection UI for private_group */}
-                {option.value === 'private_group' && value === 'private_group' && onAllowedUsersChange && (
+                {/* Email input for private_group */}
+                {option.value === 'private_group' && value === 'private_group' && onAllowedEmailsChange && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
@@ -147,10 +147,10 @@ export function StatusDropdown({
                     className="px-3 pb-3"
                   >
                     <div className="pt-2 border-t border-border mt-2">
-                      <UserSearchSelect
-                        selectedUsers={allowedUsers}
-                        onChange={onAllowedUsersChange}
-                        placeholder="Search users to add..."
+                      <EmailListInput
+                        emails={allowedEmails}
+                        onChange={onAllowedEmailsChange}
+                        placeholder="Enter email addresses..."
                       />
                     </div>
                   </motion.div>

@@ -1,14 +1,15 @@
 import * as React from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Loader2, Search, User, X } from 'lucide-react'
+import { Loader2, Mail, Search, User, X } from 'lucide-react'
 import { cn } from '../../lib/utils'
-import { searchUsers } from '../../server/creations'
 import { useAuthStore } from '../../stores/auth-store'
 
 export interface SelectedUser {
   id: string
   display_name: string | null
   avatar_url: string | null
+  email?: string // For email invites
+  isPendingInvite?: boolean // True if invited by email but not yet registered
 }
 
 interface UserSearchSelectProps {
@@ -107,6 +108,29 @@ export function UserSearchSelect({
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
   }
 
+  const isValidEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  }
+
+  const addEmailInvite = () => {
+    const email = query.trim().toLowerCase()
+    if (!isValidEmail(email)) return
+
+    // Check if already added
+    if (selectedUsers.some(u => u.email === email || u.display_name === email)) return
+
+    const newUser: SelectedUser = {
+      id: `email:${email}`, // Prefix to identify email invites
+      display_name: email,
+      avatar_url: null,
+      email: email,
+      isPendingInvite: true
+    }
+    onChange([...selectedUsers, newUser])
+    setQuery('')
+    setShowDropdown(false)
+  }
+
   return (
     <div ref={containerRef} className={cn('relative', className)}>
       {/* Selected users */}
@@ -118,9 +142,16 @@ export function UserSearchSelect({
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/20 text-primary"
+              className={cn(
+                "flex items-center gap-2 px-3 py-1.5 rounded-full",
+                user.isPendingInvite
+                  ? "bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                  : "bg-primary/20 text-primary"
+              )}
             >
-              {user.avatar_url ? (
+              {user.isPendingInvite ? (
+                <Mail className="w-4 h-4" />
+              ) : user.avatar_url ? (
                 <img
                   src={user.avatar_url}
                   alt={user.display_name || 'User'}
@@ -132,10 +163,13 @@ export function UserSearchSelect({
                 </div>
               )}
               <span className="text-sm font-medium">{user.display_name || 'Unknown'}</span>
+              {user.isPendingInvite && (
+                <span className="text-xs opacity-70">(pending)</span>
+              )}
               <button
                 type="button"
                 onClick={() => removeUser(user.id)}
-                className="hover:bg-primary/30 rounded-full p-0.5 transition-colors"
+                className="hover:bg-black/10 dark:hover:bg-white/10 rounded-full p-0.5 transition-colors"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -180,9 +214,28 @@ export function UserSearchSelect({
               'rounded-xl border border-border bg-background shadow-lg'
             )}
           >
-            {searchResults.length === 0 ? (
+            {searchResults.length === 0 && !isValidEmail(query) ? (
               <div className="p-4 text-center text-sm text-muted-foreground">
-                {isSearching ? 'Searching...' : 'No users found'}
+                {isSearching ? 'Searching...' : 'No users found. Try entering an email address.'}
+              </div>
+            ) : searchResults.length === 0 && isValidEmail(query) ? (
+              <div className="p-1">
+                <button
+                  type="button"
+                  onClick={addEmailInvite}
+                  className={cn(
+                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left',
+                    'hover:bg-secondary/50 transition-colors'
+                  )}
+                >
+                  <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center">
+                    <Mail className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div>
+                    <span className="font-medium text-foreground">Invite {query}</span>
+                    <p className="text-xs text-muted-foreground">Send invite via email</p>
+                  </div>
+                </button>
               </div>
             ) : (
               <div className="p-1">
@@ -212,6 +265,28 @@ export function UserSearchSelect({
                     </span>
                   </button>
                 ))}
+                {/* Show invite option if query is valid email */}
+                {isValidEmail(query) && (
+                  <>
+                    <div className="border-t border-border my-1" />
+                    <button
+                      type="button"
+                      onClick={addEmailInvite}
+                      className={cn(
+                        'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left',
+                        'hover:bg-secondary/50 transition-colors'
+                      )}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center">
+                        <Mail className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                      </div>
+                      <div>
+                        <span className="font-medium text-foreground">Invite {query}</span>
+                        <p className="text-xs text-muted-foreground">Send invite via email</p>
+                      </div>
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </motion.div>
@@ -220,7 +295,7 @@ export function UserSearchSelect({
 
       {/* Helper text */}
       <p className="text-xs text-muted-foreground mt-2">
-        Type at least 2 characters to search for users
+        Search by name or enter an email address to invite
       </p>
     </div>
   )
