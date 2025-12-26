@@ -2,7 +2,7 @@ import IconApp from '@/components/icon/icon-app'
 import { setTheme, type Theme } from '@/server/theme'
 import { Link, useRouter } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'framer-motion'
-import { LayoutGrid, LogIn, LogOut, Menu, Moon, Plus, Sun, User, X } from 'lucide-react'
+import { Heart, LayoutGrid, LogIn, LogOut, Menu, Moon, Plus, Sun, User, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Route } from '../routes/__root'
 import { useAuthStore } from '../stores/auth-store'
@@ -152,6 +152,14 @@ export default function Header() {
                           <LayoutGrid className="w-4 h-4" />
                           My Activities
                         </Link>
+                        <Link
+                          to="/saved"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                        >
+                          <Heart className="w-4 h-4" />
+                          My Saved
+                        </Link>
                         <button
                           onClick={handleSignOut}
                           className="w-full flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
@@ -251,6 +259,14 @@ export default function Header() {
                 >
                   <LayoutGrid className="w-5 h-5" />
                   My Activities
+                </Link>
+                <Link
+                  to="/saved"
+                  onClick={() => setIsOpen(false)}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                >
+                  <Heart className="w-5 h-5" />
+                  My Saved
                 </Link>
                 <button
                   onClick={() => {

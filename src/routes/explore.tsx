@@ -33,6 +33,9 @@ import { Input } from '../components/ui/input'
 import { cn } from '../lib/utils'
 import { getActivityById, getPublishedActivities } from '../server/activities'
 import { useActivityStore } from '../stores/activity-store'
+import { unsaveActivity } from '../server/saved'
+import { useAuthStore } from '../stores/auth-store'
+import { SaveToCollectionModal } from '../components/ui/SaveToCollectionModal'
 
 export const Route = createFileRoute('/explore')({
   component: ExplorePage,
@@ -86,6 +89,11 @@ function ExplorePage() {
   )
   const [error, setError] = useState<string | null>(null)
   const [openOptionsId, setOpenOptionsId] = useState<string | null>(null)
+  // Track saved activities: { activityId: collectionId }
+  const [savedActivities, setSavedActivities] = useState<Record<string, string>>({})
+  const { user } = useAuthStore()
+  // Save modal state
+  const [saveModalActivityId, setSaveModalActivityId] = useState<string | null>(null)
 
   const sortDropdownRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -417,15 +425,37 @@ function ExplorePage() {
                               >
                                 <button
                                   type="button"
-                                  onClick={(e) => {
+                                  onClick={async (e) => {
                                     e.stopPropagation()
-                                    toast.success('Activity saved!')
+                                    if (!user) {
+                                      toast.error('Please login to save')
+                                      setOpenOptionsId(null)
+                                      return
+                                    }
+                                    const isSaved = savedActivities[activity.id]
+                                    if (isSaved) {
+                                      // Unsave directly
+                                      try {
+                                        await unsaveActivity({ data: { activityId: activity.id, collectionId: isSaved } })
+                                        setSavedActivities(prev => {
+                                          const next = { ...prev }
+                                          delete next[activity.id]
+                                          return next
+                                        })
+                                        toast.success('Removed from saved')
+                                      } catch (err) {
+                                        toast.error(err instanceof Error ? err.message : 'Failed')
+                                      }
+                                    } else {
+                                      // Open modal to select collection
+                                      setSaveModalActivityId(activity.id)
+                                    }
                                     setOpenOptionsId(null)
                                   }}
                                   className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-left hover:bg-secondary/50 transition-colors"
                                 >
-                                  <Bookmark className="w-4 h-4" />
-                                  <span>Save</span>
+                                  <Bookmark className={cn('w-4 h-4', savedActivities[activity.id] && 'fill-current')} />
+                                  <span>{savedActivities[activity.id] ? 'Unsave' : 'Save'}</span>
                                 </button>
                                 <button
                                   type="button"
@@ -488,6 +518,19 @@ function ExplorePage() {
           )}
         </div>
       </div>
+
+      {/* Save to Collection Modal */}
+      <SaveToCollectionModal
+        isOpen={saveModalActivityId !== null}
+        onClose={() => setSaveModalActivityId(null)}
+        activityId={saveModalActivityId || ''}
+        onSaved={(collectionId) => {
+          if (saveModalActivityId) {
+            setSavedActivities(prev => ({ ...prev, [saveModalActivityId]: collectionId }))
+            toast.success('Saved to collection!')
+          }
+        }}
+      />
     </DefaultLayout>
   )
 }

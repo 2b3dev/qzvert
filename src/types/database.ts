@@ -292,3 +292,35 @@ export interface CanUserPlayResult {
   plays_remaining?: number
   replay_limit?: number
 }
+
+// Collections & Saved Items
+export interface Collection {
+  id: string
+  user_id: string
+  name: string
+  is_default: boolean
+  created_at: string
+}
+
+export interface SavedItem {
+  id: string
+  user_id: string
+  activity_id: string
+  collection_id: string
+  created_at: string
+}
+
+export interface SavedItemWithActivity extends SavedItem {
+  activity: {
+    id: string
+    title: string
+    description: string | null
+    thumbnail: string | null
+    type: 'quiz' | 'quest' | 'flashcard' | 'roleplay'
+    play_count: number
+  }
+}
+
+export interface CollectionWithCount extends Collection {
+  item_count: number
+}

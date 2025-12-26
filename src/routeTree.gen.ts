@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SavedRouteImport } from './routes/saved'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
@@ -22,6 +23,11 @@ import { Route as ActivityMeRouteImport } from './routes/activity/me'
 import { Route as ActivityUploadIdRouteImport } from './routes/activity/upload.$id'
 import { Route as ActivityPlayIdRouteImport } from './routes/activity/play.$id'
 
+const SavedRoute = SavedRouteImport.update({
+  id: '/saved',
+  path: '/saved',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -92,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
+  '/saved': typeof SavedRoute
   '/activity/me': typeof ActivityMeRoute
   '/activity/results': typeof ActivityResultsRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
@@ -106,6 +113,7 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
+  '/saved': typeof SavedRoute
   '/activity/me': typeof ActivityMeRoute
   '/activity/results': typeof ActivityResultsRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
@@ -121,6 +129,7 @@ export interface FileRoutesById {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
+  '/saved': typeof SavedRoute
   '/activity/me': typeof ActivityMeRoute
   '/activity/results': typeof ActivityResultsRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
@@ -137,6 +146,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/profile'
+    | '/saved'
     | '/activity/me'
     | '/activity/results'
     | '/activity/play/$id'
@@ -151,6 +161,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/profile'
+    | '/saved'
     | '/activity/me'
     | '/activity/results'
     | '/activity/play/$id'
@@ -165,6 +176,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/profile'
+    | '/saved'
     | '/activity/me'
     | '/activity/results'
     | '/activity/play/$id'
@@ -180,6 +192,7 @@ export interface RootRouteChildren {
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
+  SavedRoute: typeof SavedRoute
   ActivityMeRoute: typeof ActivityMeRoute
   ActivityResultsRoute: typeof ActivityResultsRoute
   ActivityPlayIdRoute: typeof ActivityPlayIdRoute
@@ -188,6 +201,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/saved': {
+      id: '/saved'
+      path: '/saved'
+      fullPath: '/saved'
+      preLoaderRoute: typeof SavedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -284,6 +304,7 @@ const rootRouteChildren: RootRouteChildren = {
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
+  SavedRoute: SavedRoute,
   ActivityMeRoute: ActivityMeRoute,
   ActivityResultsRoute: ActivityResultsRoute,
   ActivityPlayIdRoute: ActivityPlayIdRoute,
