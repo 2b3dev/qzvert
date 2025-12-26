@@ -576,11 +576,11 @@ export function QuizSettings(props: Props) {
             </div>
           )}
 
-          {/* Time Limit */}
+          {/* Activity Time Limit */}
           <div className="relative">
             <label className="text-sm font-medium text-foreground mb-2 block">
               <Clock className="w-4 h-4 inline mr-1" />
-              Time Limit per Quiz
+              Activity Time Limit
             </label>
             <button
               type="button"

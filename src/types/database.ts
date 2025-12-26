@@ -21,6 +21,7 @@ export interface Database {
           replay_limit: number | null
           available_from: string | null
           available_until: string | null
+          time_limit_minutes: number | null
         }
         Insert: {
           id?: string
@@ -38,6 +39,7 @@ export interface Database {
           replay_limit?: number | null
           available_from?: string | null
           available_until?: string | null
+          time_limit_minutes?: number | null
         }
         Update: {
           id?: string
@@ -55,6 +57,7 @@ export interface Database {
           replay_limit?: number | null
           available_from?: string | null
           available_until?: string | null
+          time_limit_minutes?: number | null
         }
       }
       stages: {
@@ -160,6 +163,7 @@ export interface Activity {
   replay_limit: number | null // null = unlimited, 1 = once, n = max n times
   available_from: string | null // ISO 8601 timestamp (UTC)
   available_until: string | null // ISO 8601 timestamp (UTC)
+  time_limit_minutes: number | null // null = unlimited, number = max minutes to complete
 }
 
 export interface Stage {

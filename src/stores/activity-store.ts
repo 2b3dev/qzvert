@@ -12,9 +12,11 @@ interface ActivityState {
   themeConfig: ThemeConfig
   isPlaying: boolean
   rawContent: string | null
+  timeLimitMinutes: number | null // Activity time limit from QuestCreator
 
   // Actions
   setActivity: (activity: GeneratedQuest, rawContent?: string, activityId?: string) => void
+  setTimeLimitMinutes: (minutes: number | null) => void
   setCurrentStage: (index: number) => void
   setCurrentQuiz: (index: number) => void
   completeStage: (stageIndex: number) => void
@@ -45,6 +47,7 @@ export const useActivityStore = create<ActivityState>((set) => ({
   themeConfig: defaultThemeConfig,
   isPlaying: false,
   rawContent: null,
+  timeLimitMinutes: null,
 
   setActivity: (activity, rawContent, activityId) => set({
     currentActivity: activity,
@@ -56,6 +59,8 @@ export const useActivityStore = create<ActivityState>((set) => ({
     lives: defaultThemeConfig.maxLives,
     rawContent: rawContent ?? null
   }),
+
+  setTimeLimitMinutes: (minutes) => set({ timeLimitMinutes: minutes }),
 
   setCurrentStage: (index) => set({ currentStageIndex: index, currentQuizIndex: 0 }),
 
@@ -86,6 +91,7 @@ export const useActivityStore = create<ActivityState>((set) => ({
     score: 0,
     lives: defaultThemeConfig.maxLives,
     isPlaying: false,
-    rawContent: null
+    rawContent: null,
+    timeLimitMinutes: null
   })
 }))

@@ -132,7 +132,7 @@ export function QuestCreator() {
   const [questSettings, setQuestSettings] =
     useState<QuestSettingsData>(defaultQuestSettings)
 
-  const { setActivity, themeConfig, setThemeConfig } = useActivityStore()
+  const { setActivity, themeConfig, setThemeConfig, setTimeLimitMinutes } = useActivityStore()
   const { user, session, isLoading: isAuthLoading } = useAuthStore()
   const navigate = useNavigate()
 
@@ -287,7 +287,14 @@ export function QuestCreator() {
       // Store quest and raw content for editing
       setActivity(quest, content)
 
-      // Update theme config with timer settings
+      // Set activity time limit (convert seconds to minutes)
+      if (currentSettings.timerEnabled && currentSettings.timerSeconds > 0) {
+        setTimeLimitMinutes(Math.ceil(currentSettings.timerSeconds / 60))
+      } else {
+        setTimeLimitMinutes(null)
+      }
+
+      // Update theme config (keep for other settings)
       const updatedThemeConfig = {
         ...themeConfig,
         timerEnabled: currentSettings.timerEnabled,
@@ -295,8 +302,8 @@ export function QuestCreator() {
       }
       setThemeConfig(updatedThemeConfig)
 
-      // Navigate to edit page for review before saving
-      navigate({ to: '/quest/edit', search: { id: undefined } })
+      // Navigate to upload page for review before saving
+      navigate({ to: '/activity/upload/$id', params: { id: 'new' } })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate quest')
     } finally {

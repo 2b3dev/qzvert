@@ -19,6 +19,7 @@ import {
   Lock,
   User,
   LogOut,
+  RefreshCw,
 } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
@@ -31,13 +32,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Progress } from '../../components/ui/progress'
 import IconApp from '../../components/icon/icon-app'
 import { checkCanUserPlay, getActivityById, recordPlay, updatePlayRecord } from '../../server/activities'
+import { loadQuizProgress, clearQuizProgress, isQuizSessionExpired, type QuizProgress } from '../../lib/quiz-progress'
 import type { CanUserPlayResult } from '../../types/database'
 
 export const Route = createFileRoute('/activity/play/$id')({
   component: ActivityPlayPage
 })
 
-type GameState = 'intro' | 'lesson' | 'playing' | 'stage_complete' | 'game_over' | 'quest_complete' | 'quiz_complete'
+type GameState = 'intro' | 'lesson' | 'playing' | 'stage_complete' | 'game_over' | 'quest_complete' | 'quiz_complete' | 'time_expired'
 
 function ActivityPlayPage() {
   const navigate = useNavigate()
@@ -62,6 +64,9 @@ function ActivityPlayPage() {
   const [canPlayResult, setCanPlayResult] = useState<CanUserPlayResult | null>(null)
   const [playRecordId, setPlayRecordId] = useState<string | null>(null)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const [savedProgress, setSavedProgress] = useState<QuizProgress | null>(null)
+  const [activityTimeLimit, setActivityTimeLimit] = useState<number | null>(null)
+  const [activityAvailableUntil, setActivityAvailableUntil] = useState<string | null>(null)
   const userMenuRef = useRef<HTMLDivElement>(null)
 
   // Close user menu when clicking outside
@@ -87,6 +92,20 @@ function ActivityPlayPage() {
     navigate({ to: '/' })
   }
 
+  // Check for saved progress on mount
+  useEffect(() => {
+    const progress = loadQuizProgress(activityId)
+    if (progress) {
+      // Check if saved progress has expired
+      if (isQuizSessionExpired(progress)) {
+        clearQuizProgress(activityId)
+        setSavedProgress(null)
+      } else {
+        setSavedProgress(progress)
+      }
+    }
+  }, [activityId])
+
   // Load activity if not already loaded or if different id
   useEffect(() => {
     const loadActivity = async () => {
@@ -98,6 +117,9 @@ function ActivityPlayPage() {
         if (data) {
           setActivity(data.generatedQuest, data.activity.raw_content, activityId)
           setThemeConfig(data.themeConfig)
+          // Store time limit settings from activity
+          setActivityTimeLimit(data.activity.time_limit_minutes ?? null)
+          setActivityAvailableUntil(data.activity.available_until ?? null)
         }
 
         // Check if user can play (availability & replay limits)
@@ -211,6 +233,12 @@ function ActivityPlayPage() {
   const totalQuizzes = isSmartQuizMode ? currentActivity.quizzes.length : 0
 
   const handleStartQuiz = async () => {
+    // Clear any saved progress when starting fresh
+    clearQuizProgress(activityId)
+
+    const startedAt = new Date().toISOString()
+    let recordId: string | null = null
+
     // Record play start if user is logged in
     if (session) {
       try {
@@ -220,13 +248,45 @@ function ActivityPlayPage() {
             completed: false
           }
         })
-        setPlayRecordId(result.playRecordId)
+        recordId = result.playRecordId
+        setPlayRecordId(recordId)
       } catch {
         // Ignore error, continue playing
       }
     }
+
+    // Create initial progress with time limit info for anti-cheat
+    const initialProgress: QuizProgress = {
+      activityId,
+      currentQuizIndex: 0,
+      score: 0,
+      lives: 3,
+      timeLeft: activityTimeLimit ? activityTimeLimit * 60 : 300,
+      answers: {},
+      timestamp: Date.now(),
+      startedAt,
+      playRecordId: recordId ?? undefined,
+      timeLimitMinutes: activityTimeLimit,
+      availableUntil: activityAvailableUntil
+    }
+    setSavedProgress(initialProgress)
+
     startPlaying()
     setGameState('playing')
+  }
+
+  const handleResumeQuiz = async () => {
+    if (!savedProgress) return
+
+    // Restore score and quiz index from saved progress
+    // Note: Lives and other state are handled by QuizPlayer via savedProgress prop
+    startPlaying()
+    setGameState('playing')
+  }
+
+  const handleDiscardProgress = () => {
+    clearQuizProgress(activityId)
+    setSavedProgress(null)
   }
 
   const handleStartQuest = async () => {
@@ -311,7 +371,16 @@ function ActivityPlayPage() {
     setGameState('game_over')
   }
 
+  const handleTimeExpired = () => {
+    // Clear progress and show time expired screen
+    clearQuizProgress(activityId)
+    setSavedProgress(null)
+    setGameState('time_expired')
+  }
+
   const handleRetry = () => {
+    clearQuizProgress(activityId)
+    setSavedProgress(null)
     resetGame()
     setGameState('intro')
   }
@@ -327,7 +396,7 @@ function ActivityPlayPage() {
   }
 
   const handleEdit = () => {
-    navigate({ to: '/activity/edit/$id', params: { id: activityId } })
+    navigate({ to: '/activity/upload/$id', params: { id: activityId } })
   }
 
   return (
@@ -484,6 +553,43 @@ function ActivityPlayPage() {
                       </CardContent>
                     </Card>
                   </motion.div>
+                  {/* Resume Progress Card */}
+                  {savedProgress && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.15 }}
+                      className="mb-6"
+                    >
+                      <Card className="border-primary/50 bg-primary/5">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 rounded-full bg-primary/20">
+                                <RefreshCw className="w-5 h-5 text-primary" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-foreground">Continue where you left off?</p>
+                                <p className="text-sm text-muted-foreground">
+                                  Question {savedProgress.currentQuizIndex + 1} of {currentActivity.quizzes.length} • {savedProgress.score} pts
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button variant="ghost" size="sm" onClick={handleDiscardProgress}>
+                                Start Over
+                              </Button>
+                              <Button size="sm" onClick={handleResumeQuiz}>
+                                <Play className="w-4 h-4" />
+                                Resume
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  )}
+
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -492,7 +598,7 @@ function ActivityPlayPage() {
                   >
                     <Button size="lg" onClick={handleStartQuiz} className="px-12">
                       <Play className="w-5 h-5" />
-                      Start Quiz
+                      {savedProgress ? 'Start Over' : 'Start Quiz'}
                     </Button>
                   </motion.div>
                 </div>)
@@ -667,6 +773,9 @@ function ActivityPlayPage() {
                       onStageComplete={handleStageComplete}
                       onGameOver={handleGameOver}
                       onQuizComplete={handleQuizComplete}
+                      onTimeExpired={handleTimeExpired}
+                      activityId={activityId}
+                      savedProgress={savedProgress}
                     />
                   </motion.div>
                 )}
@@ -916,6 +1025,49 @@ function ActivityPlayPage() {
                       <Button size="lg" onClick={handleRetry}>
                         <RotateCcw className="w-5 h-5" />
                         Try Again
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Time Expired */}
+                {gameState === 'time_expired' && (
+                  <motion.div
+                    key="time_expired"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className="text-center"
+                  >
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: [0, 1.2, 1] }}
+                      transition={{ delay: 0.2, type: 'spring' }}
+                      className="relative inline-block mb-6"
+                    >
+                      <div className="w-24 h-24 rounded-full bg-destructive/20 flex items-center justify-center mx-auto">
+                        <Clock className="w-12 h-12 text-destructive" />
+                      </div>
+                    </motion.div>
+                    <h2 className="text-4xl font-black text-destructive mb-4">หมดเวลา!</h2>
+                    <p className="text-muted-foreground mb-2">
+                      เวลาในการทำข้อสอบหมดแล้ว
+                    </p>
+                    <p className="text-5xl font-bold text-primary mb-2">{score} pts</p>
+                    <p className="text-muted-foreground mb-8">
+                      คะแนนที่ได้จากคำตอบที่ส่งแล้ว
+                    </p>
+
+                    <div className="flex flex-wrap justify-center gap-3">
+                      <Button size="lg" variant="secondary" onClick={handleFinish}>
+                        <Home className="w-5 h-5" />
+                        กลับหน้าหลัก
+                      </Button>
+                      <Button size="lg" variant="outline" asChild>
+                        <Link to="/activity/results">
+                          <BarChart3 className="w-5 h-5" />
+                          ดูผลลัพธ์
+                        </Link>
                       </Button>
                     </div>
                   </motion.div>

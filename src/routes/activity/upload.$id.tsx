@@ -7,6 +7,7 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  Clock,
   FileText,
   ImageIcon,
   Infinity,
@@ -40,6 +41,7 @@ import { cn } from '../../lib/utils'
 import {
   getActivityByIdForEdit,
   getAllowedEmails,
+  saveQuest,
   updateActivitySettings,
   updateAllowedEmails,
   updateQuest,
@@ -53,19 +55,21 @@ import type {
   GeneratedSubjectiveQuiz,
 } from '../../types/database'
 
-export const Route = createFileRoute('/activity/edit/$id')({
-  component: ActivityEditPage,
+export const Route = createFileRoute('/activity/upload/$id')({
+  component: ActivityUploadPage,
 })
 
-function ActivityEditPage() {
+function ActivityUploadPage() {
   const navigate = useNavigate()
   const { id: activityId } = Route.useParams()
+  const isNewActivity = activityId === 'new'
   const {
     currentActivity,
     setActivity,
     themeConfig,
     setThemeConfig,
     rawContent,
+    timeLimitMinutes: storeTimeLimitMinutes,
   } = useActivityStore()
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -87,14 +91,45 @@ function ActivityEditPage() {
 
   // Replay & Availability settings
   const [replayLimit, setReplayLimit] = useState<number | null>(null) // null = unlimited
+  const [timeLimitMinutes, setTimeLimitMinutes] = useState<number | null>(null) // null = unlimited
   const [availableFrom, setAvailableFrom] = useState<string>('') // ISO 8601 format (UTC)
   const [availableUntil, setAvailableUntil] = useState<string>('') // ISO 8601 format (UTC)
 
-  // Load activity from database
+  // Load activity from database or store
   useEffect(() => {
     const loadActivity = async () => {
       if (!activityId || loadedActivityId === activityId) return
 
+      // For new activity, load from store (set by QuestCreator)
+      if (isNewActivity) {
+        if (currentActivity) {
+          setTitle(currentActivity.title)
+          setDescription(currentActivity.description || '')
+          setThumbnail(currentActivity.thumbnail || '')
+          setTags(currentActivity.tags || [])
+
+          let loadedQuizzes: GeneratedQuiz[]
+          if (currentActivity.type === 'quiz') {
+            loadedQuizzes = [...currentActivity.quizzes]
+          } else {
+            loadedQuizzes = currentActivity.stages.flatMap((stage) => stage.quizzes)
+          }
+          setQuizzes(loadedQuizzes)
+          const total = loadedQuizzes.reduce(
+            (sum, q) => sum + (q.points ?? 100),
+            0,
+          )
+          setTotalPoints(total)
+          setLoadedActivityId(activityId)
+
+          // Load time limit from store (set by QuestCreator)
+          setTimeLimitMinutes(storeTimeLimitMinutes)
+        }
+        setIsLoading(false)
+        return
+      }
+
+      // For existing activity, load from database
       setIsLoading(true)
       try {
         const data = await getActivityByIdForEdit({
@@ -135,10 +170,12 @@ function ActivityEditPage() {
           // Load replay & availability settings
           const activityData = data.activity as {
             replay_limit?: number | null
+            time_limit_minutes?: number | null
             available_from?: string | null
             available_until?: string | null
           }
           setReplayLimit(activityData.replay_limit ?? null)
+          setTimeLimitMinutes(activityData.time_limit_minutes ?? null)
           // ISO format is used directly (DateTimePicker handles display)
           setAvailableFrom(activityData.available_from || '')
           setAvailableUntil(activityData.available_until || '')
@@ -164,7 +201,7 @@ function ActivityEditPage() {
     }
 
     loadActivity()
-  }, [activityId, loadedActivityId, setActivity, setThemeConfig, navigate])
+  }, [activityId, loadedActivityId, isNewActivity, currentActivity, storeTimeLimitMinutes, setActivity, setThemeConfig, navigate])
 
   // Show loading state
   if (isLoading) {
@@ -224,18 +261,22 @@ function ActivityEditPage() {
   }
 
   const redistributePoints = () => {
-    if (quizzes.length === 0 || totalPoints < 0) return
+    if (quizzes.length === 0 || totalPoints <= 0) return
     // Distribute points evenly across all quizzes
     const pointsPerQuiz = Math.floor(totalPoints / quizzes.length)
     const remainder = totalPoints % quizzes.length
-    setQuizzes(
-      (prev) =>
-        prev.map((q, i) => ({
-          ...q,
-          // Add remainder to last question
-          points: pointsPerQuiz + (i === prev.length - 1 ? remainder : 0),
-        })) as GeneratedQuiz[],
-    )
+    const newQuizzes = quizzes.map((q, i) => ({
+      ...q,
+      // Add remainder to last question
+      points: pointsPerQuiz + (i === quizzes.length - 1 ? remainder : 0),
+    })) as GeneratedQuiz[]
+    setQuizzes(newQuizzes)
+
+    // Show toast with distribution info
+    const message = remainder > 0
+      ? `${pointsPerQuiz} pts each, +${remainder} pts to last question`
+      : `${pointsPerQuiz} pts each`
+    toast.success(`Distributed: ${message}`)
   }
 
   const updateQuiz = (index: number, updates: Partial<GeneratedQuiz>) => {
@@ -424,62 +465,116 @@ function ActivityEditPage() {
     setIsSaving(true)
 
     try {
-      // Delete old thumbnail if it changed and was a storage URL
-      if (
-        originalThumbnail &&
-        originalThumbnail !== thumbnail &&
-        originalThumbnail.includes('/storage/v1/object/public/thumbnails/')
-      ) {
-        try {
-          await deleteImage({
-            data: {
-              imageUrl: originalThumbnail,
-            },
-          })
-        } catch {
-          // Ignore deletion errors, continue with save
-        }
-      }
-
-      // Update the quest with edited data
+      // Build the updated quest with edited data
       const updatedQuest = isSmartQuiz
         ? { ...currentActivity, title, description, thumbnail, tags, quizzes }
         : { ...currentActivity, title, description, thumbnail, tags }
 
       setActivity(updatedQuest)
 
-      // Save to database
-      await updateQuest({
-        data: {
-          activityId,
-          quest: updatedQuest,
-          rawContent: rawContent || '',
-          themeConfig,
-          status,
-        },
-      })
-
-      // Save allowed emails if private_group
-      if (status === 'private_group') {
-        await updateAllowedEmails({
+      if (isNewActivity) {
+        // Create new activity
+        const result = await saveQuest({
           data: {
-            activityId,
-            emails: allowedEmails,
+            quest: updatedQuest,
+            rawContent: rawContent || '',
+            themeConfig,
           },
         })
+
+        const newActivityId = result.activityId
+
+        // Save additional settings for new activity
+        if (status !== 'draft' || replayLimit !== null || timeLimitMinutes !== null || availableFrom || availableUntil) {
+          await updateActivitySettings({
+            data: {
+              activityId: newActivityId,
+              replayLimit: replayLimit,
+              timeLimitMinutes: timeLimitMinutes,
+              availableFrom: availableFrom || null,
+              availableUntil: availableUntil || null,
+            },
+          })
+        }
+
+        // Update status if not draft
+        if (status !== 'draft') {
+          await updateQuest({
+            data: {
+              activityId: newActivityId,
+              quest: updatedQuest,
+              rawContent: rawContent || '',
+              themeConfig,
+              status,
+            },
+          })
+        }
+
+        // Save allowed emails if private_group
+        if (status === 'private_group') {
+          await updateAllowedEmails({
+            data: {
+              activityId: newActivityId,
+              emails: allowedEmails,
+            },
+          })
+        }
+
+        toast.success('Activity created successfully!')
+      } else {
+        // Update existing activity
+        // Delete old thumbnail if it changed and was a storage URL
+        if (
+          originalThumbnail &&
+          originalThumbnail !== thumbnail &&
+          originalThumbnail.includes('/storage/v1/object/public/thumbnails/')
+        ) {
+          try {
+            await deleteImage({
+              data: {
+                imageUrl: originalThumbnail,
+              },
+            })
+          } catch {
+            // Ignore deletion errors, continue with save
+          }
+        }
+
+        // Save to database
+        await updateQuest({
+          data: {
+            activityId,
+            quest: updatedQuest,
+            rawContent: rawContent || '',
+            themeConfig,
+            status,
+          },
+        })
+
+        // Save allowed emails if private_group
+        if (status === 'private_group') {
+          await updateAllowedEmails({
+            data: {
+              activityId,
+              emails: allowedEmails,
+            },
+          })
+        }
+
+        // Save replay, time limit & availability settings
+        await updateActivitySettings({
+          data: {
+            activityId,
+            replayLimit: replayLimit,
+            timeLimitMinutes: timeLimitMinutes,
+            availableFrom: availableFrom || null,
+            availableUntil: availableUntil || null,
+          },
+        })
+
+        toast.success('Saved successfully!')
       }
 
-      // Save replay & availability settings
-      await updateActivitySettings({
-        data: {
-          activityId,
-          replayLimit: replayLimit,
-          availableFrom: availableFrom || null,
-          availableUntil: availableUntil || null,
-        },
-      })
-
-      toast.success('Saved successfully!')
       navigate({ to: '/activity/me' })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to save')
@@ -721,9 +816,9 @@ function ActivityEditPage() {
                         type="number"
                         min={1}
                         max={100}
-                        value={replayLimit}
+                        value={replayLimit || ''}
                         onChange={(e) => {
-                          const val = parseInt(e.target.value, 10)
+                          const val = e.target.value === '' ? 1 : parseInt(e.target.value, 10)
                           if (!isNaN(val) && val >= 1) setReplayLimit(val)
                         }}
                         className="w-20"
@@ -738,6 +833,64 @@ function ActivityEditPage() {
                   {replayLimit === null
                     ? 'Players can play this activity as many times as they want.'
                     : `Players can only play this activity ${replayLimit} time${replayLimit > 1 ? 's' : ''}.`}
+                </p>
+              </div>
+
+              {/* Time Limit */}
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  <Clock className="w-4 h-4 inline-block mr-1" />
+                  Time Limit
+                </label>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setTimeLimitMinutes(null)}
+                    className={cn(
+                      'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                      timeLimitMinutes === null
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground',
+                    )}
+                  >
+                    <Infinity className="w-4 h-4" />
+                    Unlimited
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTimeLimitMinutes(30)}
+                    className={cn(
+                      'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                      timeLimitMinutes !== null
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground',
+                    )}
+                  >
+                    Limited
+                  </button>
+                  {timeLimitMinutes !== null && (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={600}
+                        value={timeLimitMinutes || ''}
+                        onChange={(e) => {
+                          const val = e.target.value === '' ? 1 : parseInt(e.target.value, 10)
+                          if (!isNaN(val) && val >= 1) setTimeLimitMinutes(val)
+                        }}
+                        className="w-20"
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        minutes
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {timeLimitMinutes === null
+                    ? 'Players can take as long as they need to complete this activity.'
+                    : `Players must complete this activity within ${timeLimitMinutes} minute${timeLimitMinutes > 1 ? 's' : ''}.`}
                 </p>
               </div>
 

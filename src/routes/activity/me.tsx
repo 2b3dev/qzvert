@@ -334,7 +334,7 @@ function MyActivitiesPage() {
                             asChild
                           >
                             <Link
-                              to="/activity/edit/$id"
+                              to="/activity/upload/$id"
                               params={{ id: activity.id }}
                             >
                               <Pencil className="w-4 h-4" />

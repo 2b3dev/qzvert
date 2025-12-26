@@ -825,11 +825,97 @@ export const getUserPlayHistory = createServerFn({ method: 'GET' })
     return records
   })
 
+// Get active play session with time limit info
+export interface ActivePlaySession {
+  playRecordId: string
+  startedAt: string
+  timeLimitMinutes: number | null
+  availableUntil: string | null
+  isExpired: boolean
+  remainingSeconds: number | null
+}
+
+export const getActivePlaySession = createServerFn({ method: 'GET' })
+  .inputValidator((data: { activityId: string; playRecordId?: string }) => data)
+  .handler(async ({ data }): Promise<ActivePlaySession | null> => {
+    const supabase = getSupabaseFromCookies()
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      return null // Guest users don't have tracked sessions
+    }
+
+    // Get the most recent uncompleted play record or specific record
+    let query = supabase
+      .from('activity_play_records')
+      .select('id, started_at')
+      .eq('activity_id', data.activityId)
+      .eq('user_id', user.id)
+      .eq('completed', false)
+      .order('started_at', { ascending: false })
+      .limit(1)
+
+    if (data.playRecordId) {
+      query = supabase
+        .from('activity_play_records')
+        .select('id, started_at')
+        .eq('id', data.playRecordId)
+        .eq('user_id', user.id)
+    }
+
+    const { data: playRecord, error: playError } = await query.single()
+
+    if (playError || !playRecord) {
+      return null
+    }
+
+    // Get activity time settings
+    const { data: activity, error: activityError } = await supabase
+      .from('activities')
+      .select('time_limit_minutes, available_until')
+      .eq('id', data.activityId)
+      .single()
+
+    if (activityError || !activity) {
+      return null
+    }
+
+    const now = new Date()
+    const startedAt = new Date(playRecord.started_at)
+    let isExpired = false
+    let remainingSeconds: number | null = null
+
+    // Check time limit expiry
+    if (activity.time_limit_minutes) {
+      const timeLimitMs = activity.time_limit_minutes * 60 * 1000
+      const elapsedMs = now.getTime() - startedAt.getTime()
+      remainingSeconds = Math.max(0, Math.floor((timeLimitMs - elapsedMs) / 1000))
+      if (remainingSeconds <= 0) {
+        isExpired = true
+      }
+    }
+
+    // Check availability window expiry
+    if (activity.available_until && new Date(activity.available_until) < now) {
+      isExpired = true
+    }
+
+    return {
+      playRecordId: playRecord.id,
+      startedAt: playRecord.started_at,
+      timeLimitMinutes: activity.time_limit_minutes,
+      availableUntil: activity.available_until,
+      isExpired,
+      remainingSeconds
+    }
+  })
+
 // Update activity replay & availability settings
 export const updateActivitySettings = createServerFn({ method: 'POST' })
   .inputValidator((data: {
     activityId: string
     replayLimit?: number | null
+    timeLimitMinutes?: number | null
     availableFrom?: string | null
     availableUntil?: string | null
   }) => data)
@@ -845,6 +931,9 @@ export const updateActivitySettings = createServerFn({ method: 'POST' })
 
     if (data.replayLimit !== undefined) {
       updateData.replay_limit = data.replayLimit
+    }
+    if (data.timeLimitMinutes !== undefined) {
+      updateData.time_limit_minutes = data.timeLimitMinutes
     }
     if (data.availableFrom !== undefined) {
       updateData.available_from = data.availableFrom
