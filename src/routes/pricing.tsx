@@ -296,7 +296,7 @@ function PricingPage() {
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
-                    <div className="px-4 py-1.5 rounded-full bg-gradient-to-r from-primary to-cyan-500 text-white text-sm font-semibold flex items-center gap-1.5 shadow-lg">
+                    <div className="px-4 py-1.5 rounded-full bg-gradient-to-r from-primary to-cyan-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg">
                       <Star className="w-4 h-4" />
                       Most Popular
                     </div>
@@ -693,7 +693,7 @@ function PricingPage() {
                 เริ่มต้นใช้ Qzvert วันนี้
               </span>
               <br />
-              เพื่อเปลี่ยนความรู้ให้เป็นอำนาจที่สนุกที่สุดในมือคุณ"
+              เพื่อเปลี่ยนการเรียนรู้ให้สนุกอย่างที่ไม่เคยมีมาก่อน"
             </blockquote>
 
             <div className="flex flex-col sm:flex-row justify-center gap-4">

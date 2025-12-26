@@ -472,12 +472,11 @@ function HomePage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl md:text-5xl font-black mb-6">
-              <span className="text-foreground">พร้อมเปลี่ยนการเรียนรู้</span>
-              <br />
-              <span className="bg-gradient-to-r from-primary via-pink-500 to-orange-400 bg-clip-text text-transparent">
+            <h2 className="text-3xl md:text-5xl font-black mb-">
+              <div className="text-foreground pb-2">พร้อมเปลี่ยนการเรียนรู้</div>
+              <div className="bg-gradient-to-r from-primary via-pink-500 to-orange-400 bg-clip-text text-transparent py-2">
                 ให้สนุกกว่าที่เคย?
-              </span>
+              </div>
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
               ไม่ว่าคุณจะอยากเรียนหรืออยากสอน QzVert พร้อมช่วยคุณ

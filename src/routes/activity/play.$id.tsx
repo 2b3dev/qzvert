@@ -13,13 +13,12 @@ import {
   AlertCircle,
   GraduationCap,
   Play,
-  Pencil,
   Loader2,
   Clock,
   Lock,
   User,
   LogOut,
-  RefreshCw,
+  RefreshCw
 } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
@@ -343,23 +342,23 @@ function ActivityPlayPage() {
     }
   }
 
-  const handleQuizComplete = async () => {
-    // Update play record if we have one
-    if (playRecordId && session) {
-      try {
-        await updatePlayRecord({
-          data: {
-            playRecordId,
-            score,
-            durationSeconds: 0, // TODO: track actual duration
-            completed: true
-          }
-        })
-      } catch {
-        // Ignore error
-      }
-    }
+  const handleQuizComplete = () => {
+    // Set game state immediately for better UX
     setGameState('quiz_complete')
+
+    // Update play record in background if we have one
+    if (playRecordId && session) {
+      updatePlayRecord({
+        data: {
+          playRecordId,
+          score,
+          durationSeconds: 0, // TODO: track actual duration
+          completed: true
+        }
+      }).catch(() => {
+        // Ignore error
+      })
+    }
   }
 
   const handleNextStage = () => {
@@ -395,10 +394,6 @@ function ActivityPlayPage() {
     navigate({ to: '/' })
   }
 
-  const handleEdit = () => {
-    navigate({ to: '/activity/upload/$id', params: { id: activityId } })
-  }
-
   return (
     <div className="min-h-screen bg-background">
       {/* Minimal Header */}
@@ -420,13 +415,6 @@ function ActivityPlayPage() {
 
             {/* Right Side */}
             <div className="flex items-center gap-2">
-              {session && (
-                <Button variant="ghost" size="sm" onClick={handleEdit}>
-                  <Pencil className="w-4 h-4" />
-                  Edit
-                </Button>
-              )}
-
               {/* User Menu */}
               {user ? (
                 <div ref={userMenuRef} className="relative">
@@ -731,7 +719,7 @@ function ActivityPlayPage() {
                 )}
               </motion.div>
 
-              <AnimatePresence mode="wait">
+              <AnimatePresence mode="popLayout" initial={false}>
                 {/* Lesson View */}
                 {gameState === 'lesson' && !isSmartQuizMode && stage && (
                   <motion.div
@@ -820,7 +808,7 @@ function ActivityPlayPage() {
                     <div className="text-center mb-8">
                       <motion.div
                         initial={{ scale: 0 }}
-                        animate={{ scale: [0, 1.2, 1] }}
+                        animate={{ scale: 1 }}
                         transition={{ delay: 0.2, type: 'spring' }}
                         className="relative inline-block mb-6"
                       >
@@ -882,7 +870,7 @@ function ActivityPlayPage() {
                     <div className="text-center mb-8">
                       <motion.div
                         initial={{ scale: 0 }}
-                        animate={{ scale: [0, 1.2, 1] }}
+                        animate={{ scale: 1 }}
                         transition={{ delay: 0.2, type: 'spring' }}
                         className="relative inline-block mb-6"
                       >
@@ -1041,7 +1029,7 @@ function ActivityPlayPage() {
                   >
                     <motion.div
                       initial={{ scale: 0 }}
-                      animate={{ scale: [0, 1.2, 1] }}
+                      animate={{ scale: 1 }}
                       transition={{ delay: 0.2, type: 'spring' }}
                       className="relative inline-block mb-6"
                     >
