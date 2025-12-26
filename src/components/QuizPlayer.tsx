@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Timer, ArrowRight, ArrowLeft, Send, Lock, Check } from 'lucide-react'
+import { Timer, ArrowRight, ArrowLeft, Send, Lock, Check, ChevronDown } from 'lucide-react'
 import { useActivityStore } from '../stores/activity-store'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
@@ -418,8 +418,9 @@ export function QuizPlayer({ onStageComplete, onGameOver, onQuizComplete, onTime
         <div className="mb-6">
           <button
             onClick={() => setShowQuestionPicker(!showQuestionPicker)}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors mb-3"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors mb-3 flex items-center gap-1"
           >
+            <ChevronDown className={cn("w-4 h-4 transition-transform", showQuestionPicker && "rotate-180")} />
             {showQuestionPicker ? 'ซ่อนรายการข้อ' : 'ดูรายการข้อทั้งหมด'} ({answeredCount}/{totalQuizzes} ตอบแล้ว)
           </button>
 

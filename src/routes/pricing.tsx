@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import {
+  Building2,
   Check,
   ChevronDown,
   Crown,
@@ -11,7 +12,6 @@ import {
   Shield,
   Sparkles,
   Star,
-  Users,
   Wand2,
   X,
   Zap,
@@ -35,6 +35,7 @@ interface PlanFeature {
   explorer: string | boolean
   hero: string | boolean
   legend: string | boolean
+  enterprise: string | boolean
 }
 
 interface FAQItem {
@@ -111,7 +112,7 @@ function PricingPage() {
     {
       name: 'Explorer',
       nameThai: 'นักสำรวจ',
-      description: 'เหมาะสำหรับผู้เริ่มต้นทดลองพลัง AI',
+      description: 'เรียนได้ไม่จำกัด ทดลองสร้างด้วย AI',
       price: 'Free',
       priceSuffix: 'Forever',
       icon: GraduationCap,
@@ -123,8 +124,8 @@ function PricingPage() {
     {
       name: 'Hero',
       nameThai: 'ฮีโร่',
-      description: 'Creator, ติวเตอร์ และนักพัฒนามืออาชีพ',
-      price: '฿490',
+      description: 'Creator และติวเตอร์ที่เริ่มต้น',
+      price: '฿290',
       priceSuffix: '/ month',
       icon: Rocket,
       color: 'from-primary to-cyan-500',
@@ -135,10 +136,22 @@ function PricingPage() {
     {
       name: 'Legend',
       nameThai: 'ตำนาน',
+      description: 'Creator มืออาชีพที่ต้องการความยืดหยุ่น',
+      price: '฿790',
+      priceSuffix: '/ month',
+      icon: Crown,
+      color: 'from-amber-500 to-orange-500',
+      borderColor: 'border-amber-500/30',
+      bgGlow: 'bg-amber-500/10',
+      popular: false,
+    },
+    {
+      name: 'Enterprise',
+      nameThai: 'องค์กร',
       description: 'โรงเรียน, มหาวิทยาลัย และองค์กร',
       price: 'Contact',
-      priceSuffix: 'Sales',
-      icon: Crown,
+      priceSuffix: 'Us',
+      icon: Building2,
       color: 'from-purple-500 to-pink-500',
       borderColor: 'border-purple-500/30',
       bgGlow: 'bg-purple-500/10',
@@ -148,40 +161,74 @@ function PricingPage() {
 
   const features: PlanFeature[] = [
     {
-      name: 'AI Quest Creation',
-      explorer: '3 เควส / เดือน',
-      hero: 'ไม่จำกัด (Unlimited)',
-      legend: 'ไม่จำกัด + Custom AI',
+      name: 'เรียนฟรี',
+      explorer: 'ไม่จำกัด',
+      hero: 'ไม่จำกัด',
+      legend: 'ไม่จำกัด',
+      enterprise: 'ไม่จำกัด',
+    },
+    {
+      name: 'AI Credits',
+      explorer: '3 credits / เดือน',
+      hero: '30 credits / เดือน',
+      legend: '100 credits / เดือน',
+      enterprise: 'ไม่จำกัด',
+    },
+    {
+      name: 'Storage',
+      explorer: '25 MB',
+      hero: '1 GB',
+      legend: '5 GB',
+      enterprise: 'ไม่จำกัด',
     },
     {
       name: 'Content Source',
       explorer: 'เอกสาร 5 หน้า / วิดีโอ 5 นาที',
       hero: 'ไม่จำกัดความยาว',
       legend: 'ไม่จำกัดความยาว',
+      enterprise: 'ไม่จำกัดความยาว',
+    },
+    {
+      name: 'Custom Branding',
+      explorer: false,
+      hero: false,
+      legend: 'Custom Header & Footer',
+      enterprise: 'Full White-label',
     },
     {
       name: 'AI Roleplay Agent',
       explorer: 'พื้นฐาน (Simple NPC)',
       hero: 'Advanced (Emotional AI)',
-      legend: 'Fully Custom Scenarios',
+      legend: 'Advanced (Emotional AI)',
+      enterprise: 'Fully Custom Scenarios',
     },
     {
       name: 'Analytics',
       explorer: false,
-      hero: 'Dashboard วิเคราะห์ผู้เรียนรายบุคคล',
-      legend: 'Deep Insights & API Export',
+      hero: 'Dashboard พื้นฐาน',
+      legend: 'Dashboard วิเคราะห์ผู้เรียนรายบุคคล',
+      enterprise: 'Deep Insights & API Export',
     },
     {
       name: 'Gamification',
       explorer: 'Level & XP พื้นฐาน',
       hero: 'สร้างไอเทมและของรางวัลเองได้',
-      legend: 'White-label & Guild System',
+      legend: 'สร้างไอเทมและของรางวัลเองได้',
+      enterprise: 'White-label & Guild System',
     },
     {
       name: 'Support',
       explorer: 'Community Support',
-      hero: 'Priority Email Support',
-      legend: 'Dedicated Success Manager',
+      hero: 'Email Support',
+      legend: 'Priority Email Support',
+      enterprise: 'Dedicated Success Manager',
+    },
+    {
+      name: 'Self-hosted Server',
+      explorer: false,
+      hero: false,
+      legend: false,
+      enterprise: 'ติดตั้งบน Server ของคุณเอง',
     },
   ]
 
@@ -238,7 +285,7 @@ function PricingPage() {
       {/* Pricing Cards */}
       <section className="py-12 px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {plans.map((plan, index) => (
               <motion.div
                 key={plan.name}
@@ -292,7 +339,9 @@ function PricingPage() {
                             ? feature.explorer
                             : plan.name === 'Hero'
                               ? feature.hero
-                              : feature.legend
+                              : plan.name === 'Legend'
+                                ? feature.legend
+                                : feature.enterprise
                         const hasFeature = value !== false
 
                         return (
@@ -328,13 +377,27 @@ function PricingPage() {
                   </CardContent>
 
                   <CardFooter className="relative pt-4">
-                    {plan.name === 'Legend' ? (
+                    {plan.name === 'Enterprise' ? (
                       <Button
-                        className={`w-full bg-gradient-to-r ${plan.color} hover:opacity-90`}
+                        className={`w-full bg-linear-to-r ${plan.color} hover:opacity-90`}
                         size="lg"
+                        asChild
                       >
-                        <Users className="w-4 h-4" />
-                        Contact Sales
+                        <Link to="/contact">
+                          <Building2 className="w-4 h-4" />
+                          Contact Us
+                        </Link>
+                      </Button>
+                    ) : plan.name === 'Legend' ? (
+                      <Button
+                        className={`w-full bg-linear-to-r ${plan.color} hover:opacity-90`}
+                        size="lg"
+                        asChild
+                      >
+                        <Link to="/" hash="create">
+                          <Crown className="w-4 h-4" />
+                          อัปเกรดเป็น Legend
+                        </Link>
                       </Button>
                     ) : (
                       <Button
@@ -399,14 +462,21 @@ function PricingPage() {
                     <div className="flex flex-col items-center gap-1">
                       <Rocket className="w-5 h-5 text-primary" />
                       <span className="font-semibold text-primary">Hero</span>
-                      <span className="text-xs text-primary/70">฿490/mo</span>
+                      <span className="text-xs text-primary/70">฿290/mo</span>
                     </div>
                   </th>
                   <th className="text-center py-4 px-4">
                     <div className="flex flex-col items-center gap-1">
-                      <Crown className="w-5 h-5 text-purple-500" />
+                      <Crown className="w-5 h-5 text-amber-500" />
                       <span className="font-semibold">Legend</span>
-                      <span className="text-xs text-muted-foreground">Custom</span>
+                      <span className="text-xs text-muted-foreground">฿790/mo</span>
+                    </div>
+                  </th>
+                  <th className="text-center py-4 px-4">
+                    <div className="flex flex-col items-center gap-1">
+                      <Building2 className="w-5 h-5 text-purple-500" />
+                      <span className="font-semibold">Enterprise</span>
+                      <span className="text-xs text-muted-foreground">Contact Us</span>
                     </div>
                   </th>
                 </tr>
@@ -428,6 +498,9 @@ function PricingPage() {
                     </td>
                     <td className="py-4 px-4 text-center text-muted-foreground">
                       {renderFeatureValue(feature.legend)}
+                    </td>
+                    <td className="py-4 px-4 text-center text-muted-foreground">
+                      {renderFeatureValue(feature.enterprise)}
                     </td>
                   </tr>
                 ))}
