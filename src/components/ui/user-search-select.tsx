@@ -47,8 +47,8 @@ export function UserSearchSelect({
     }
 
     searchTimeoutRef.current = setTimeout(async () => {
-      if (!session?.access_token) {
-        console.log('No access token available')
+      if (!session) {
+        console.log('No session available')
         return
       }
 
@@ -56,7 +56,7 @@ export function UserSearchSelect({
       try {
         console.log('Searching for:', query)
         const results = await searchUsers({
-          data: { query, accessToken: session.access_token }
+          data: { query }
         })
         console.log('Search results:', results)
         // Filter out already selected users
@@ -78,7 +78,7 @@ export function UserSearchSelect({
         clearTimeout(searchTimeoutRef.current)
       }
     }
-  }, [query, session?.access_token, selectedUsers])
+  }, [query, session, selectedUsers])
 
   // Close dropdown when clicking outside
   React.useEffect(() => {

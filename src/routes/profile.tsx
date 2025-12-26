@@ -37,7 +37,7 @@ export const Route = createFileRoute('/profile')({
 
 function ProfilePage() {
   const navigate = useNavigate()
-  const { user, session, signOut, isInitialized } = useAuthStore()
+  const { user, signOut, isInitialized } = useAuthStore()
   const { profile, fetchProfile, updateProfile, isLoading: profileLoading } = useProfileStore()
 
   const [isEditing, setIsEditing] = useState(false)
@@ -57,7 +57,7 @@ function ProfilePage() {
   // Load profile and stats
   useEffect(() => {
     const loadData = async () => {
-      if (!user || !session?.access_token) return
+      if (!user) return
 
       // Load profile
       await fetchProfile(user.id)
@@ -65,7 +65,7 @@ function ProfilePage() {
       // Load stats
       setStatsLoading(true)
       try {
-        const userStats = await getUserStats({ data: { accessToken: session.access_token } })
+        const userStats = await getUserStats()
         setStats(userStats)
       } catch (error) {
         console.error('Failed to load stats:', error)
@@ -75,7 +75,7 @@ function ProfilePage() {
     }
 
     loadData()
-  }, [user, session, fetchProfile])
+  }, [user, fetchProfile])
 
   // Sync edit form with profile
   useEffect(() => {

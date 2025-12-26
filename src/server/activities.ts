@@ -1,42 +1,30 @@
 import { createServerFn } from '@tanstack/react-start'
-import { createClient } from '@supabase/supabase-js'
+import { getCookies, setCookie } from '@tanstack/react-start/server'
+import { createSupabaseServerClient } from '../lib/supabase'
 import type { ActivityStatus, CanUserPlayResult, Database, GeneratedQuest, ThemeConfig } from '../types/database'
+import type { User, Session } from '@supabase/supabase-js'
 
-// Create Supabase client with user's access token for RLS
-const getSupabaseWithAuth = (accessToken: string) => {
-  const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
-  const anonKey = process.env.VITE_SUPABASE_API_KEY || process.env.SUPABASE_API_KEY
+// Create Supabase client from cookies (SSR-compatible)
+// This automatically handles auth via cookies set by @supabase/ssr
+const getSupabaseFromCookies = () => {
+  return createSupabaseServerClient(getCookies, setCookie)
+}
 
-  if (!url || !anonKey) {
-    throw new Error('Supabase credentials not configured')
-  }
+// Get current user session from cookies (for SSR hydration)
+export const getAuthSession = createServerFn({ method: 'GET' })
+  .handler(async (): Promise<{ user: User | null; session: Session | null }> => {
+    const supabase = getSupabaseFromCookies()
 
-  return createClient<Database>(url, anonKey, {
-    global: {
-      headers: {
-        Authorization: `Bearer ${accessToken}`
-      }
-    }
+    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+
+    return { user, session }
   })
-}
-
-// Public client for read-only operations (published quests)
-const getSupabasePublic = () => {
-  const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
-  const anonKey = process.env.VITE_SUPABASE_API_KEY || process.env.SUPABASE_API_KEY
-
-  if (!url || !anonKey) {
-    throw new Error('Supabase credentials not configured')
-  }
-
-  return createClient<Database>(url, anonKey)
-}
 
 interface SaveQuestInput {
   quest: GeneratedQuest
   rawContent: string
   themeConfig: ThemeConfig
-  accessToken: string
 }
 
 interface SaveQuestResult {
@@ -47,9 +35,9 @@ interface SaveQuestResult {
 export const saveQuest = createServerFn({ method: 'POST' })
   .inputValidator((data: SaveQuestInput) => data)
   .handler(async ({ data }): Promise<SaveQuestResult> => {
-    const supabase = getSupabaseWithAuth(data.accessToken)
+    const supabase = getSupabaseFromCookies()
 
-    // Get user ID from the token
+    // Get user ID from cookies
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) {
       throw new Error('Authentication failed')
@@ -157,9 +145,9 @@ export const saveQuest = createServerFn({ method: 'POST' })
   })
 
 export const publishActivity = createServerFn({ method: 'POST' })
-  .inputValidator((data: { activityId: string; accessToken: string }) => data)
+  .inputValidator((data: { activityId: string }) => data)
   .handler(async ({ data }) => {
-    const supabase = getSupabaseWithAuth(data.accessToken)
+    const supabase = getSupabaseFromCookies()
 
     const { error } = await supabase
       .from('activities')
@@ -175,7 +163,7 @@ export const publishActivity = createServerFn({ method: 'POST' })
 
 export const getPublishedActivities = createServerFn({ method: 'GET' })
   .handler(async () => {
-    const supabase = getSupabasePublic()
+    const supabase = getSupabaseFromCookies()
 
     const { data, error } = await supabase
       .from('activities')
@@ -206,7 +194,7 @@ export const getPublishedActivities = createServerFn({ method: 'GET' })
 export const getActivityById = createServerFn({ method: 'GET' })
   .inputValidator((data: { activityId: string }) => data)
   .handler(async ({ data }) => {
-    const supabase = getSupabasePublic()
+    const supabase = getSupabaseFromCookies()
 
     // Fetch activity with all stages and questions
     const { data: activity, error: activityError } = await supabase
@@ -295,9 +283,9 @@ export const getActivityById = createServerFn({ method: 'GET' })
 
 // Authenticated version of getActivityById for editing user's own activities (including drafts)
 export const getActivityByIdForEdit = createServerFn({ method: 'GET' })
-  .inputValidator((data: { activityId: string; accessToken: string }) => data)
+  .inputValidator((data: { activityId: string }) => data)
   .handler(async ({ data }) => {
-    const supabase = getSupabaseWithAuth(data.accessToken)
+    const supabase = getSupabaseFromCookies()
 
     // Verify user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -390,9 +378,8 @@ export const getActivityByIdForEdit = createServerFn({ method: 'GET' })
   })
 
 export const getUserActivities = createServerFn({ method: 'GET' })
-  .inputValidator((data: { accessToken: string }) => data)
-  .handler(async ({ data }) => {
-    const supabase = getSupabaseWithAuth(data.accessToken)
+  .handler(async () => {
+    const supabase = getSupabaseFromCookies()
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) {
@@ -425,7 +412,7 @@ export const getUserActivities = createServerFn({ method: 'GET' })
 export const incrementPlayCount = createServerFn({ method: 'POST' })
   .inputValidator((data: { activityId: string }) => data)
   .handler(async ({ data }) => {
-    const supabase = getSupabasePublic()
+    const supabase = getSupabaseFromCookies()
 
     const { error } = await supabase.rpc('increment_play_count', {
       activity_id: data.activityId
@@ -443,14 +430,13 @@ interface UpdateQuestInput {
   quest: GeneratedQuest
   rawContent: string
   themeConfig: ThemeConfig
-  accessToken: string
   status?: ActivityStatus
 }
 
 export const updateQuest = createServerFn({ method: 'POST' })
   .inputValidator((data: UpdateQuestInput) => data)
   .handler(async ({ data }): Promise<{ success: boolean }> => {
-    const supabase = getSupabaseWithAuth(data.accessToken)
+    const supabase = getSupabaseFromCookies()
 
     // Verify user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -584,9 +570,9 @@ export const updateQuest = createServerFn({ method: 'POST' })
 
 // Get allowed emails for a private_group activity
 export const getAllowedEmails = createServerFn({ method: 'GET' })
-  .inputValidator((data: { activityId: string; accessToken: string }) => data)
+  .inputValidator((data: { activityId: string }) => data)
   .handler(async ({ data }) => {
-    const supabase = getSupabaseWithAuth(data.accessToken)
+    const supabase = getSupabaseFromCookies()
 
     // Verify user is authenticated
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -612,10 +598,9 @@ export const updateAllowedEmails = createServerFn({ method: 'POST' })
   .inputValidator((data: {
     activityId: string
     emails: string[]
-    accessToken: string
   }) => data)
   .handler(async ({ data }) => {
-    const supabase = getSupabaseWithAuth(data.accessToken)
+    const supabase = getSupabaseFromCookies()
 
     // Verify user is authenticated
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -649,9 +634,9 @@ export const updateAllowedEmails = createServerFn({ method: 'POST' })
   })
 
 export const deleteActivity = createServerFn({ method: 'POST' })
-  .inputValidator((data: { activityId: string; accessToken: string }) => data)
+  .inputValidator((data: { activityId: string }) => data)
   .handler(async ({ data }) => {
-    const supabase = getSupabaseWithAuth(data.accessToken)
+    const supabase = getSupabaseFromCookies()
 
     // Verify user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -695,18 +680,13 @@ export const deleteActivity = createServerFn({ method: 'POST' })
 
 // Check if user can play an activity (replay limits + availability window)
 export const checkCanUserPlay = createServerFn({ method: 'GET' })
-  .inputValidator((data: { activityId: string; accessToken?: string }) => data)
+  .inputValidator((data: { activityId: string }) => data)
   .handler(async ({ data }): Promise<CanUserPlayResult> => {
-    const supabase = data.accessToken
-      ? getSupabaseWithAuth(data.accessToken)
-      : getSupabasePublic()
+    const supabase = getSupabaseFromCookies()
 
     // Get user ID if authenticated
-    let userId: string | null = null
-    if (data.accessToken) {
-      const { data: { user } } = await supabase.auth.getUser()
-      userId = user?.id || null
-    }
+    const { data: { user } } = await supabase.auth.getUser()
+    const userId = user?.id || null
 
     // If no user, we can still check availability window but not replay limits
     if (!userId) {
@@ -760,13 +740,12 @@ export const checkCanUserPlay = createServerFn({ method: 'GET' })
 export const recordPlay = createServerFn({ method: 'POST' })
   .inputValidator((data: {
     activityId: string
-    accessToken: string
     score?: number
     durationSeconds?: number
     completed?: boolean
   }) => data)
   .handler(async ({ data }) => {
-    const supabase = getSupabaseWithAuth(data.accessToken)
+    const supabase = getSupabaseFromCookies()
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) {
@@ -792,13 +771,12 @@ export const recordPlay = createServerFn({ method: 'POST' })
 export const updatePlayRecord = createServerFn({ method: 'POST' })
   .inputValidator((data: {
     playRecordId: string
-    accessToken: string
     score: number
     durationSeconds: number
     completed: boolean
   }) => data)
   .handler(async ({ data }) => {
-    const supabase = getSupabaseWithAuth(data.accessToken)
+    const supabase = getSupabaseFromCookies()
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) {
@@ -824,9 +802,9 @@ export const updatePlayRecord = createServerFn({ method: 'POST' })
 
 // Get user's play history for an activity
 export const getUserPlayHistory = createServerFn({ method: 'GET' })
-  .inputValidator((data: { activityId: string; accessToken: string }) => data)
+  .inputValidator((data: { activityId: string }) => data)
   .handler(async ({ data }) => {
-    const supabase = getSupabaseWithAuth(data.accessToken)
+    const supabase = getSupabaseFromCookies()
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) {
@@ -851,13 +829,12 @@ export const getUserPlayHistory = createServerFn({ method: 'GET' })
 export const updateActivitySettings = createServerFn({ method: 'POST' })
   .inputValidator((data: {
     activityId: string
-    accessToken: string
     replayLimit?: number | null
     availableFrom?: string | null
     availableUntil?: string | null
   }) => data)
   .handler(async ({ data }) => {
-    const supabase = getSupabaseWithAuth(data.accessToken)
+    const supabase = getSupabaseFromCookies()
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) {
@@ -905,9 +882,8 @@ export interface UserStats {
 }
 
 export const getUserStats = createServerFn({ method: 'GET' })
-  .inputValidator((data: { accessToken: string }) => data)
-  .handler(async ({ data }): Promise<UserStats> => {
-    const supabase = getSupabaseWithAuth(data.accessToken)
+  .handler(async (): Promise<UserStats> => {
+    const supabase = getSupabaseFromCookies()
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) {
@@ -983,9 +959,9 @@ export interface ActivityResultsResponse {
 }
 
 export const getActivityResults = createServerFn({ method: 'GET' })
-  .inputValidator((data: { accessToken: string; page?: number; pageSize?: number }) => data)
+  .inputValidator((data: { page?: number; pageSize?: number }) => data)
   .handler(async ({ data }): Promise<ActivityResultsResponse> => {
-    const supabase = getSupabaseWithAuth(data.accessToken)
+    const supabase = getSupabaseFromCookies()
     const page = data.page || 1
     const pageSize = data.pageSize || 20
     const offset = (page - 1) * pageSize

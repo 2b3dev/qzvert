@@ -102,10 +102,7 @@ function ActivityPlayPage() {
 
         // Check if user can play (availability & replay limits)
         const canPlay = await checkCanUserPlay({
-          data: {
-            activityId,
-            accessToken: session?.access_token
-          }
+          data: { activityId }
         })
         setCanPlayResult(canPlay)
       } catch (error) {
@@ -215,12 +212,11 @@ function ActivityPlayPage() {
 
   const handleStartQuiz = async () => {
     // Record play start if user is logged in
-    if (session?.access_token) {
+    if (session) {
       try {
         const result = await recordPlay({
           data: {
             activityId,
-            accessToken: session.access_token,
             completed: false
           }
         })
@@ -235,12 +231,11 @@ function ActivityPlayPage() {
 
   const handleStartQuest = async () => {
     // Record play start if user is logged in
-    if (session?.access_token) {
+    if (session) {
       try {
         const result = await recordPlay({
           data: {
             activityId,
-            accessToken: session.access_token,
             completed: false
           }
         })
@@ -268,12 +263,11 @@ function ActivityPlayPage() {
   const handleStageComplete = async () => {
     if (isLastStage) {
       // Update play record if we have one
-      if (playRecordId && session?.access_token) {
+      if (playRecordId && session) {
         try {
           await updatePlayRecord({
             data: {
               playRecordId,
-              accessToken: session.access_token,
               score,
               durationSeconds: 0, // TODO: track actual duration
               completed: true
@@ -291,12 +285,11 @@ function ActivityPlayPage() {
 
   const handleQuizComplete = async () => {
     // Update play record if we have one
-    if (playRecordId && session?.access_token) {
+    if (playRecordId && session) {
       try {
         await updatePlayRecord({
           data: {
             playRecordId,
-            accessToken: session.access_token,
             score,
             durationSeconds: 0, // TODO: track actual duration
             completed: true

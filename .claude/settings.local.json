@@ -21,7 +21,9 @@
       "Bash(cat:*)",
       "Bash(pnpm build:*)",
       "Bash(npx supabase:*)",
-      "Bash(timeout 15 pnpm dev:*)"
+      "Bash(timeout 15 pnpm dev:*)",
+      "Bash(find:*)",
+      "Bash(pkill:*)"
     ]
   }
 }

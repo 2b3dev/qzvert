@@ -68,7 +68,7 @@ export function ImageInput({
     }
 
     // Check if user is authenticated
-    if (!session?.access_token) {
+    if (!session) {
       // Fallback to base64 if not authenticated
       const reader = new FileReader()
       reader.onload = (e) => {
@@ -97,7 +97,6 @@ export function ImageInput({
         data: {
           base64Data: base64,
           fileName: file.name,
-          accessToken: session.access_token,
         },
       })
 
@@ -145,13 +144,12 @@ export function ImageInput({
   }
 
   const handleRemove = async () => {
-    // If it's a storage URL, delete from storage
-    if (value.includes('/storage/v1/object/public/') && session?.access_token) {
+    // If it's a storage URL and user is authenticated, delete from storage
+    if (value.includes('/storage/v1/object/public/') && session) {
       try {
         await deleteImage({
           data: {
             imageUrl: value,
-            accessToken: session.access_token,
           },
         })
       } catch {

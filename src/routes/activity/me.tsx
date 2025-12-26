@@ -67,13 +67,9 @@ function MyActivitiesPage() {
   }, [isAuthLoading, session])
 
   const loadActivities = async () => {
-    if (!session) return
-
     setIsLoading(true)
     try {
-      const data = await getUserActivities({
-        data: { accessToken: session.access_token },
-      })
+      const data = await getUserActivities()
       setActivities(data || [])
     } catch (error) {
       toast.error('Failed to load your activities')
@@ -83,12 +79,12 @@ function MyActivitiesPage() {
   }
 
   const handleDelete = async () => {
-    if (!session || !deleteId) return
+    if (!deleteId) return
 
     setIsDeleting(true)
     try {
       await deleteActivity({
-        data: { activityId: deleteId, accessToken: session.access_token },
+        data: { activityId: deleteId },
       })
       setActivities((prev) => prev.filter((c) => c.id !== deleteId))
       toast.success('Deleted successfully')

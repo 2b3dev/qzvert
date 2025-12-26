@@ -6,10 +6,11 @@ import {
   Scripts,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Toaster } from 'sonner'
 
 import { NotFound } from '../components/ui/not-found'
+import { getAuthSession } from '../server/activities'
 import { getTheme } from '../server/theme'
 import { useAuthStore } from '../stores/auth-store'
 
@@ -19,8 +20,11 @@ const IS_SHOW_DEVTOOL = false
 
 export const Route = createRootRoute({
   loader: async () => {
-    const { theme } = await getTheme()
-    return { theme }
+    const [{ theme }, authData] = await Promise.all([
+      getTheme(),
+      getAuthSession()
+    ])
+    return { theme, user: authData.user, session: authData.session }
   },
   head: () => ({
     meta: [
@@ -65,14 +69,20 @@ function RootComponent() {
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  const { theme } = Route.useLoaderData()
-  const { initialize, isInitialized } = useAuthStore()
+  const { theme, user, session } = Route.useLoaderData()
+  const { initialize, hydrateAuth, isInitialized } = useAuthStore()
+  const hasHydrated = useRef(false)
+
+  // Hydrate auth state from SSR on first render (before useEffect)
+  if (!hasHydrated.current && !isInitialized) {
+    hydrateAuth(user, session)
+    hasHydrated.current = true
+  }
 
   useEffect(() => {
-    if (!isInitialized) {
-      initialize()
-    }
-  }, [initialize, isInitialized])
+    // Initialize sets up the auth listener for client-side changes
+    initialize()
+  }, [initialize])
 
   return (
     <html lang="en" className={theme === 'dark' ? 'dark' : ''}>

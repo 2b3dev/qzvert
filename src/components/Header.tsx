@@ -11,9 +11,12 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
-  const { theme } = Route.useLoaderData()
+  const { theme, user: loaderUser } = Route.useLoaderData()
   const router = useRouter()
-  const { user, signOut, isInitialized } = useAuthStore()
+  const { user: storeUser, signOut } = useAuthStore()
+
+  // Use store user if available (for client-side updates), fallback to loader user (SSR)
+  const user = storeUser ?? loaderUser
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -110,9 +113,7 @@ export default function Header() {
               </button>
 
               {/* User Menu */}
-              {!isInitialized ? (
-                <div className="ml-2 w-8 h-8 rounded-full bg-muted animate-pulse" />
-              ) : user ? (
+              {user ? (
                 <div ref={userMenuRef} className="relative ml-2">
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -230,9 +231,7 @@ export default function Header() {
 
           {/* Mobile User Section */}
           <div className="mt-4 pt-4 border-t border-border">
-            {!isInitialized ? (
-              <div className="h-12 bg-muted animate-pulse rounded-lg" />
-            ) : user ? (
+            {user ? (
               <>
                 <div className="px-3 py-2 text-sm text-muted-foreground truncate">
                   {user.email}

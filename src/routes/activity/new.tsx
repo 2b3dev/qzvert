@@ -44,9 +44,8 @@ export const Route = createFileRoute('/activity/new')({
 
 function CreationNewPage() {
   const navigate = useNavigate()
-  const { currentActivity, setActivity, themeConfig, setThemeConfig, rawContent } =
+  const { currentActivity, setActivity, themeConfig, rawContent } =
     useActivityStore()
-  const { session } = useAuthStore()
   const [isSaving, setIsSaving] = useState(false)
   const [expandedQuiz, setExpandedQuiz] = useState<number | null>(0)
 
@@ -234,12 +233,6 @@ function CreationNewPage() {
       return
     }
 
-    if (!session?.access_token) {
-      toast.error('Please login to save')
-      navigate({ to: '/login' })
-      return
-    }
-
     setIsSaving(true)
 
     try {
@@ -256,7 +249,6 @@ function CreationNewPage() {
           quest: updatedQuest,
           rawContent: rawContent || '',
           themeConfig,
-          accessToken: session.access_token,
         },
       })
 

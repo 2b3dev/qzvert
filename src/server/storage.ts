@@ -1,22 +1,10 @@
 import { createServerFn } from '@tanstack/react-start'
-import { createClient } from '@supabase/supabase-js'
-import type { Database } from '../types/database'
+import { getCookies, setCookie } from '@tanstack/react-start/server'
+import { createSupabaseServerClient } from '../lib/supabase'
 
-const getSupabaseWithAuth = (accessToken: string) => {
-  const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
-  const anonKey = process.env.VITE_SUPABASE_API_KEY || process.env.SUPABASE_API_KEY
-
-  if (!url || !anonKey) {
-    throw new Error('Supabase credentials not configured')
-  }
-
-  return createClient<Database>(url, anonKey, {
-    global: {
-      headers: {
-        Authorization: `Bearer ${accessToken}`
-      }
-    }
-  })
+// Create Supabase client from cookies (SSR-compatible)
+const getSupabaseFromCookies = () => {
+  return createSupabaseServerClient(getCookies, setCookie)
 }
 
 const BUCKET_NAME = 'thumbnails'
@@ -24,13 +12,12 @@ const BUCKET_NAME = 'thumbnails'
 interface UploadImageInput {
   base64Data: string
   fileName: string
-  accessToken: string
 }
 
 export const uploadImage = createServerFn({ method: 'POST' })
   .inputValidator((data: UploadImageInput) => data)
   .handler(async ({ data }): Promise<{ url: string }> => {
-    const supabase = getSupabaseWithAuth(data.accessToken)
+    const supabase = getSupabaseFromCookies()
 
     // Verify user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -80,13 +67,12 @@ export const uploadImage = createServerFn({ method: 'POST' })
 
 interface DeleteImageInput {
   imageUrl: string
-  accessToken: string
 }
 
 export const deleteImage = createServerFn({ method: 'POST' })
   .inputValidator((data: DeleteImageInput) => data)
   .handler(async ({ data }): Promise<{ success: boolean }> => {
-    const supabase = getSupabaseWithAuth(data.accessToken)
+    const supabase = getSupabaseFromCookies()
 
     // Verify user
     const { data: { user }, error: userError } = await supabase.auth.getUser()

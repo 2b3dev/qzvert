@@ -36,7 +36,7 @@ export const Route = createFileRoute('/activity/results')({
 
 function ResultsPage() {
   const navigate = useNavigate()
-  const { user, session, isInitialized } = useAuthStore()
+  const { user, isInitialized } = useAuthStore()
 
   const [stats, setStats] = useState<UserStats | null>(null)
   const [results, setResults] = useState<ActivityResult[]>([])
@@ -58,15 +58,15 @@ function ResultsPage() {
   // Load stats and initial results
   useEffect(() => {
     const loadData = async () => {
-      if (!user || !session?.access_token) return
+      if (!user) return
 
       setIsLoading(true)
       try {
         // Load stats and first page of results in parallel
         const [userStats, resultsData] = await Promise.all([
-          getUserStats({ data: { accessToken: session.access_token } }),
+          getUserStats(),
           getActivityResults({
-            data: { accessToken: session.access_token, page: 1, pageSize },
+            data: { page: 1, pageSize },
           }),
         ])
 
@@ -83,17 +83,17 @@ function ResultsPage() {
     }
 
     loadData()
-  }, [user, session])
+  }, [user])
 
   // Load more results
   const loadMore = async () => {
-    if (!session?.access_token || isLoadingMore || !hasMore) return
+    if (isLoadingMore || !hasMore) return
 
     setIsLoadingMore(true)
     try {
       const nextPage = page + 1
       const resultsData = await getActivityResults({
-        data: { accessToken: session.access_token, page: nextPage, pageSize },
+        data: { page: nextPage, pageSize },
       })
 
       setResults((prev) => [...prev, ...resultsData.results])
@@ -108,12 +108,12 @@ function ResultsPage() {
 
   // Load specific page
   const goToPage = async (newPage: number) => {
-    if (!session?.access_token || isLoadingMore) return
+    if (isLoadingMore) return
 
     setIsLoadingMore(true)
     try {
       const resultsData = await getActivityResults({
-        data: { accessToken: session.access_token, page: newPage, pageSize },
+        data: { page: newPage, pageSize },
       })
 
       setResults(resultsData.results)

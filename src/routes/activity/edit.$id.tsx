@@ -36,7 +36,6 @@ import { ImageInput } from '../../components/ui/image-input'
 import { Input, Textarea } from '../../components/ui/input'
 import { RichTextEditor } from '../../components/ui/rich-text-editor'
 import { StatusDropdown } from '../../components/ui/status-dropdown'
-import { supabase } from '../../lib/supabase'
 import { cn } from '../../lib/utils'
 import {
   getActivityByIdForEdit,
@@ -47,7 +46,6 @@ import {
 } from '../../server/activities'
 import { deleteImage } from '../../server/storage'
 import { useActivityStore } from '../../stores/activity-store'
-import { useAuthStore } from '../../stores/auth-store'
 import type {
   ActivityStatus,
   GeneratedMultipleChoiceQuiz,
@@ -69,7 +67,6 @@ function ActivityEditPage() {
     setThemeConfig,
     rawContent,
   } = useActivityStore()
-  const { session } = useAuthStore()
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [expandedQuiz, setExpandedQuiz] = useState<number | null>(0)
@@ -98,20 +95,10 @@ function ActivityEditPage() {
     const loadActivity = async () => {
       if (!activityId || loadedActivityId === activityId) return
 
-      // Get session directly from supabase (handles cookies/localStorage)
-      const {
-        data: { session: currentSession },
-      } = await supabase.auth.getSession()
-      if (!currentSession?.access_token) {
-        toast.error('Please login to edit')
-        navigate({ to: '/login' })
-        return
-      }
-
       setIsLoading(true)
       try {
         const data = await getActivityByIdForEdit({
-          data: { activityId, accessToken: currentSession.access_token },
+          data: { activityId },
         })
         if (data) {
           const quest = data.generatedQuest
@@ -160,7 +147,7 @@ function ActivityEditPage() {
           if (activityStatus === 'private_group') {
             try {
               const emails = await getAllowedEmails({
-                data: { activityId, accessToken: currentSession.access_token },
+                data: { activityId },
               })
               setAllowedEmails(emails)
             } catch {
@@ -447,7 +434,6 @@ function ActivityEditPage() {
           await deleteImage({
             data: {
               imageUrl: originalThumbnail,
-              accessToken: session!.access_token,
             },
           })
         } catch {
@@ -469,7 +455,6 @@ function ActivityEditPage() {
           quest: updatedQuest,
           rawContent: rawContent || '',
           themeConfig,
-          accessToken: session!.access_token,
           status,
         },
       })
@@ -480,7 +465,6 @@ function ActivityEditPage() {
           data: {
             activityId,
             emails: allowedEmails,
-            accessToken: session!.access_token,
           },
         })
       }
@@ -489,7 +473,6 @@ function ActivityEditPage() {
       await updateActivitySettings({
         data: {
           activityId,
-          accessToken: session!.access_token,
           replayLimit: replayLimit,
           availableFrom: availableFrom || null,
           availableUntil: availableUntil || null,
