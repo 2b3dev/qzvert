@@ -25,6 +25,7 @@ import { ConfirmModal } from '../../components/ui/confirm-modal'
 import { cn } from '../../lib/utils'
 import { deleteActivity, getUserActivities } from '../../server/activities'
 import { useAuthStore } from '../../stores/auth-store'
+import { DefaultLayout } from '../../components/layouts/DefaultLayout'
 
 export const Route = createFileRoute('/activity/me')({
   component: MyActivitiesPage,
@@ -145,13 +146,14 @@ function MyActivitiesPage() {
   const deletingActivity = activities.find((c) => c.id === deleteId)
 
   return (
-    <div className="min-h-screen bg-background py-8 px-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8"
+    <DefaultLayout>
+      <div className="min-h-screen bg-background py-8 px-6">
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8"
         >
           <div>
             <h1 className="text-3xl font-bold text-foreground">My Activities</h1>
@@ -369,20 +371,21 @@ function MyActivitiesPage() {
             </AnimatePresence>
           </motion.div>
         )}
-      </div>
+        </div>
 
-      {/* Delete Confirm Modal */}
-      <ConfirmModal
-        open={deleteId !== null}
-        onOpenChange={(open) => !open && setDeleteId(null)}
-        title="Delete Activity"
-        description={`Are you sure you want to delete "${deletingActivity?.title || 'this activity'}"? This action cannot be undone.`}
-        confirmText="Delete"
-        cancelText="Cancel"
-        variant="danger"
-        onConfirm={handleDelete}
-        isLoading={isDeleting}
-      />
-    </div>
+        {/* Delete Confirm Modal */}
+        <ConfirmModal
+          open={deleteId !== null}
+          onOpenChange={(open) => !open && setDeleteId(null)}
+          title="Delete Activity"
+          description={`Are you sure you want to delete "${deletingActivity?.title || 'this activity'}"? This action cannot be undone.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="danger"
+          onConfirm={handleDelete}
+          isLoading={isDeleting}
+        />
+      </div>
+    </DefaultLayout>
   )
 }

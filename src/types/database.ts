@@ -18,6 +18,9 @@ export interface Database {
           play_count: number
           type: 'quiz' | 'quest' | 'flashcard' | 'roleplay'
           status: ActivityStatus
+          replay_limit: number | null
+          available_from: string | null
+          available_until: string | null
         }
         Insert: {
           id?: string
@@ -32,6 +35,9 @@ export interface Database {
           play_count?: number
           type: 'quiz' | 'quest' | 'flashcard' | 'roleplay'
           status?: ActivityStatus
+          replay_limit?: number | null
+          available_from?: string | null
+          available_until?: string | null
         }
         Update: {
           id?: string
@@ -46,6 +52,9 @@ export interface Database {
           play_count?: number
           type?: 'quiz' | 'quest' | 'flashcard'
           status?: ActivityStatus
+          replay_limit?: number | null
+          available_from?: string | null
+          available_until?: string | null
         }
       }
       stages: {
@@ -147,6 +156,10 @@ export interface Activity {
   play_count: number
   type: 'quiz' | 'quest' | 'flashcard' | 'roleplay'
   stages?: Stage[]
+  // Replay & Availability settings
+  replay_limit: number | null // null = unlimited, 1 = once, n = max n times
+  available_from: string | null // ISO 8601 timestamp (UTC)
+  available_until: string | null // ISO 8601 timestamp (UTC)
 }
 
 export interface Stage {
@@ -244,4 +257,34 @@ export interface ProfileUpdate {
   display_name?: string
   avatar_url?: string
   metadata?: Record<string, unknown>
+}
+
+// Activity Play Records
+export interface ActivityPlayRecord {
+  id: string
+  activity_id: string
+  user_id: string
+  played_at: string
+  score: number | null
+  duration_seconds: number | null
+  completed: boolean
+}
+
+// Can User Play Result (from Supabase function)
+export type CanPlayReason =
+  | 'unlimited'
+  | 'within_limit'
+  | 'activity_not_found'
+  | 'not_yet_available'
+  | 'expired'
+  | 'replay_limit_reached'
+
+export interface CanUserPlayResult {
+  can_play: boolean
+  reason: CanPlayReason
+  available_from?: string
+  available_until?: string
+  plays_used?: number
+  plays_remaining?: number
+  replay_limit?: number
 }

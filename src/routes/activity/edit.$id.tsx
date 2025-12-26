@@ -3,15 +3,18 @@ import { AnimatePresence, motion } from 'framer-motion'
 import {
   AlertCircle,
   ArrowLeft,
+  Calendar,
   Check,
   ChevronDown,
   ChevronUp,
   FileText,
   ImageIcon,
+  Infinity,
   List,
   Loader2,
   MessageSquare,
   Plus,
+  Repeat,
   Save,
   Star,
   Tag,
@@ -28,16 +31,23 @@ import {
   CardTitle,
 } from '../../components/ui/card'
 import { ConfirmModal } from '../../components/ui/confirm-modal'
+import { DateTimePicker } from '../../components/ui/date-time-picker'
 import { ImageInput } from '../../components/ui/image-input'
 import { Input, Textarea } from '../../components/ui/input'
 import { RichTextEditor } from '../../components/ui/rich-text-editor'
 import { StatusDropdown } from '../../components/ui/status-dropdown'
-import { cn } from '../../lib/utils'
-import { getAllowedEmails, getActivityByIdForEdit, updateAllowedEmails, updateQuest } from '../../server/activities'
-import { deleteImage } from '../../server/storage'
-import { useAuthStore } from '../../stores/auth-store'
 import { supabase } from '../../lib/supabase'
+import { cn } from '../../lib/utils'
+import {
+  getActivityByIdForEdit,
+  getAllowedEmails,
+  updateActivitySettings,
+  updateAllowedEmails,
+  updateQuest,
+} from '../../server/activities'
+import { deleteImage } from '../../server/storage'
 import { useActivityStore } from '../../stores/activity-store'
+import { useAuthStore } from '../../stores/auth-store'
 import type {
   ActivityStatus,
   GeneratedMultipleChoiceQuiz,
@@ -78,13 +88,20 @@ function ActivityEditPage() {
   const [status, setStatus] = useState<ActivityStatus>('draft')
   const [allowedEmails, setAllowedEmails] = useState<string[]>([])
 
+  // Replay & Availability settings
+  const [replayLimit, setReplayLimit] = useState<number | null>(null) // null = unlimited
+  const [availableFrom, setAvailableFrom] = useState<string>('') // ISO 8601 format (UTC)
+  const [availableUntil, setAvailableUntil] = useState<string>('') // ISO 8601 format (UTC)
+
   // Load activity from database
   useEffect(() => {
     const loadActivity = async () => {
       if (!activityId || loadedActivityId === activityId) return
 
       // Get session directly from supabase (handles cookies/localStorage)
-      const { data: { session: currentSession } } = await supabase.auth.getSession()
+      const {
+        data: { session: currentSession },
+      } = await supabase.auth.getSession()
       if (!currentSession?.access_token) {
         toast.error('Please login to edit')
         navigate({ to: '/login' })
@@ -117,18 +134,33 @@ function ActivityEditPage() {
           }
           setQuizzes(loadedQuizzes)
           // Calculate total points from loaded quizzes
-          const total = loadedQuizzes.reduce((sum, q) => sum + (q.points ?? 100), 0)
+          const total = loadedQuizzes.reduce(
+            (sum, q) => sum + (q.points ?? 100),
+            0,
+          )
           setTotalPoints(total)
 
           // Load status (default to 'draft' for backwards compatibility)
-          const activityStatus = (data.activity as { status?: ActivityStatus }).status
+          const activityStatus = (data.activity as { status?: ActivityStatus })
+            .status
           setStatus(activityStatus || 'draft')
+
+          // Load replay & availability settings
+          const activityData = data.activity as {
+            replay_limit?: number | null
+            available_from?: string | null
+            available_until?: string | null
+          }
+          setReplayLimit(activityData.replay_limit ?? null)
+          // ISO format is used directly (DateTimePicker handles display)
+          setAvailableFrom(activityData.available_from || '')
+          setAvailableUntil(activityData.available_until || '')
 
           // Load allowed emails if private_group
           if (activityStatus === 'private_group') {
             try {
               const emails = await getAllowedEmails({
-                data: { activityId, accessToken: currentSession.access_token }
+                data: { activityId, accessToken: currentSession.access_token },
               })
               setAllowedEmails(emails)
             } catch {
@@ -145,13 +177,7 @@ function ActivityEditPage() {
     }
 
     loadActivity()
-  }, [
-    activityId,
-    loadedActivityId,
-    setActivity,
-    setThemeConfig,
-    navigate,
-  ])
+  }, [activityId, loadedActivityId, setActivity, setThemeConfig, navigate])
 
   // Show loading state
   if (isLoading) {
@@ -215,21 +241,27 @@ function ActivityEditPage() {
     // Distribute points evenly across all quizzes
     const pointsPerQuiz = Math.floor(totalPoints / quizzes.length)
     const remainder = totalPoints % quizzes.length
-    setQuizzes((prev) =>
-      prev.map((q, i) => ({
-        ...q,
-        // Add remainder to last question
-        points: pointsPerQuiz + (i === prev.length - 1 ? remainder : 0),
-      })) as GeneratedQuiz[],
+    setQuizzes(
+      (prev) =>
+        prev.map((q, i) => ({
+          ...q,
+          // Add remainder to last question
+          points: pointsPerQuiz + (i === prev.length - 1 ? remainder : 0),
+        })) as GeneratedQuiz[],
     )
   }
 
   const updateQuiz = (index: number, updates: Partial<GeneratedQuiz>) => {
     setQuizzes((prev) => {
-      const newQuizzes = prev.map((q, i) => (i === index ? { ...q, ...updates } : q))
+      const newQuizzes = prev.map((q, i) =>
+        i === index ? { ...q, ...updates } : q,
+      )
       // If points changed, update total
       if ('points' in updates) {
-        const newTotal = newQuizzes.reduce((sum, q) => sum + (q.points ?? 100), 0)
+        const newTotal = newQuizzes.reduce(
+          (sum, q) => sum + (q.points ?? 100),
+          0,
+        )
         setTotalPoints(newTotal)
       }
       return newQuizzes
@@ -286,7 +318,10 @@ function ActivityEditPage() {
     )
   }
 
-  const changeQuizType = (index: number, newType: 'multiple_choice' | 'subjective') => {
+  const changeQuizType = (
+    index: number,
+    newType: 'multiple_choice' | 'subjective',
+  ) => {
     setQuizzes((prev) => {
       const newQuizzes = prev.map((q, i) => {
         if (i !== index) return q
@@ -299,7 +334,8 @@ function ActivityEditPage() {
             question: q.question,
             explanation: q.explanation,
             points: q.points,
-            model_answer: anyQ.model_answer || anyQ._preserved_model_answer || '',
+            model_answer:
+              anyQ.model_answer || anyQ._preserved_model_answer || '',
             // Preserve MC data for switching back
             _preserved_options: anyQ.options,
             _preserved_correct_answer: anyQ.correct_answer,
@@ -311,8 +347,10 @@ function ActivityEditPage() {
             question: q.question,
             explanation: q.explanation,
             points: q.points,
-            options: anyQ._preserved_options || anyQ.options || ['', '', '', ''],
-            correct_answer: anyQ._preserved_correct_answer ?? anyQ.correct_answer ?? 0,
+            options: anyQ._preserved_options ||
+              anyQ.options || ['', '', '', ''],
+            correct_answer:
+              anyQ._preserved_correct_answer ?? anyQ.correct_answer ?? 0,
             // Preserve subjective data for switching back
             _preserved_model_answer: anyQ.model_answer,
           }
@@ -446,6 +484,17 @@ function ActivityEditPage() {
           },
         })
       }
+
+      // Save replay & availability settings
+      await updateActivitySettings({
+        data: {
+          activityId,
+          accessToken: session!.access_token,
+          replayLimit: replayLimit,
+          availableFrom: availableFrom || null,
+          availableUntil: availableUntil || null,
+        },
+      })
 
       toast.success('Saved successfully!')
       navigate({ to: '/activity/me' })
@@ -615,7 +664,8 @@ function ActivityEditPage() {
               min={0}
               value={totalPoints || ''}
               onChange={(e) => {
-                const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10)
+                const val =
+                  e.target.value === '' ? 0 : parseInt(e.target.value, 10)
                 if (!isNaN(val) && val >= 0) setTotalPoints(val)
               }}
               className="w-32"
@@ -633,6 +683,125 @@ function ActivityEditPage() {
           <p className="text-xs text-muted-foreground mt-1">
             Click "Distribute" to evenly split points across all questions.
           </p>
+        </motion.div>
+
+        {/* Replay & Availability Settings */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.19 }}
+          className="mb-6"
+        >
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Repeat className="w-4 h-4" />
+                Play Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Replay Limit */}
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  <Repeat className="w-4 h-4 inline-block mr-1" />
+                  Replay Limit
+                </label>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setReplayLimit(null)}
+                    className={cn(
+                      'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                      replayLimit === null
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground',
+                    )}
+                  >
+                    <Infinity className="w-4 h-4" />
+                    Unlimited
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setReplayLimit(1)}
+                    className={cn(
+                      'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                      replayLimit !== null
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground',
+                    )}
+                  >
+                    Limited
+                  </button>
+                  {replayLimit !== null && (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={100}
+                        value={replayLimit}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10)
+                          if (!isNaN(val) && val >= 1) setReplayLimit(val)
+                        }}
+                        className="w-20"
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        times
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {replayLimit === null
+                    ? 'Players can play this activity as many times as they want.'
+                    : `Players can only play this activity ${replayLimit} time${replayLimit > 1 ? 's' : ''}.`}
+                </p>
+              </div>
+
+              {/* Availability Window */}
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  <Calendar className="w-4 h-4 inline-block mr-1" />
+                  Availability Window
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">
+                      Available From
+                    </label>
+                    <DateTimePicker
+                      value={availableFrom}
+                      onChange={setAvailableFrom}
+                      placeholder="Select start date"
+                      outputFormat="iso"
+                      maxDate={availableUntil || undefined}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">
+                      Available Until
+                    </label>
+                    <DateTimePicker
+                      value={availableUntil}
+                      onChange={setAvailableUntil}
+                      placeholder="Select end date"
+                      outputFormat="iso"
+                      minDate={availableFrom || undefined}
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {!availableFrom && !availableUntil
+                    ? 'This activity is always available.'
+                    : availableFrom && availableUntil
+                      ? `Available from ${new Date(availableFrom).toLocaleString()} to ${new Date(availableUntil).toLocaleString()}`
+                      : availableFrom
+                        ? `Available starting ${new Date(availableFrom).toLocaleString()}`
+                        : `Available until ${new Date(availableUntil).toLocaleString()}`}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
 
         {/* Questions List */}
@@ -747,7 +916,9 @@ function ActivityEditPage() {
                           <div className="flex gap-2">
                             <button
                               type="button"
-                              onClick={() => changeQuizType(index, 'multiple_choice')}
+                              onClick={() =>
+                                changeQuizType(index, 'multiple_choice')
+                              }
                               className={cn(
                                 'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
                                 quiz.type !== 'subjective'
@@ -760,7 +931,9 @@ function ActivityEditPage() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => changeQuizType(index, 'subjective')}
+                              onClick={() =>
+                                changeQuizType(index, 'subjective')
+                              }
                               className={cn(
                                 'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
                                 quiz.type === 'subjective'
@@ -927,7 +1100,6 @@ function ActivityEditPage() {
             </motion.div>
           ))}
         </motion.div>
-
       </div>
 
       {/* Delete Question Confirm Modal */}

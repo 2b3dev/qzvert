@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
+import { DefaultLayout } from '../components/layouts/DefaultLayout'
 
 export const Route = createFileRoute('/contact')({ component: ContactPage })
 
@@ -68,8 +69,9 @@ function ContactPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-muted/50 to-background">
-      {/* Hero Section */}
+    <DefaultLayout>
+      <div className="min-h-screen bg-gradient-to-b from-background via-muted/50 to-background">
+        {/* Hero Section */}
       <section className="relative py-24 px-6 overflow-hidden">
         {/* Background Effects */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
@@ -308,6 +310,7 @@ function ContactPage() {
           </motion.div>
         </div>
       </section>
-    </div>
+      </div>
+    </DefaultLayout>
   )
 }

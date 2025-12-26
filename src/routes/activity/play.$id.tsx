@@ -1,7 +1,8 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ArrowLeft,
+  BarChart3,
   BookOpen,
   Trophy,
   Star,
@@ -14,8 +15,12 @@ import {
   Play,
   Pencil,
   Loader2,
+  Clock,
+  Lock,
+  User,
+  LogOut,
 } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { useActivityStore } from '../../stores/activity-store'
 import { useAuthStore } from '../../stores/auth-store'
@@ -24,7 +29,9 @@ import { LearningMap } from '../../components/LearningMap'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
 import { Progress } from '../../components/ui/progress'
-import { getActivityById } from '../../server/activities'
+import IconApp from '../../components/icon/icon-app'
+import { checkCanUserPlay, getActivityById, recordPlay, updatePlayRecord } from '../../server/activities'
+import type { CanUserPlayResult } from '../../types/database'
 
 export const Route = createFileRoute('/activity/play/$id')({
   component: ActivityPlayPage
@@ -48,10 +55,37 @@ function ActivityPlayPage() {
     resetGame,
     stopPlaying
   } = useActivityStore()
-  const { session } = useAuthStore()
+  const { session, user, signOut } = useAuthStore()
 
   const [isLoading, setIsLoading] = useState(false)
   const [gameState, setGameState] = useState<GameState>('intro')
+  const [canPlayResult, setCanPlayResult] = useState<CanUserPlayResult | null>(null)
+  const [playRecordId, setPlayRecordId] = useState<string | null>(null)
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false)
+      }
+    }
+
+    if (isUserMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isUserMenuOpen])
+
+  const handleSignOut = async () => {
+    await signOut()
+    setIsUserMenuOpen(false)
+    navigate({ to: '/' })
+  }
 
   // Load activity if not already loaded or if different id
   useEffect(() => {
@@ -65,6 +99,15 @@ function ActivityPlayPage() {
           setActivity(data.generatedQuest, data.activity.raw_content, activityId)
           setThemeConfig(data.themeConfig)
         }
+
+        // Check if user can play (availability & replay limits)
+        const canPlay = await checkCanUserPlay({
+          data: {
+            activityId,
+            accessToken: session?.access_token
+          }
+        })
+        setCanPlayResult(canPlay)
       } catch (error) {
         toast.error('Failed to load content')
         navigate({ to: '/' })
@@ -74,7 +117,7 @@ function ActivityPlayPage() {
     }
 
     loadActivity()
-  }, [activityId, currentActivityId, currentActivity, setActivity, setThemeConfig, navigate])
+  }, [activityId, currentActivityId, currentActivity, setActivity, setThemeConfig, navigate, session])
 
   if (isLoading) {
     return (
@@ -105,20 +148,115 @@ function ActivityPlayPage() {
     )
   }
 
+  // Check if activity is blocked from playing
+  const isBlocked = canPlayResult && !canPlayResult.can_play
+
+  // Render blocked state (availability or replay limit reached)
+  const renderBlockedState = () => {
+    if (!canPlayResult || canPlayResult.can_play) return null
+
+    let icon = <Lock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+    let title = 'Cannot Play'
+    let description = 'You cannot play this activity right now.'
+
+    switch (canPlayResult.reason) {
+      case 'not_yet_available':
+        icon = <Clock className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+        title = 'Not Yet Available'
+        description = canPlayResult.available_from
+          ? `This activity will be available on ${formatDate(canPlayResult.available_from)}`
+          : 'This activity is not yet available.'
+        break
+      case 'expired':
+        icon = <Clock className="w-12 h-12 text-destructive mx-auto mb-4" />
+        title = 'Activity Expired'
+        description = canPlayResult.available_until
+          ? `This activity was available until ${formatDate(canPlayResult.available_until)}`
+          : 'This activity is no longer available.'
+        break
+      case 'replay_limit_reached':
+        icon = <Lock className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+        title = 'Replay Limit Reached'
+        description = `You have already played this activity ${canPlayResult.plays_used} time${(canPlayResult.plays_used ?? 0) > 1 ? 's' : ''} (maximum: ${canPlayResult.replay_limit}).`
+        break
+      case 'activity_not_found':
+        icon = <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+        title = 'Activity Not Found'
+        description = 'This activity does not exist.'
+        break
+    }
+
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center py-8 px-6">
+        <Card className="max-w-md">
+          <CardContent className="pt-6 text-center">
+            {icon}
+            <h2 className="text-xl font-semibold text-foreground mb-2">{title}</h2>
+            <p className="text-muted-foreground mb-6">{description}</p>
+            <Button onClick={() => navigate({ to: '/' })}>
+              <Home className="w-4 h-4" />
+              Back to Home
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Show blocked state if cannot play
+  if (isBlocked) {
+    return renderBlockedState()
+  }
+
   const isSmartQuizMode = currentActivity.type === 'quiz'
   const stage = isSmartQuizMode ? null : currentActivity.stages[currentStageIndex]
   const isLastStage = isSmartQuizMode ? true : currentStageIndex === currentActivity.stages.length - 1
   const totalQuizzes = isSmartQuizMode ? currentActivity.quizzes.length : 0
 
-  const handleStartQuiz = () => {
+  const handleStartQuiz = async () => {
+    // Record play start if user is logged in
+    if (session?.access_token) {
+      try {
+        const result = await recordPlay({
+          data: {
+            activityId,
+            accessToken: session.access_token,
+            completed: false
+          }
+        })
+        setPlayRecordId(result.playRecordId)
+      } catch {
+        // Ignore error, continue playing
+      }
+    }
     startPlaying()
     setGameState('playing')
   }
 
-  const handleStartQuest = () => {
+  const handleStartQuest = async () => {
+    // Record play start if user is logged in
+    if (session?.access_token) {
+      try {
+        const result = await recordPlay({
+          data: {
+            activityId,
+            accessToken: session.access_token,
+            completed: false
+          }
+        })
+        setPlayRecordId(result.playRecordId)
+      } catch {
+        // Ignore error, continue playing
+      }
+    }
     setCurrentStage(0)
     startPlaying()
     setGameState('lesson')
+  }
+
+  // Format date for display
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleString()
   }
 
   const handleStageSelect = (stageIndex: number) => {
@@ -127,15 +265,47 @@ function ActivityPlayPage() {
     setGameState('lesson')
   }
 
-  const handleStageComplete = () => {
+  const handleStageComplete = async () => {
     if (isLastStage) {
+      // Update play record if we have one
+      if (playRecordId && session?.access_token) {
+        try {
+          await updatePlayRecord({
+            data: {
+              playRecordId,
+              accessToken: session.access_token,
+              score,
+              durationSeconds: 0, // TODO: track actual duration
+              completed: true
+            }
+          })
+        } catch {
+          // Ignore error
+        }
+      }
       setGameState('quest_complete')
     } else {
       setGameState('stage_complete')
     }
   }
 
-  const handleQuizComplete = () => {
+  const handleQuizComplete = async () => {
+    // Update play record if we have one
+    if (playRecordId && session?.access_token) {
+      try {
+        await updatePlayRecord({
+          data: {
+            playRecordId,
+            accessToken: session.access_token,
+            score,
+            durationSeconds: 0, // TODO: track actual duration
+            completed: true
+          }
+        })
+      } catch {
+        // Ignore error
+      }
+    }
     setGameState('quiz_complete')
   }
 
@@ -168,34 +338,109 @@ function ActivityPlayPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-6">
-      <div className="max-w-4xl mx-auto">
-        <AnimatePresence mode="wait">
-          {/* Intro/Preview State */}
-          {gameState === 'intro' && (
-            <motion.div
-              key="intro"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, y: -20 }}
-            >
-              {/* Header */}
+    <div className="min-h-screen bg-background">
+      {/* Minimal Header */}
+      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex items-center justify-between h-14">
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-2 group">
               <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center justify-between mb-8"
+                whileHover={{ rotate: 180 }}
+                transition={{ duration: 0.3 }}
               >
-                <Button variant="ghost" onClick={() => navigate({ to: '/' })}>
-                  <ArrowLeft className="w-4 h-4" />
-                  Back
-                </Button>
-                {session && (
-                  <Button variant="ghost" onClick={handleEdit}>
-                    <Pencil className="w-4 h-4" />
-                    Edit
-                  </Button>
-                )}
+                <IconApp className="w-6 h-6" color={'hsl(var(--foreground))'} />
               </motion.div>
+              <span className="font-black text-xl text-foreground group-hover:text-primary transition-colors">
+                QzVert
+              </span>
+            </Link>
+
+            {/* Right Side */}
+            <div className="flex items-center gap-2">
+              {session && (
+                <Button variant="ghost" size="sm" onClick={handleEdit}>
+                  <Pencil className="w-4 h-4" />
+                  Edit
+                </Button>
+              )}
+
+              {/* User Menu */}
+              {user ? (
+                <div ref={userMenuRef} className="relative">
+                  <button
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="flex items-center gap-2 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                      <User className="w-4 h-4 text-primary" />
+                    </div>
+                  </button>
+                  <AnimatePresence>
+                    {isUserMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute right-0 mt-2 w-56 rounded-lg bg-card border border-border shadow-lg py-2"
+                      >
+                        <div className="px-4 py-2 border-b border-border">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {user.email}
+                          </p>
+                        </div>
+                        <Link
+                          to="/profile"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                        >
+                          <User className="w-4 h-4" />
+                          โปรไฟล์
+                        </Link>
+                        <Link
+                          to="/activity/results"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                        >
+                          <BarChart3 className="w-4 h-4" />
+                          ผลลัพธ์ทั้งหมด
+                        </Link>
+                        <button
+                          onClick={handleSignOut}
+                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          ออกจากระบบ
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <Link
+                  to="/login"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors text-sm"
+                >
+                  <User className="w-4 h-4" />
+                  เข้าสู่ระบบ
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="py-8 px-6">
+        <div className="max-w-4xl mx-auto">
+          <AnimatePresence mode="wait">
+            {/* Intro/Preview State */}
+            {gameState === 'intro' && (
+              <motion.div
+                key="intro"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, y: -20 }}
+              >
 
               {isSmartQuizMode ? (
                 // Quiz Intro
@@ -225,9 +470,17 @@ function ActivityPlayPage() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="text-center space-y-4">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary">
-                          <span className="font-bold">{currentActivity.quizzes.length}</span>
-                          <span>Questions</span>
+                        <div className="flex items-center justify-center gap-3 flex-wrap">
+                          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary">
+                            <span className="font-bold">{currentActivity.quizzes.length}</span>
+                            <span>Questions</span>
+                          </div>
+                          {canPlayResult?.plays_remaining !== undefined && canPlayResult.plays_remaining > 0 && (
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 text-amber-500">
+                              <span className="font-bold">{canPlayResult.plays_remaining}</span>
+                              <span>plays remaining</span>
+                            </div>
+                          )}
                         </div>
                         {currentActivity.description && (
                           <div
@@ -497,10 +750,16 @@ function ActivityPlayPage() {
                       </p>
                     </div>
 
-                    <div className="flex justify-center gap-4">
+                    <div className="flex flex-wrap justify-center gap-3">
                       <Button size="lg" variant="secondary" onClick={handleFinish}>
                         <Home className="w-5 h-5" />
                         Back to Home
+                      </Button>
+                      <Button size="lg" variant="outline" asChild>
+                        <Link to="/activity/results">
+                          <BarChart3 className="w-5 h-5" />
+                          View Results
+                        </Link>
                       </Button>
                       <Button size="lg" onClick={handleRetry}>
                         <RotateCcw className="w-5 h-5" />
@@ -612,10 +871,16 @@ function ActivityPlayPage() {
                       </Card>
                     </motion.div>
 
-                    <div className="flex justify-center gap-4">
+                    <div className="flex flex-wrap justify-center gap-3">
                       <Button size="lg" variant="secondary" onClick={handleFinish}>
                         <Home className="w-5 h-5" />
                         Back to Home
+                      </Button>
+                      <Button size="lg" variant="outline" asChild>
+                        <Link to="/activity/results">
+                          <BarChart3 className="w-5 h-5" />
+                          View Results
+                        </Link>
                       </Button>
                       <Button size="lg" onClick={handleRetry}>
                         <RotateCcw className="w-5 h-5" />
@@ -644,10 +909,16 @@ function ActivityPlayPage() {
                     <p className="text-xl text-muted-foreground mb-2">You scored</p>
                     <p className="text-5xl font-bold text-primary mb-8">{score} points</p>
 
-                    <div className="flex justify-center gap-4">
+                    <div className="flex flex-wrap justify-center gap-3">
                       <Button size="lg" variant="secondary" onClick={handleQuit}>
                         <Home className="w-5 h-5" />
                         Quit
+                      </Button>
+                      <Button size="lg" variant="outline" asChild>
+                        <Link to="/activity/results">
+                          <BarChart3 className="w-5 h-5" />
+                          View Results
+                        </Link>
                       </Button>
                       <Button size="lg" onClick={handleRetry}>
                         <RotateCcw className="w-5 h-5" />
@@ -660,6 +931,7 @@ function ActivityPlayPage() {
             </motion.div>
           )}
         </AnimatePresence>
+        </div>
       </div>
     </div>
   )

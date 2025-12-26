@@ -1,5 +1,6 @@
 import IconApp from '@/components/icon/icon-app'
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { DefaultLayout } from '../components/layouts/DefaultLayout'
 import { motion } from 'framer-motion'
 import {
   BookOpen,
@@ -109,7 +110,8 @@ function HomePage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-muted/50 to-background">
+    <DefaultLayout>
+      <div className="min-h-screen bg-gradient-to-b from-background via-muted/50 to-background">
       {/* Hero Section */}
       <section className="relative py-24 px-6 overflow-hidden">
         {/* Background Effects */}
@@ -503,6 +505,7 @@ function HomePage() {
       <section id="create" className="py-16 px-6">
         <QuestCreator />
       </section>
-    </div>
+      </div>
+    </DefaultLayout>
   )
 }

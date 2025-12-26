@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import { createClient } from '@supabase/supabase-js'
-import type { ActivityStatus, Database, GeneratedQuest, ThemeConfig } from '../types/database'
+import type { ActivityStatus, CanUserPlayResult, Database, GeneratedQuest, ThemeConfig } from '../types/database'
 
 // Create Supabase client with user's access token for RLS
 const getSupabaseWithAuth = (accessToken: string) => {
@@ -687,4 +687,361 @@ export const deleteActivity = createServerFn({ method: 'POST' })
     }
 
     return { success: true }
+  })
+
+// ============================================================
+// Replay & Availability Settings Functions
+// ============================================================
+
+// Check if user can play an activity (replay limits + availability window)
+export const checkCanUserPlay = createServerFn({ method: 'GET' })
+  .inputValidator((data: { activityId: string; accessToken?: string }) => data)
+  .handler(async ({ data }): Promise<CanUserPlayResult> => {
+    const supabase = data.accessToken
+      ? getSupabaseWithAuth(data.accessToken)
+      : getSupabasePublic()
+
+    // Get user ID if authenticated
+    let userId: string | null = null
+    if (data.accessToken) {
+      const { data: { user } } = await supabase.auth.getUser()
+      userId = user?.id || null
+    }
+
+    // If no user, we can still check availability window but not replay limits
+    if (!userId) {
+      // Check availability only
+      const { data: activity } = await supabase
+        .from('activities')
+        .select('available_from, available_until')
+        .eq('id', data.activityId)
+        .single()
+
+      if (!activity) {
+        return { can_play: false, reason: 'activity_not_found' }
+      }
+
+      const now = new Date()
+
+      if (activity.available_from && new Date(activity.available_from) > now) {
+        return {
+          can_play: false,
+          reason: 'not_yet_available',
+          available_from: activity.available_from
+        }
+      }
+
+      if (activity.available_until && new Date(activity.available_until) < now) {
+        return {
+          can_play: false,
+          reason: 'expired',
+          available_until: activity.available_until
+        }
+      }
+
+      // Guest can play (no replay limit check possible)
+      return { can_play: true, reason: 'unlimited' }
+    }
+
+    // Use the database function for authenticated users
+    const { data: result, error } = await supabase.rpc('can_user_play_activity', {
+      p_activity_id: data.activityId,
+      p_user_id: userId
+    })
+
+    if (error) {
+      throw new Error(`Failed to check play eligibility: ${error.message}`)
+    }
+
+    return result as CanUserPlayResult
+  })
+
+// Record a play (start or complete)
+export const recordPlay = createServerFn({ method: 'POST' })
+  .inputValidator((data: {
+    activityId: string
+    accessToken: string
+    score?: number
+    durationSeconds?: number
+    completed?: boolean
+  }) => data)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseWithAuth(data.accessToken)
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      throw new Error('Authentication failed')
+    }
+
+    const { data: result, error } = await supabase.rpc('record_activity_play', {
+      p_activity_id: data.activityId,
+      p_user_id: user.id,
+      p_score: data.score ?? null,
+      p_duration_seconds: data.durationSeconds ?? null,
+      p_completed: data.completed ?? false
+    })
+
+    if (error) {
+      throw new Error(`Failed to record play: ${error.message}`)
+    }
+
+    return { playRecordId: result, success: true }
+  })
+
+// Update play record (when completing a play)
+export const updatePlayRecord = createServerFn({ method: 'POST' })
+  .inputValidator((data: {
+    playRecordId: string
+    accessToken: string
+    score: number
+    durationSeconds: number
+    completed: boolean
+  }) => data)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseWithAuth(data.accessToken)
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      throw new Error('Authentication failed')
+    }
+
+    const { error } = await supabase
+      .from('activity_play_records')
+      .update({
+        score: data.score,
+        duration_seconds: data.durationSeconds,
+        completed: data.completed
+      })
+      .eq('id', data.playRecordId)
+      .eq('user_id', user.id) // RLS double-check
+
+    if (error) {
+      throw new Error(`Failed to update play record: ${error.message}`)
+    }
+
+    return { success: true }
+  })
+
+// Get user's play history for an activity
+export const getUserPlayHistory = createServerFn({ method: 'GET' })
+  .inputValidator((data: { activityId: string; accessToken: string }) => data)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseWithAuth(data.accessToken)
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      throw new Error('Authentication failed')
+    }
+
+    const { data: records, error } = await supabase
+      .from('activity_play_records')
+      .select('*')
+      .eq('activity_id', data.activityId)
+      .eq('user_id', user.id)
+      .order('played_at', { ascending: false })
+
+    if (error) {
+      throw new Error(`Failed to get play history: ${error.message}`)
+    }
+
+    return records
+  })
+
+// Update activity replay & availability settings
+export const updateActivitySettings = createServerFn({ method: 'POST' })
+  .inputValidator((data: {
+    activityId: string
+    accessToken: string
+    replayLimit?: number | null
+    availableFrom?: string | null
+    availableUntil?: string | null
+  }) => data)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseWithAuth(data.accessToken)
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      throw new Error('Authentication failed')
+    }
+
+    const updateData: Record<string, unknown> = {}
+
+    if (data.replayLimit !== undefined) {
+      updateData.replay_limit = data.replayLimit
+    }
+    if (data.availableFrom !== undefined) {
+      updateData.available_from = data.availableFrom
+    }
+    if (data.availableUntil !== undefined) {
+      updateData.available_until = data.availableUntil
+    }
+
+    const { error } = await supabase
+      .from('activities')
+      .update(updateData)
+      .eq('id', data.activityId)
+
+    if (error) {
+      throw new Error(`Failed to update activity settings: ${error.message}`)
+    }
+
+    return { success: true }
+  })
+
+// User stats for profile page
+export interface UserStats {
+  totalActivitiesPlayed: number
+  totalScore: number
+  completedActivities: number
+  recentPlays: Array<{
+    id: string
+    activity_id: string
+    activity_title: string
+    activity_thumbnail: string | null
+    played_at: string
+    score: number | null
+    completed: boolean
+  }>
+}
+
+export const getUserStats = createServerFn({ method: 'GET' })
+  .inputValidator((data: { accessToken: string }) => data)
+  .handler(async ({ data }): Promise<UserStats> => {
+    const supabase = getSupabaseWithAuth(data.accessToken)
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      throw new Error('Authentication failed')
+    }
+
+    // Get all play records with activity info
+    const { data: records, error } = await supabase
+      .from('activity_play_records')
+      .select(`
+        id,
+        activity_id,
+        played_at,
+        score,
+        completed,
+        activities (
+          title,
+          thumbnail
+        )
+      `)
+      .eq('user_id', user.id)
+      .order('played_at', { ascending: false })
+
+    if (error) {
+      throw new Error(`Failed to get user stats: ${error.message}`)
+    }
+
+    // Calculate stats
+    const totalActivitiesPlayed = new Set(records?.map(r => r.activity_id) || []).size
+    const totalScore = records?.reduce((sum, r) => sum + (r.score || 0), 0) || 0
+    const completedActivities = new Set(
+      records?.filter(r => r.completed).map(r => r.activity_id) || []
+    ).size
+
+    // Get recent 5 plays
+    const recentPlays = (records || []).slice(0, 5).map(r => ({
+      id: r.id,
+      activity_id: r.activity_id,
+      activity_title: (r.activities as { title: string } | null)?.title || 'Unknown',
+      activity_thumbnail: (r.activities as { thumbnail: string | null } | null)?.thumbnail || null,
+      played_at: r.played_at,
+      score: r.score,
+      completed: r.completed
+    }))
+
+    return {
+      totalActivitiesPlayed,
+      totalScore,
+      completedActivities,
+      recentPlays
+    }
+  })
+
+// Get all activity results with pagination
+export interface ActivityResult {
+  id: string
+  activity_id: string
+  activity_title: string
+  activity_thumbnail: string | null
+  activity_type: string
+  played_at: string
+  score: number | null
+  completed: boolean
+  time_spent: number | null // seconds
+}
+
+export interface ActivityResultsResponse {
+  results: ActivityResult[]
+  total: number
+  page: number
+  pageSize: number
+  hasMore: boolean
+}
+
+export const getActivityResults = createServerFn({ method: 'GET' })
+  .inputValidator((data: { accessToken: string; page?: number; pageSize?: number }) => data)
+  .handler(async ({ data }): Promise<ActivityResultsResponse> => {
+    const supabase = getSupabaseWithAuth(data.accessToken)
+    const page = data.page || 1
+    const pageSize = data.pageSize || 20
+    const offset = (page - 1) * pageSize
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      throw new Error('Authentication failed')
+    }
+
+    // Get total count
+    const { count } = await supabase
+      .from('activity_play_records')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+
+    // Get paginated results
+    const { data: records, error } = await supabase
+      .from('activity_play_records')
+      .select(`
+        id,
+        activity_id,
+        played_at,
+        score,
+        completed,
+        duration_seconds,
+        activities (
+          title,
+          thumbnail,
+          type
+        )
+      `)
+      .eq('user_id', user.id)
+      .order('played_at', { ascending: false })
+      .range(offset, offset + pageSize - 1)
+
+    if (error) {
+      throw new Error(`Failed to get activity results: ${error.message}`)
+    }
+
+    const results: ActivityResult[] = (records || []).map(r => ({
+      id: r.id,
+      activity_id: r.activity_id,
+      activity_title: (r.activities as { title: string } | null)?.title || 'Unknown',
+      activity_thumbnail: (r.activities as { thumbnail: string | null } | null)?.thumbnail || null,
+      activity_type: (r.activities as { type: string } | null)?.type || 'quiz',
+      played_at: r.played_at,
+      score: r.score,
+      completed: r.completed,
+      time_spent: r.duration_seconds
+    }))
+
+    return {
+      results,
+      total: count || 0,
+      page,
+      pageSize,
+      hasMore: offset + results.length < (count || 0)
+    }
   })

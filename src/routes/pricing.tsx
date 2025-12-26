@@ -26,6 +26,7 @@ import {
   CardHeader,
   CardTitle,
 } from '../components/ui/card'
+import { DefaultLayout } from '../components/layouts/DefaultLayout'
 
 export const Route = createFileRoute('/pricing')({ component: PricingPage })
 
@@ -196,9 +197,10 @@ function PricingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-muted/50 to-background">
-      {/* Hero Section */}
-      <section className="relative py-20 px-6 overflow-hidden">
+    <DefaultLayout>
+      <div className="min-h-screen bg-gradient-to-b from-background via-muted/50 to-background">
+        {/* Hero Section */}
+        <section className="relative py-20 px-6 overflow-hidden">
         {/* Background Effects */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
         <div className="absolute top-20 left-1/4 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
@@ -635,7 +637,8 @@ function PricingPage() {
             </div>
           </motion.div>
         </div>
-      </section>
-    </div>
+        </section>
+      </div>
+    </DefaultLayout>
   )
 }

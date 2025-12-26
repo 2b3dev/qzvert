@@ -13,6 +13,7 @@ import {
   ArrowLeft,
 } from 'lucide-react'
 import { Button } from '../components/ui/button'
+import { DefaultLayout } from '../components/layouts/DefaultLayout'
 
 export const Route = createFileRoute('/privacy')({ component: PrivacyPage })
 
@@ -127,9 +128,10 @@ function PrivacyPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-muted/50 to-background">
-      {/* Header */}
-      <section className="relative py-16 px-6">
+    <DefaultLayout>
+      <div className="min-h-screen bg-gradient-to-b from-background via-muted/50 to-background">
+        {/* Header */}
+        <section className="relative py-16 px-6">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
 
         <div className="relative max-w-4xl mx-auto">
@@ -273,7 +275,8 @@ function PrivacyPage() {
             </p>
           </motion.div>
         </div>
-      </section>
-    </div>
+        </section>
+      </div>
+    </DefaultLayout>
   )
 }

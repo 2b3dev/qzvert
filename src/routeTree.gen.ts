@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
@@ -16,11 +17,17 @@ import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ActivityResultsRouteImport } from './routes/activity/results'
 import { Route as ActivityNewRouteImport } from './routes/activity/new'
 import { Route as ActivityMeRouteImport } from './routes/activity/me'
 import { Route as ActivityPlayIdRouteImport } from './routes/activity/play.$id'
 import { Route as ActivityEditIdRouteImport } from './routes/activity/edit.$id'
 
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
@@ -56,6 +63,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ActivityResultsRoute = ActivityResultsRouteImport.update({
+  id: '/activity/results',
+  path: '/activity/results',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ActivityNewRoute = ActivityNewRouteImport.update({
   id: '/activity/new',
   path: '/activity/new',
@@ -85,8 +97,10 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRoute
   '/activity/me': typeof ActivityMeRoute
   '/activity/new': typeof ActivityNewRoute
+  '/activity/results': typeof ActivityResultsRoute
   '/activity/edit/$id': typeof ActivityEditIdRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
 }
@@ -98,8 +112,10 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRoute
   '/activity/me': typeof ActivityMeRoute
   '/activity/new': typeof ActivityNewRoute
+  '/activity/results': typeof ActivityResultsRoute
   '/activity/edit/$id': typeof ActivityEditIdRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
 }
@@ -112,8 +128,10 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRoute
   '/activity/me': typeof ActivityMeRoute
   '/activity/new': typeof ActivityNewRoute
+  '/activity/results': typeof ActivityResultsRoute
   '/activity/edit/$id': typeof ActivityEditIdRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
 }
@@ -127,8 +145,10 @@ export interface FileRouteTypes {
     | '/login'
     | '/pricing'
     | '/privacy'
+    | '/profile'
     | '/activity/me'
     | '/activity/new'
+    | '/activity/results'
     | '/activity/edit/$id'
     | '/activity/play/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -140,8 +160,10 @@ export interface FileRouteTypes {
     | '/login'
     | '/pricing'
     | '/privacy'
+    | '/profile'
     | '/activity/me'
     | '/activity/new'
+    | '/activity/results'
     | '/activity/edit/$id'
     | '/activity/play/$id'
   id:
@@ -153,8 +175,10 @@ export interface FileRouteTypes {
     | '/login'
     | '/pricing'
     | '/privacy'
+    | '/profile'
     | '/activity/me'
     | '/activity/new'
+    | '/activity/results'
     | '/activity/edit/$id'
     | '/activity/play/$id'
   fileRoutesById: FileRoutesById
@@ -167,14 +191,23 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
+  ProfileRoute: typeof ProfileRoute
   ActivityMeRoute: typeof ActivityMeRoute
   ActivityNewRoute: typeof ActivityNewRoute
+  ActivityResultsRoute: typeof ActivityResultsRoute
   ActivityEditIdRoute: typeof ActivityEditIdRoute
   ActivityPlayIdRoute: typeof ActivityPlayIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/privacy': {
       id: '/privacy'
       path: '/privacy'
@@ -224,6 +257,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/activity/results': {
+      id: '/activity/results'
+      path: '/activity/results'
+      fullPath: '/activity/results'
+      preLoaderRoute: typeof ActivityResultsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/activity/new': {
       id: '/activity/new'
       path: '/activity/new'
@@ -263,8 +303,10 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
+  ProfileRoute: ProfileRoute,
   ActivityMeRoute: ActivityMeRoute,
   ActivityNewRoute: ActivityNewRoute,
+  ActivityResultsRoute: ActivityResultsRoute,
   ActivityEditIdRoute: ActivityEditIdRoute,
   ActivityPlayIdRoute: ActivityPlayIdRoute,
 }

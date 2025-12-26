@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../co
 import { Input } from '../components/ui/input'
 import { getPublishedActivities, getActivityById } from '../server/activities'
 import { useActivityStore } from '../stores/activity-store'
+import { DefaultLayout } from '../components/layouts/DefaultLayout'
 
 export const Route = createFileRoute('/explore')({
   component: ExplorePage
@@ -68,9 +69,10 @@ function ExplorePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-background py-8 px-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
+    <DefaultLayout>
+      <div className="min-h-screen bg-gradient-to-b from-background via-background to-background py-8 px-6">
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -235,7 +237,8 @@ function ExplorePage() {
             </Button>
           </motion.div>
         )}
+        </div>
       </div>
-    </div>
+    </DefaultLayout>
   )
 }
