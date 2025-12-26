@@ -16,10 +16,10 @@ import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as CreationNewRouteImport } from './routes/creation/new'
-import { Route as CreationMeRouteImport } from './routes/creation/me'
-import { Route as CreationPlayIdRouteImport } from './routes/creation/play.$id'
-import { Route as CreationEditIdRouteImport } from './routes/creation/edit.$id'
+import { Route as ActivityNewRouteImport } from './routes/activity/new'
+import { Route as ActivityMeRouteImport } from './routes/activity/me'
+import { Route as ActivityPlayIdRouteImport } from './routes/activity/play.$id'
+import { Route as ActivityEditIdRouteImport } from './routes/activity/edit.$id'
 
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
@@ -56,24 +56,24 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CreationNewRoute = CreationNewRouteImport.update({
-  id: '/creation/new',
-  path: '/creation/new',
+const ActivityNewRoute = ActivityNewRouteImport.update({
+  id: '/activity/new',
+  path: '/activity/new',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CreationMeRoute = CreationMeRouteImport.update({
-  id: '/creation/me',
-  path: '/creation/me',
+const ActivityMeRoute = ActivityMeRouteImport.update({
+  id: '/activity/me',
+  path: '/activity/me',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CreationPlayIdRoute = CreationPlayIdRouteImport.update({
-  id: '/creation/play/$id',
-  path: '/creation/play/$id',
+const ActivityPlayIdRoute = ActivityPlayIdRouteImport.update({
+  id: '/activity/play/$id',
+  path: '/activity/play/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CreationEditIdRoute = CreationEditIdRouteImport.update({
-  id: '/creation/edit/$id',
-  path: '/creation/edit/$id',
+const ActivityEditIdRoute = ActivityEditIdRouteImport.update({
+  id: '/activity/edit/$id',
+  path: '/activity/edit/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -85,10 +85,10 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
-  '/creation/me': typeof CreationMeRoute
-  '/creation/new': typeof CreationNewRoute
-  '/creation/edit/$id': typeof CreationEditIdRoute
-  '/creation/play/$id': typeof CreationPlayIdRoute
+  '/activity/me': typeof ActivityMeRoute
+  '/activity/new': typeof ActivityNewRoute
+  '/activity/edit/$id': typeof ActivityEditIdRoute
+  '/activity/play/$id': typeof ActivityPlayIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -98,10 +98,10 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
-  '/creation/me': typeof CreationMeRoute
-  '/creation/new': typeof CreationNewRoute
-  '/creation/edit/$id': typeof CreationEditIdRoute
-  '/creation/play/$id': typeof CreationPlayIdRoute
+  '/activity/me': typeof ActivityMeRoute
+  '/activity/new': typeof ActivityNewRoute
+  '/activity/edit/$id': typeof ActivityEditIdRoute
+  '/activity/play/$id': typeof ActivityPlayIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -112,10 +112,10 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
-  '/creation/me': typeof CreationMeRoute
-  '/creation/new': typeof CreationNewRoute
-  '/creation/edit/$id': typeof CreationEditIdRoute
-  '/creation/play/$id': typeof CreationPlayIdRoute
+  '/activity/me': typeof ActivityMeRoute
+  '/activity/new': typeof ActivityNewRoute
+  '/activity/edit/$id': typeof ActivityEditIdRoute
+  '/activity/play/$id': typeof ActivityPlayIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -127,10 +127,10 @@ export interface FileRouteTypes {
     | '/login'
     | '/pricing'
     | '/privacy'
-    | '/creation/me'
-    | '/creation/new'
-    | '/creation/edit/$id'
-    | '/creation/play/$id'
+    | '/activity/me'
+    | '/activity/new'
+    | '/activity/edit/$id'
+    | '/activity/play/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -140,10 +140,10 @@ export interface FileRouteTypes {
     | '/login'
     | '/pricing'
     | '/privacy'
-    | '/creation/me'
-    | '/creation/new'
-    | '/creation/edit/$id'
-    | '/creation/play/$id'
+    | '/activity/me'
+    | '/activity/new'
+    | '/activity/edit/$id'
+    | '/activity/play/$id'
   id:
     | '__root__'
     | '/'
@@ -153,10 +153,10 @@ export interface FileRouteTypes {
     | '/login'
     | '/pricing'
     | '/privacy'
-    | '/creation/me'
-    | '/creation/new'
-    | '/creation/edit/$id'
-    | '/creation/play/$id'
+    | '/activity/me'
+    | '/activity/new'
+    | '/activity/edit/$id'
+    | '/activity/play/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -167,10 +167,10 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
-  CreationMeRoute: typeof CreationMeRoute
-  CreationNewRoute: typeof CreationNewRoute
-  CreationEditIdRoute: typeof CreationEditIdRoute
-  CreationPlayIdRoute: typeof CreationPlayIdRoute
+  ActivityMeRoute: typeof ActivityMeRoute
+  ActivityNewRoute: typeof ActivityNewRoute
+  ActivityEditIdRoute: typeof ActivityEditIdRoute
+  ActivityPlayIdRoute: typeof ActivityPlayIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -224,32 +224,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/creation/new': {
-      id: '/creation/new'
-      path: '/creation/new'
-      fullPath: '/creation/new'
-      preLoaderRoute: typeof CreationNewRouteImport
+    '/activity/new': {
+      id: '/activity/new'
+      path: '/activity/new'
+      fullPath: '/activity/new'
+      preLoaderRoute: typeof ActivityNewRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/creation/me': {
-      id: '/creation/me'
-      path: '/creation/me'
-      fullPath: '/creation/me'
-      preLoaderRoute: typeof CreationMeRouteImport
+    '/activity/me': {
+      id: '/activity/me'
+      path: '/activity/me'
+      fullPath: '/activity/me'
+      preLoaderRoute: typeof ActivityMeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/creation/play/$id': {
-      id: '/creation/play/$id'
-      path: '/creation/play/$id'
-      fullPath: '/creation/play/$id'
-      preLoaderRoute: typeof CreationPlayIdRouteImport
+    '/activity/play/$id': {
+      id: '/activity/play/$id'
+      path: '/activity/play/$id'
+      fullPath: '/activity/play/$id'
+      preLoaderRoute: typeof ActivityPlayIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/creation/edit/$id': {
-      id: '/creation/edit/$id'
-      path: '/creation/edit/$id'
-      fullPath: '/creation/edit/$id'
-      preLoaderRoute: typeof CreationEditIdRouteImport
+    '/activity/edit/$id': {
+      id: '/activity/edit/$id'
+      path: '/activity/edit/$id'
+      fullPath: '/activity/edit/$id'
+      preLoaderRoute: typeof ActivityEditIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -263,10 +263,10 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
-  CreationMeRoute: CreationMeRoute,
-  CreationNewRoute: CreationNewRoute,
-  CreationEditIdRoute: CreationEditIdRoute,
-  CreationPlayIdRoute: CreationPlayIdRoute,
+  ActivityMeRoute: ActivityMeRoute,
+  ActivityNewRoute: ActivityNewRoute,
+  ActivityEditIdRoute: ActivityEditIdRoute,
+  ActivityPlayIdRoute: ActivityPlayIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

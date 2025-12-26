@@ -3,18 +3,18 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Check, ChevronDown, Copy, EyeOff, Globe, Link2, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '../../lib/utils'
-import type { CreationStatus } from '../../types/database'
-import { CREATION_STATUS_OPTIONS } from '../../types/database'
+import type { ActivityStatus } from '../../types/database'
+import { ACTIVITY_STATUS_OPTIONS } from '../../types/database'
 import { EmailListInput } from './email-list-input'
 
-const statusIcons: Record<CreationStatus, React.ReactNode> = {
+const statusIcons: Record<ActivityStatus, React.ReactNode> = {
   draft: <EyeOff className="w-4 h-4" />,
   private_group: <Users className="w-4 h-4" />,
   link: <Link2 className="w-4 h-4" />,
   public: <Globe className="w-4 h-4" />,
 }
 
-const statusColors: Record<CreationStatus, string> = {
+const statusColors: Record<ActivityStatus, string> = {
   draft: 'text-muted-foreground',
   private_group: 'text-amber-500',
   link: 'text-blue-500',
@@ -22,12 +22,12 @@ const statusColors: Record<CreationStatus, string> = {
 }
 
 interface StatusDropdownProps {
-  value: CreationStatus
-  onChange: (value: CreationStatus) => void
+  value: ActivityStatus
+  onChange: (value: ActivityStatus) => void
   disabled?: boolean
   allowedEmails?: string[]
   onAllowedEmailsChange?: (emails: string[]) => void
-  creationId?: string
+  activityId?: string
 }
 
 export function StatusDropdown({
@@ -36,14 +36,14 @@ export function StatusDropdown({
   disabled,
   allowedEmails = [],
   onAllowedEmailsChange,
-  creationId
+  activityId
 }: StatusDropdownProps) {
   const [isOpen, setIsOpen] = React.useState(false)
   const [copied, setCopied] = React.useState(false)
   const dropdownRef = React.useRef<HTMLDivElement>(null)
 
-  const playLink = creationId
-    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/creation/play/${creationId}`
+  const playLink = activityId
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/activity/play/${activityId}`
     : ''
 
   const handleCopyLink = async (e: React.MouseEvent) => {
@@ -60,7 +60,7 @@ export function StatusDropdown({
     }
   }
 
-  const selectedOption = CREATION_STATUS_OPTIONS.find((opt) => opt.value === value)
+  const selectedOption = ACTIVITY_STATUS_OPTIONS.find((opt) => opt.value === value)
 
   // Close dropdown when clicking outside
   React.useEffect(() => {
@@ -128,7 +128,7 @@ export function StatusDropdown({
               'min-w-[320px] p-1 rounded-xl border border-border bg-background shadow-lg'
             )}
           >
-            {CREATION_STATUS_OPTIONS.map((option) => (
+            {ACTIVITY_STATUS_OPTIONS.map((option) => (
               <div key={option.value}>
                 <button
                   type="button"
@@ -179,7 +179,7 @@ export function StatusDropdown({
                 )}
 
                 {/* Copy link for link status */}
-                {option.value === 'link' && value === 'link' && creationId && (
+                {option.value === 'link' && value === 'link' && activityId && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}

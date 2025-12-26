@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, Timer, CheckCircle, XCircle, ArrowRight, Trophy, Star, Send } from 'lucide-react'
-import { useCreationStore } from '../stores/creation-store'
+import { useActivityStore } from '../stores/activity-store'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
 import { Progress } from './ui/progress'
@@ -35,7 +35,7 @@ function getQuizzesFromQuest(quest: GeneratedQuest | null, stageIndex: number): 
 
 export function QuizPlayer({ onStageComplete, onGameOver, onQuizComplete }: QuizPlayerProps) {
   const {
-    currentCreation,
+    currentActivity,
     currentStageIndex,
     currentQuizIndex,
     setCurrentQuiz,
@@ -44,7 +44,7 @@ export function QuizPlayer({ onStageComplete, onGameOver, onQuizComplete }: Quiz
     addScore,
     themeConfig,
     completeStage
-  } = useCreationStore()
+  } = useActivityStore()
 
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
   const [subjectiveAnswer, setSubjectiveAnswer] = useState('')
@@ -54,8 +54,8 @@ export function QuizPlayer({ onStageComplete, onGameOver, onQuizComplete }: Quiz
   const [timedOut, setTimedOut] = useState(false)
 
   // Handle both Quiz and Quest formats
-  const isSmartQuizMode = currentCreation?.type === 'quiz'
-  const quizzes = getQuizzesFromQuest(currentCreation, currentStageIndex)
+  const isSmartQuizMode = currentActivity?.type === 'quiz'
+  const quizzes = getQuizzesFromQuest(currentActivity, currentStageIndex)
   const quiz = quizzes[currentQuizIndex]
   const totalQuizzes = quizzes.length
   const progress = ((currentQuizIndex + 1) / totalQuizzes) * 100

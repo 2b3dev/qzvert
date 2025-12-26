@@ -8,7 +8,9 @@ import {
   ChevronUp,
   FileText,
   ImageIcon,
+  List,
   Loader2,
+  MessageSquare,
   Plus,
   Save,
   Star,
@@ -16,7 +18,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '../../components/ui/button'
 import {
@@ -25,61 +27,159 @@ import {
   CardHeader,
   CardTitle,
 } from '../../components/ui/card'
+import { ConfirmModal } from '../../components/ui/confirm-modal'
 import { ImageInput } from '../../components/ui/image-input'
 import { Input, Textarea } from '../../components/ui/input'
 import { RichTextEditor } from '../../components/ui/rich-text-editor'
+import { StatusDropdown } from '../../components/ui/status-dropdown'
 import { cn } from '../../lib/utils'
-import { saveQuest } from '../../server/creations'
+import { getAllowedEmails, getActivityByIdForEdit, updateAllowedEmails, updateQuest } from '../../server/activities'
+import { deleteImage } from '../../server/storage'
 import { useAuthStore } from '../../stores/auth-store'
-import { useCreationStore } from '../../stores/creation-store'
+import { supabase } from '../../lib/supabase'
+import { useActivityStore } from '../../stores/activity-store'
 import type {
+  ActivityStatus,
   GeneratedMultipleChoiceQuiz,
   GeneratedQuiz,
   GeneratedSubjectiveQuiz,
 } from '../../types/database'
 
-export const Route = createFileRoute('/creation/new')({
-  component: CreationNewPage,
+export const Route = createFileRoute('/activity/edit/$id')({
+  component: ActivityEditPage,
 })
 
-function CreationNewPage() {
+function ActivityEditPage() {
   const navigate = useNavigate()
-  const { currentCreation, setCreation, themeConfig, setThemeConfig, rawContent } =
-    useCreationStore()
+  const { id: activityId } = Route.useParams()
+  const {
+    currentActivity,
+    setActivity,
+    themeConfig,
+    setThemeConfig,
+    rawContent,
+  } = useActivityStore()
   const { session } = useAuthStore()
   const [isSaving, setIsSaving] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [expandedQuiz, setExpandedQuiz] = useState<number | null>(0)
+  const [loadedActivityId, setLoadedActivityId] = useState<string | null>(null)
 
   // Local state for editing
-  const [title, setTitle] = useState(currentCreation?.title || '')
-  const [description, setDescription] = useState(
-    currentCreation?.description || '',
-  )
-  const [thumbnail, setThumbnail] = useState(currentCreation?.thumbnail || '')
-  const [tags, setTags] = useState<Array<string>>(currentCreation?.tags || [])
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [thumbnail, setThumbnail] = useState('')
+  const [originalThumbnail, setOriginalThumbnail] = useState('') // Track original for deletion
+  const [tags, setTags] = useState<Array<string>>([])
   const [tagInput, setTagInput] = useState('')
-  const [quizzes, setQuizzes] = useState<Array<GeneratedQuiz>>(() => {
-    if (!currentCreation) return []
-    if (currentCreation.type === 'quiz') {
-      return [...currentCreation.quizzes]
-    }
-    // For quest, flatten all quizzes (for now, focus on quiz)
-    return currentCreation.stages.flatMap((stage) => stage.quizzes)
-  })
+  const [quizzes, setQuizzes] = useState<Array<GeneratedQuiz>>([])
+  const [deleteQuizIndex, setDeleteQuizIndex] = useState<number | null>(null)
+  const [totalPoints, setTotalPoints] = useState(0)
+  const [status, setStatus] = useState<ActivityStatus>('draft')
+  const [allowedEmails, setAllowedEmails] = useState<string[]>([])
 
-  if (!currentCreation) {
+  // Load activity from database
+  useEffect(() => {
+    const loadActivity = async () => {
+      if (!activityId || loadedActivityId === activityId) return
+
+      // Get session directly from supabase (handles cookies/localStorage)
+      const { data: { session: currentSession } } = await supabase.auth.getSession()
+      if (!currentSession?.access_token) {
+        toast.error('Please login to edit')
+        navigate({ to: '/login' })
+        return
+      }
+
+      setIsLoading(true)
+      try {
+        const data = await getActivityByIdForEdit({
+          data: { activityId, accessToken: currentSession.access_token },
+        })
+        if (data) {
+          const quest = data.generatedQuest
+          setActivity(quest, data.activity.raw_content)
+          setThemeConfig(data.themeConfig)
+          setLoadedActivityId(activityId)
+
+          // Update local state
+          setTitle(quest.title)
+          setDescription(quest.description || '')
+          setThumbnail(quest.thumbnail || '')
+          setOriginalThumbnail(quest.thumbnail || '') // Store original for later comparison
+          setTags(quest.tags || [])
+
+          let loadedQuizzes: GeneratedQuiz[]
+          if (quest.type === 'quiz') {
+            loadedQuizzes = [...quest.quizzes]
+          } else {
+            loadedQuizzes = quest.stages.flatMap((stage) => stage.quizzes)
+          }
+          setQuizzes(loadedQuizzes)
+          // Calculate total points from loaded quizzes
+          const total = loadedQuizzes.reduce((sum, q) => sum + (q.points ?? 100), 0)
+          setTotalPoints(total)
+
+          // Load status (default to 'draft' for backwards compatibility)
+          const activityStatus = (data.activity as { status?: ActivityStatus }).status
+          setStatus(activityStatus || 'draft')
+
+          // Load allowed emails if private_group
+          if (activityStatus === 'private_group') {
+            try {
+              const emails = await getAllowedEmails({
+                data: { activityId, accessToken: currentSession.access_token }
+              })
+              setAllowedEmails(emails)
+            } catch {
+              // Ignore error, just use empty array
+            }
+          }
+        }
+      } catch (error) {
+        toast.error('Failed to load activity')
+        navigate({ to: '/activity/me' })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadActivity()
+  }, [
+    activityId,
+    loadedActivityId,
+    setActivity,
+    setThemeConfig,
+    navigate,
+  ])
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!currentActivity) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-foreground mb-2">
-              No Quiz to Edit
+              Activity Not Found
             </h2>
-            <p className="text-muted-foreground mb-6">Generate a quiz first</p>
-            <Button onClick={() => navigate({ to: '/' })}>
+            <p className="text-muted-foreground mb-6">
+              This activity doesn't exist or you don't have access
+            </p>
+            <Button onClick={() => navigate({ to: '/activity/me' })}>
               <ArrowLeft className="w-4 h-4" />
-              Back to Home
+              Back to My Activities
             </Button>
           </CardContent>
         </Card>
@@ -87,7 +187,7 @@ function CreationNewPage() {
     )
   }
 
-  const isSmartQuiz = currentCreation.type === 'quiz'
+  const isSmartQuiz = currentActivity.type === 'quiz'
 
   const addTag = (tag: string) => {
     const trimmed = tag.trim().toLowerCase()
@@ -110,10 +210,30 @@ function CreationNewPage() {
     }
   }
 
-  const updateQuiz = (index: number, updates: Partial<GeneratedQuiz>) => {
+  const redistributePoints = () => {
+    if (quizzes.length === 0 || totalPoints < 0) return
+    // Distribute points evenly across all quizzes
+    const pointsPerQuiz = Math.floor(totalPoints / quizzes.length)
+    const remainder = totalPoints % quizzes.length
     setQuizzes((prev) =>
-      prev.map((q, i) => (i === index ? { ...q, ...updates } : q)),
+      prev.map((q, i) => ({
+        ...q,
+        // Add remainder to last question
+        points: pointsPerQuiz + (i === prev.length - 1 ? remainder : 0),
+      })) as GeneratedQuiz[],
     )
+  }
+
+  const updateQuiz = (index: number, updates: Partial<GeneratedQuiz>) => {
+    setQuizzes((prev) => {
+      const newQuizzes = prev.map((q, i) => (i === index ? { ...q, ...updates } : q))
+      // If points changed, update total
+      if ('points' in updates) {
+        const newTotal = newQuizzes.reduce((sum, q) => sum + (q.points ?? 100), 0)
+        setTotalPoints(newTotal)
+      }
+      return newQuizzes
+    })
   }
 
   const updateOption = (
@@ -166,6 +286,42 @@ function CreationNewPage() {
     )
   }
 
+  const changeQuizType = (index: number, newType: 'multiple_choice' | 'subjective') => {
+    setQuizzes((prev) => {
+      const newQuizzes = prev.map((q, i) => {
+        if (i !== index) return q
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const anyQ = q as any
+        if (newType === 'subjective') {
+          // Convert to subjective - keep options/correct_answer as hidden fields
+          return {
+            type: 'subjective' as const,
+            question: q.question,
+            explanation: q.explanation,
+            points: q.points,
+            model_answer: anyQ.model_answer || anyQ._preserved_model_answer || '',
+            // Preserve MC data for switching back
+            _preserved_options: anyQ.options,
+            _preserved_correct_answer: anyQ.correct_answer,
+          }
+        } else {
+          // Convert to multiple choice - restore preserved options if available
+          return {
+            type: 'multiple_choice' as const,
+            question: q.question,
+            explanation: q.explanation,
+            points: q.points,
+            options: anyQ._preserved_options || anyQ.options || ['', '', '', ''],
+            correct_answer: anyQ._preserved_correct_answer ?? anyQ.correct_answer ?? 0,
+            // Preserve subjective data for switching back
+            _preserved_model_answer: anyQ.model_answer,
+          }
+        }
+      })
+      return newQuizzes as GeneratedQuiz[]
+    })
+  }
+
   const addQuiz = () => {
     const newQuiz: GeneratedMultipleChoiceQuiz = {
       type: 'multiple_choice',
@@ -173,19 +329,22 @@ function CreationNewPage() {
       options: ['', '', '', ''],
       correct_answer: 0,
       explanation: '',
+      points: 100,
     }
     setQuizzes((prev) => [...prev, newQuiz])
+    setTotalPoints((prev) => prev + 100)
     setExpandedQuiz(quizzes.length)
   }
 
-  const removeQuiz = (index: number) => {
-    if (quizzes.length <= 1) return
-    setQuizzes((prev) => prev.filter((_, i) => i !== index))
-    if (expandedQuiz === index) {
+  const confirmRemoveQuiz = () => {
+    if (deleteQuizIndex === null || quizzes.length <= 1) return
+    setQuizzes((prev) => prev.filter((_, i) => i !== deleteQuizIndex))
+    if (expandedQuiz === deleteQuizIndex) {
       setExpandedQuiz(null)
-    } else if (expandedQuiz !== null && expandedQuiz > index) {
+    } else if (expandedQuiz !== null && expandedQuiz > deleteQuizIndex) {
       setExpandedQuiz(expandedQuiz - 1)
     }
+    setDeleteQuizIndex(null)
   }
 
   const moveQuiz = (index: number, direction: 'up' | 'down') => {
@@ -203,7 +362,7 @@ function CreationNewPage() {
   }
 
   const validateQuizzes = (): string | null => {
-    if (!title.trim()) return 'Quiz title is required'
+    if (!title.trim()) return 'Title is required'
     if (quizzes.length === 0) return 'At least one question is required'
 
     for (let i = 0; i < quizzes.length; i++) {
@@ -222,6 +381,9 @@ function CreationNewPage() {
         ) {
           return `Question ${i + 1} has invalid correct answer`
         }
+      } else if (quiz.type === 'subjective') {
+        if (!quiz.model_answer?.trim())
+          return `Question ${i + 1} needs a model answer`
       }
     }
     return null
@@ -234,34 +396,59 @@ function CreationNewPage() {
       return
     }
 
-    if (!session?.access_token) {
-      toast.error('Please login to save')
-      navigate({ to: '/login' })
-      return
-    }
-
     setIsSaving(true)
 
     try {
+      // Delete old thumbnail if it changed and was a storage URL
+      if (
+        originalThumbnail &&
+        originalThumbnail !== thumbnail &&
+        originalThumbnail.includes('/storage/v1/object/public/thumbnails/')
+      ) {
+        try {
+          await deleteImage({
+            data: {
+              imageUrl: originalThumbnail,
+              accessToken: session!.access_token,
+            },
+          })
+        } catch {
+          // Ignore deletion errors, continue with save
+        }
+      }
+
       // Update the quest with edited data
       const updatedQuest = isSmartQuiz
-        ? { ...currentCreation, title, description, thumbnail, tags, quizzes }
-        : { ...currentCreation, title, description, thumbnail, tags }
+        ? { ...currentActivity, title, description, thumbnail, tags, quizzes }
+        : { ...currentActivity, title, description, thumbnail, tags }
 
-      setCreation(updatedQuest)
+      setActivity(updatedQuest)
 
       // Save to database
-      const result = await saveQuest({
+      await updateQuest({
         data: {
+          activityId,
           quest: updatedQuest,
           rawContent: rawContent || '',
           themeConfig,
-          accessToken: session.access_token,
+          accessToken: session!.access_token,
+          status,
         },
       })
 
+      // Save allowed emails if private_group
+      if (status === 'private_group') {
+        await updateAllowedEmails({
+          data: {
+            activityId,
+            emails: allowedEmails,
+            accessToken: session!.access_token,
+          },
+        })
+      }
+
       toast.success('Saved successfully!')
-      navigate({ to: '/creation/play/$id', params: { id: result.creationId } })
+      navigate({ to: '/activity/me' })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to save')
     } finally {
@@ -269,35 +456,50 @@ function CreationNewPage() {
     }
   }
 
-  const handleDiscard = () => {
-    navigate({ to: '/' })
+  const handleBack = () => {
+    navigate({ to: '/activity/me' })
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-6">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-8"
-        >
-          <Button variant="ghost" onClick={handleDiscard}>
-            <X className="w-4 h-4" />
-            Discard
-          </Button>
-          <h1 className="text-xl font-bold text-foreground">Review & Save</h1>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            Save & Continue
-          </Button>
-        </motion.div>
+    <div className="min-h-screen bg-background">
+      {/* Custom Sticky Header */}
+      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="icon" onClick={handleBack}>
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <h1 className="text-xl font-bold text-foreground">
+                Edit {isSmartQuiz ? 'Quiz' : 'Quest'}
+              </h1>
+              <StatusDropdown
+                value={status}
+                onChange={setStatus}
+                allowedEmails={allowedEmails}
+                onAllowedEmailsChange={setAllowedEmails}
+                activityId={activityId}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" onClick={handleBack}>
+                Cancel
+              </Button>
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                Save
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
 
-        {/* Quiz Title */}
+      <div className="max-w-4xl mx-auto py-8 px-6">
+        {/* Title */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -305,12 +507,12 @@ function CreationNewPage() {
           className="mb-6"
         >
           <label className="text-sm font-medium text-foreground mb-2 block">
-            Quiz Title
+            Title
           </label>
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Enter quiz title..."
+            placeholder="Enter title..."
             className="text-lg font-semibold"
           />
         </motion.div>
@@ -322,9 +524,8 @@ function CreationNewPage() {
           transition={{ delay: 0.12 }}
           className="mb-6 grid grid-cols-1 md:grid-cols-[1fr,280px] gap-6"
         >
-          {/* Thumbnail & Description */}
           <div className="flex gap-4">
-            <div>
+            <div className="w-[263px] relative">
               <label className="text-sm font-medium text-foreground mb-2 block">
                 <ImageIcon className="w-4 h-4 inline-block mr-1" />
                 Thumbnail
@@ -336,7 +537,7 @@ function CreationNewPage() {
                 aspectRatio="video"
               />
             </div>
-            <div>
+            <div className="flex-1">
               <label className="text-sm font-medium text-foreground mb-2 block">
                 <FileText className="w-4 h-4 inline-block mr-1" />
                 Description
@@ -344,7 +545,7 @@ function CreationNewPage() {
               <RichTextEditor
                 value={description}
                 onChange={setDescription}
-                placeholder="Add a description for your quiz..."
+                placeholder="Add a description..."
               />
             </div>
           </div>
@@ -394,6 +595,43 @@ function CreationNewPage() {
           </div>
           <p className="text-xs text-muted-foreground mt-1">
             Press Enter or comma to add a tag. Backspace to remove last tag.
+          </p>
+        </motion.div>
+
+        {/* Total Points */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.17 }}
+          className="mb-6"
+        >
+          <label className="text-sm font-medium text-foreground mb-2 block">
+            <Star className="w-4 h-4 inline-block mr-1" />
+            Total Points
+          </label>
+          <div className="flex items-center gap-3">
+            <Input
+              type="number"
+              min={0}
+              value={totalPoints || ''}
+              onChange={(e) => {
+                const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10)
+                if (!isNaN(val) && val >= 0) setTotalPoints(val)
+              }}
+              className="w-32"
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={redistributePoints}
+              disabled={quizzes.length === 0}
+            >
+              Distribute
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Click "Distribute" to evenly split points across all questions.
           </p>
         </motion.div>
 
@@ -475,7 +713,7 @@ function CreationNewPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          removeQuiz(index)
+                          setDeleteQuizIndex(index)
                         }}
                         disabled={quizzes.length <= 1}
                         className="p-2 hover:bg-destructive/10 rounded-lg text-destructive disabled:opacity-30"
@@ -501,6 +739,41 @@ function CreationNewPage() {
                       transition={{ duration: 0.2 }}
                     >
                       <CardContent className="pt-0 space-y-4">
+                        {/* Question Type Selector */}
+                        <div>
+                          <label className="text-sm font-medium text-foreground mb-2 block">
+                            Question Type
+                          </label>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => changeQuizType(index, 'multiple_choice')}
+                              className={cn(
+                                'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                                quiz.type !== 'subjective'
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground',
+                              )}
+                            >
+                              <List className="w-4 h-4" />
+                              Multiple Choice
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => changeQuizType(index, 'subjective')}
+                              className={cn(
+                                'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                                quiz.type === 'subjective'
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground',
+                              )}
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                              Subjective
+                            </button>
+                          </div>
+                        </div>
+
                         {/* Question */}
                         <div>
                           <label className="text-sm font-medium text-foreground mb-2 block">
@@ -655,27 +928,19 @@ function CreationNewPage() {
           ))}
         </motion.div>
 
-        {/* Bottom Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mt-8 flex justify-center gap-4"
-        >
-          <Button variant="secondary" size="lg" onClick={handleDiscard}>
-            <X className="w-5 h-5" />
-            Discard Changes
-          </Button>
-          <Button size="lg" onClick={handleSave} disabled={isSaving}>
-            {isSaving ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Check className="w-5 h-5" />
-            )}
-            Save & Preview
-          </Button>
-        </motion.div>
       </div>
+
+      {/* Delete Question Confirm Modal */}
+      <ConfirmModal
+        open={deleteQuizIndex !== null}
+        onOpenChange={(open) => !open && setDeleteQuizIndex(null)}
+        title="Delete Question"
+        description={`Are you sure you want to delete "${deleteQuizIndex !== null ? quizzes[deleteQuizIndex]?.question || 'this question' : ''}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={confirmRemoveQuiz}
+      />
     </div>
   )
 }

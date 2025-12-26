@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { Lock, CheckCircle2, Play, Star } from 'lucide-react'
-import { useCreationStore } from '../stores/creation-store'
+import { useActivityStore } from '../stores/activity-store'
 import { cn } from '../lib/utils'
 
 interface LearningMapProps {
@@ -8,11 +8,11 @@ interface LearningMapProps {
 }
 
 export function LearningMap({ onStageSelect }: LearningMapProps) {
-  const { currentCreation, completedStages, currentStageIndex } = useCreationStore()
+  const { currentActivity, completedStages, currentStageIndex } = useActivityStore()
 
-  if (!currentCreation) return null
+  if (!currentActivity) return null
 
-  const stages = currentCreation.stages
+  const stages = currentActivity.stages
 
   return (
     <div className="relative w-full max-w-4xl mx-auto py-8">

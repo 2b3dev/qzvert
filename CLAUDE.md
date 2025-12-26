@@ -51,25 +51,26 @@ src/
 ├── routes/             # File-based routing (TanStack Router)
 │   ├── __root.tsx      # Root layout with theme
 │   ├── index.tsx       # Landing page
-│   ├── explore.tsx     # Discover public creations
-│   ├── creator.tsx     # User's creations dashboard
+│   ├── explore.tsx     # Discover public activities
+│   ├── creator.tsx     # User's activities dashboard
 │   ├── login.tsx       # Authentication
 │   ├── about.tsx       # About page
 │   ├── contact.tsx     # Contact page
 │   ├── pricing.tsx     # Pricing page
 │   ├── privacy.tsx     # Privacy policy
-│   └── creation/
+│   └── activity/
 │       ├── new.tsx     # Create new quiz/quest
-│       ├── edit.$id.tsx  # Edit existing creation
+│       ├── me.tsx      # User's activities list
+│       ├── edit.$id.tsx  # Edit existing activity
 │       └── play.$id.tsx  # Play quiz/quest
 ├── server/             # Server functions
 │   ├── gemini.ts       # AI content generation
-│   ├── creations.ts    # CRUD for creations, stages, questions
+│   ├── activities.ts   # CRUD for activities, stages, questions
 │   ├── storage.ts      # Image upload/delete to Supabase Storage
 │   └── theme.ts        # Theme preference (dark/light)
 ├── stores/             # Zustand state stores
 │   ├── auth-store.ts   # Authentication state
-│   ├── creation-store.ts # Current creation state
+│   ├── activity-store.ts # Current activity state
 │   └── profile-store.ts  # User profile state
 ├── lib/                # Utilities
 │   ├── utils.ts        # cn() class merging
@@ -95,7 +96,7 @@ export const Route = createFileRoute('/path')({ component: MyComponent })
 ```
 
 ### State Management
-Zustand stores in `src/stores/` for client-side state (auth, creation progress, profiles).
+Zustand stores in `src/stores/` for client-side state (auth, activity progress, profiles).
 
 ## Environment Variables
 
@@ -108,13 +109,14 @@ Copy `.env.example` to `.env` and configure:
 ## Database Schema (Supabase)
 
 ### Tables
-- `creations` - Creation metadata (title, description, thumbnail, tags, theme_config, type)
-- `stages` - Learning stages with lesson summaries
+- `activities` - Activity metadata (title, description, thumbnail, tags, theme_config, type)
+- `stages` - Learning stages with lesson summaries (references activity_id)
 - `questions` - Quiz questions with options and explanations
 - `profiles` - User profiles with display name and avatar
+- `activity_pending_invites` - Email invites for private group activities
 
 ### Storage Buckets
-- `thumbnails` - Creation thumbnail images (public, max 5MB)
+- `thumbnails` - Activity thumbnail images (public, max 5MB)
 
 ### Types
 - `quiz` - Single quiz with multiple questions

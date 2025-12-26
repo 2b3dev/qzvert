@@ -136,12 +136,12 @@ export default function Header() {
                           </p>
                         </div>
                         <Link
-                          to="/creation/me"
+                          to="/activity/me"
                           onClick={() => setIsUserMenuOpen(false)}
                           className="w-full flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                         >
                           <LayoutGrid className="w-4 h-4" />
-                          My Creations
+                          My Activities
                         </Link>
                         <button
                           onClick={handleSignOut}
@@ -230,12 +230,12 @@ export default function Header() {
                   {user.email}
                 </div>
                 <Link
-                  to="/creation/me"
+                  to="/activity/me"
                   onClick={() => setIsOpen(false)}
                   className="w-full flex items-center gap-3 p-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                 >
                   <LayoutGrid className="w-5 h-5" />
-                  My Creations
+                  My Activities
                 </Link>
                 <button
                   onClick={() => {

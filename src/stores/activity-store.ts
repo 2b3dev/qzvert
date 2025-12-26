@@ -1,9 +1,9 @@
 import { create } from 'zustand'
 import type { GeneratedQuest, ThemeConfig } from '../types/database'
 
-interface CreationState {
-  currentCreation: GeneratedQuest | null
-  currentCreationId: string | null
+interface ActivityState {
+  currentActivity: GeneratedQuest | null
+  currentActivityId: string | null
   currentStageIndex: number
   currentQuizIndex: number
   completedStages: Set<number>
@@ -14,7 +14,7 @@ interface CreationState {
   rawContent: string | null
 
   // Actions
-  setCreation: (creation: GeneratedQuest, rawContent?: string, creationId?: string) => void
+  setActivity: (activity: GeneratedQuest, rawContent?: string, activityId?: string) => void
   setCurrentStage: (index: number) => void
   setCurrentQuiz: (index: number) => void
   completeStage: (stageIndex: number) => void
@@ -34,9 +34,9 @@ const defaultThemeConfig: ThemeConfig = {
   theme: 'adventure'
 }
 
-export const useCreationStore = create<CreationState>((set) => ({
-  currentCreation: null,
-  currentCreationId: null,
+export const useActivityStore = create<ActivityState>((set) => ({
+  currentActivity: null,
+  currentActivityId: null,
   currentStageIndex: 0,
   currentQuizIndex: 0,
   completedStages: new Set(),
@@ -46,9 +46,9 @@ export const useCreationStore = create<CreationState>((set) => ({
   isPlaying: false,
   rawContent: null,
 
-  setCreation: (creation, rawContent, creationId) => set({
-    currentCreation: creation,
-    currentCreationId: creationId ?? null,
+  setActivity: (activity, rawContent, activityId) => set({
+    currentActivity: activity,
+    currentActivityId: activityId ?? null,
     currentStageIndex: 0,
     currentQuizIndex: 0,
     completedStages: new Set(),
@@ -78,8 +78,8 @@ export const useCreationStore = create<CreationState>((set) => ({
   stopPlaying: () => set({ isPlaying: false }),
 
   resetGame: () => set({
-    currentCreation: null,
-    currentCreationId: null,
+    currentActivity: null,
+    currentActivityId: null,
     currentStageIndex: 0,
     currentQuizIndex: 0,
     completedStages: new Set(),

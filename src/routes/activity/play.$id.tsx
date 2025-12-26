@@ -17,52 +17,52 @@ import {
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { useCreationStore } from '../../stores/creation-store'
+import { useActivityStore } from '../../stores/activity-store'
 import { useAuthStore } from '../../stores/auth-store'
 import { QuizPlayer } from '../../components/QuizPlayer'
 import { LearningMap } from '../../components/LearningMap'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
 import { Progress } from '../../components/ui/progress'
-import { getCreationById } from '../../server/creations'
+import { getActivityById } from '../../server/activities'
 
-export const Route = createFileRoute('/creation/play/$id')({
-  component: CreationPlayPage
+export const Route = createFileRoute('/activity/play/$id')({
+  component: ActivityPlayPage
 })
 
 type GameState = 'intro' | 'lesson' | 'playing' | 'stage_complete' | 'game_over' | 'quest_complete' | 'quiz_complete'
 
-function CreationPlayPage() {
+function ActivityPlayPage() {
   const navigate = useNavigate()
-  const { id: creationId } = Route.useParams()
+  const { id: activityId } = Route.useParams()
   const {
-    currentCreation,
-    currentCreationId,
+    currentActivity,
+    currentActivityId,
     currentStageIndex,
     setCurrentStage,
-    setCreation,
+    setActivity,
     setThemeConfig,
     startPlaying,
     score,
     completedStages,
     resetGame,
     stopPlaying
-  } = useCreationStore()
+  } = useActivityStore()
   const { session } = useAuthStore()
 
   const [isLoading, setIsLoading] = useState(false)
   const [gameState, setGameState] = useState<GameState>('intro')
 
-  // Load creation if not already loaded or if different id
+  // Load activity if not already loaded or if different id
   useEffect(() => {
-    const loadCreation = async () => {
-      if (currentCreationId === creationId && currentCreation) return
+    const loadActivity = async () => {
+      if (currentActivityId === activityId && currentActivity) return
 
       setIsLoading(true)
       try {
-        const data = await getCreationById({ data: { creationId } })
+        const data = await getActivityById({ data: { activityId } })
         if (data) {
-          setCreation(data.generatedQuest, data.creation.raw_content, creationId)
+          setActivity(data.generatedQuest, data.activity.raw_content, activityId)
           setThemeConfig(data.themeConfig)
         }
       } catch (error) {
@@ -73,8 +73,8 @@ function CreationPlayPage() {
       }
     }
 
-    loadCreation()
-  }, [creationId, currentCreationId, currentCreation, setCreation, setThemeConfig, navigate])
+    loadActivity()
+  }, [activityId, currentActivityId, currentActivity, setActivity, setThemeConfig, navigate])
 
   if (isLoading) {
     return (
@@ -87,7 +87,7 @@ function CreationPlayPage() {
     )
   }
 
-  if (!currentCreation) {
+  if (!currentActivity) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="max-w-md">
@@ -105,10 +105,10 @@ function CreationPlayPage() {
     )
   }
 
-  const isSmartQuizMode = currentCreation.type === 'quiz'
-  const stage = isSmartQuizMode ? null : currentCreation.stages[currentStageIndex]
-  const isLastStage = isSmartQuizMode ? true : currentStageIndex === currentCreation.stages.length - 1
-  const totalQuizzes = isSmartQuizMode ? currentCreation.quizzes.length : 0
+  const isSmartQuizMode = currentActivity.type === 'quiz'
+  const stage = isSmartQuizMode ? null : currentActivity.stages[currentStageIndex]
+  const isLastStage = isSmartQuizMode ? true : currentStageIndex === currentActivity.stages.length - 1
+  const totalQuizzes = isSmartQuizMode ? currentActivity.quizzes.length : 0
 
   const handleStartQuiz = () => {
     startPlaying()
@@ -164,7 +164,7 @@ function CreationPlayPage() {
   }
 
   const handleEdit = () => {
-    navigate({ to: '/creation/edit/$id', params: { id: creationId } })
+    navigate({ to: '/activity/edit/$id', params: { id: activityId } })
   }
 
   return (
@@ -199,7 +199,7 @@ function CreationPlayPage() {
 
               {isSmartQuizMode ? (
                 // Quiz Intro
-                <div className="max-w-3xl mx-auto">
+                (<div className="max-w-3xl mx-auto">
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -207,11 +207,11 @@ function CreationPlayPage() {
                   >
                     <Card className="mb-8 bg-gradient-to-br from-card to-secondary/50">
                       <CardHeader className="text-center pb-4">
-                        {currentCreation.thumbnail ? (
+                        {currentActivity.thumbnail ? (
                           <div className="w-full max-w-xs mx-auto mb-4 rounded-xl overflow-hidden aspect-video">
                             <img
-                              src={currentCreation.thumbnail}
-                              alt={currentCreation.title}
+                              src={currentActivity.thumbnail}
+                              alt={currentActivity.title}
                               className="w-full h-full object-cover"
                             />
                           </div>
@@ -221,24 +221,23 @@ function CreationPlayPage() {
                           </div>
                         )}
                         <CardTitle className="text-3xl md:text-4xl font-black bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">
-                          {currentCreation.title}
+                          {currentActivity.title}
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="text-center space-y-4">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary">
-                          <span className="font-bold">{currentCreation.quizzes.length}</span>
+                          <span className="font-bold">{currentActivity.quizzes.length}</span>
                           <span>Questions</span>
                         </div>
-                        {currentCreation.description && (
+                        {currentActivity.description && (
                           <div
                             className="text-muted-foreground prose prose-sm dark:prose-invert max-w-none"
-                            dangerouslySetInnerHTML={{ __html: currentCreation.description }}
+                            dangerouslySetInnerHTML={{ __html: currentActivity.description }}
                           />
                         )}
                       </CardContent>
                     </Card>
                   </motion.div>
-
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -250,10 +249,10 @@ function CreationPlayPage() {
                       Start Quiz
                     </Button>
                   </motion.div>
-                </div>
+                </div>)
               ) : (
                 // Quest Intro with Learning Map
-                <div className="max-w-6xl mx-auto">
+                (<div className="max-w-6xl mx-auto">
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -261,13 +260,12 @@ function CreationPlayPage() {
                     className="text-center mb-12"
                   >
                     <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent mb-4">
-                      {currentCreation.title}
+                      {currentActivity.title}
                     </h1>
                     <p className="text-muted-foreground text-lg">
-                      {currentCreation.stages.length} Stages to Master
+                      {currentActivity.stages.length} Stages to Master
                     </p>
                   </motion.div>
-
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -284,14 +282,13 @@ function CreationPlayPage() {
                       </CardContent>
                     </Card>
                   </motion.div>
-
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
                     className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8"
                   >
-                    {currentCreation.stages.map((stageItem, index) => (
+                    {currentActivity.stages.map((stageItem, index) => (
                       <motion.div
                         key={index}
                         initial={{ opacity: 0, y: 20 }}
@@ -320,7 +317,6 @@ function CreationPlayPage() {
                       </motion.div>
                     ))}
                   </motion.div>
-
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -332,7 +328,7 @@ function CreationPlayPage() {
                       Begin Quest
                     </Button>
                   </motion.div>
-                </div>
+                </div>)
               )}
             </motion.div>
           )}
@@ -371,12 +367,12 @@ function CreationPlayPage() {
                     <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm mb-4">
                       {totalQuizzes} Questions
                     </div>
-                    <h1 className="text-3xl font-bold text-foreground">{currentCreation.title}</h1>
+                    <h1 className="text-3xl font-bold text-foreground">{currentActivity.title}</h1>
                   </>
                 ) : (
                   <>
                     <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm mb-4">
-                      Stage {currentStageIndex + 1} of {currentCreation.stages.length}
+                      Stage {currentStageIndex + 1} of {currentActivity.stages.length}
                     </div>
                     <h1 className="text-3xl font-bold text-foreground">{stage?.title}</h1>
                   </>
@@ -553,7 +549,7 @@ function CreationPlayPage() {
                       </h2>
                       <p className="text-5xl font-bold text-primary mb-2">{score} pts</p>
                       <p className="text-muted-foreground">
-                        Completed {currentCreation.type === 'quest' ? currentCreation.stages.length : 0} stages
+                        Completed {currentActivity.type === 'quest' ? currentActivity.stages.length : 0} stages
                       </p>
                     </div>
 

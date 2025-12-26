@@ -18,7 +18,7 @@ import {
 import { useState } from 'react'
 import { generateQuest } from '../server/gemini'
 import { useAuthStore } from '../stores/auth-store'
-import { useCreationStore } from '../stores/creation-store'
+import { useActivityStore } from '../stores/activity-store'
 import IconApp from './icon/icon-app'
 import type { QuestSettingsData, QuizSettingsData } from './QuizSettings'
 import { QuizSettings } from './QuizSettings'
@@ -132,7 +132,7 @@ export function QuestCreator() {
   const [questSettings, setQuestSettings] =
     useState<QuestSettingsData>(defaultQuestSettings)
 
-  const { setCreation, themeConfig, setThemeConfig } = useCreationStore()
+  const { setActivity, themeConfig, setThemeConfig } = useActivityStore()
   const { user, session, isLoading: isAuthLoading } = useAuthStore()
   const navigate = useNavigate()
 
@@ -285,7 +285,7 @@ export function QuestCreator() {
       })
 
       // Store quest and raw content for editing
-      setCreation(quest, content)
+      setActivity(quest, content)
 
       // Update theme config with timer settings
       const updatedThemeConfig = {

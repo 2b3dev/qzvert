@@ -73,7 +73,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const routerState = useRouterState()
 
   // Hide default header on edit page (uses custom header)
-  const isEditPage = routerState.location.pathname.startsWith('/creation/edit/')
+  const isEditPage = routerState.location.pathname.startsWith('/activity/edit/')
 
   useEffect(() => {
     if (!isInitialized) {

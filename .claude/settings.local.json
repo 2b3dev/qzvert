@@ -18,7 +18,9 @@
       "Bash(supabase db pull:*)",
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\derle\\\\Documents\\\\bucket\\\\qzvert\\\\supabase\" -Recurse -Name)",
       "Bash(npx tsc:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(pnpm build:*)",
+      "Bash(npx supabase:*)"
     ]
   }
 }

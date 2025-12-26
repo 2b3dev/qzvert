@@ -1,10 +1,10 @@
-// Creation visibility status (must be defined before Database interface)
-export type CreationStatus = 'draft' | 'private_group' | 'link' | 'public'
+// Activity visibility status (must be defined before Database interface)
+export type ActivityStatus = 'draft' | 'private_group' | 'link' | 'public'
 
 export interface Database {
   public: {
     Tables: {
-      creations: {
+      activities: {
         Row: {
           id: string
           created_at: string
@@ -17,7 +17,7 @@ export interface Database {
           theme_config: ThemeConfig
           play_count: number
           type: 'quiz' | 'quest' | 'flashcard' | 'roleplay'
-          status: CreationStatus
+          status: ActivityStatus
         }
         Insert: {
           id?: string
@@ -31,7 +31,7 @@ export interface Database {
           theme_config?: ThemeConfig
           play_count?: number
           type: 'quiz' | 'quest' | 'flashcard' | 'roleplay'
-          status?: CreationStatus
+          status?: ActivityStatus
         }
         Update: {
           id?: string
@@ -45,27 +45,27 @@ export interface Database {
           theme_config?: ThemeConfig
           play_count?: number
           type?: 'quiz' | 'quest' | 'flashcard'
-          status?: CreationStatus
+          status?: ActivityStatus
         }
       }
       stages: {
         Row: {
           id: string
-          creation_id: string
+          activity_id: string
           title: string
           lesson_summary: string
           order_index: number
         }
         Insert: {
           id?: string
-          creation_id: string
+          activity_id: string
           title: string
           lesson_summary: string
           order_index: number
         }
         Update: {
           id?: string
-          creation_id?: string
+          activity_id?: string
           title?: string
           lesson_summary?: string
           order_index?: number
@@ -100,17 +100,17 @@ export interface Database {
       embeddings: {
         Row: {
           id: string
-          creation_id: string
+          activity_id: string
           vector_data: number[]
         }
         Insert: {
           id?: string
-          creation_id: string
+          activity_id: string
           vector_data: number[]
         }
         Update: {
           id?: string
-          creation_id?: string
+          activity_id?: string
           vector_data?: number[]
         }
       }
@@ -126,14 +126,14 @@ export interface ThemeConfig {
   theme: 'adventure' | 'space' | 'fantasy' | 'science'
 }
 
-export const CREATION_STATUS_OPTIONS: { value: CreationStatus; label: string; description: string }[] = [
+export const ACTIVITY_STATUS_OPTIONS: { value: ActivityStatus; label: string; description: string }[] = [
   { value: 'draft', label: 'Draft', description: 'Only you can see this' },
   { value: 'private_group', label: 'Private Group', description: 'Share with specific users' },
   { value: 'link', label: 'Link', description: 'Anyone with the link can access' },
   { value: 'public', label: 'Public', description: 'Visible to everyone' },
 ]
 
-export interface Creation {
+export interface Activity {
   id: string
   created_at: string
   user_id: string | null
@@ -143,7 +143,7 @@ export interface Creation {
   tags: string[] | null
   raw_content: string
   theme_config: ThemeConfig
-  status: CreationStatus
+  status: ActivityStatus
   play_count: number
   type: 'quiz' | 'quest' | 'flashcard' | 'roleplay'
   stages?: Stage[]
@@ -151,7 +151,7 @@ export interface Creation {
 
 export interface Stage {
   id: string
-  creation_id: string
+  activity_id: string
   title: string
   lesson_summary: string
   order_index: number

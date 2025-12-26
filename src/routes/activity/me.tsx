@@ -23,11 +23,11 @@ import { Button } from '../../components/ui/button'
 import { Card, CardContent } from '../../components/ui/card'
 import { ConfirmModal } from '../../components/ui/confirm-modal'
 import { cn } from '../../lib/utils'
-import { deleteCreation, getUserCreations } from '../../server/creations'
+import { deleteActivity, getUserActivities } from '../../server/activities'
 import { useAuthStore } from '../../stores/auth-store'
 
-export const Route = createFileRoute('/creation/me')({
-  component: MyCreationsPage,
+export const Route = createFileRoute('/activity/me')({
+  component: MyActivitiesPage,
 })
 
 type TabType = 'all' | 'quiz' | 'quest' | 'flashcard'
@@ -39,43 +39,43 @@ const tabs: { type: TabType; label: string; icon: React.ElementType }[] = [
   { type: 'flashcard', label: 'Flashcard', icon: BookOpen },
 ]
 
-import type { CreationStatus } from '../../types/database'
+import type { ActivityStatus } from '../../types/database'
 
-interface CreationItem {
+interface ActivityItem {
   id: string
   created_at: string
   title: string
-  status: CreationStatus
+  status: ActivityStatus
   play_count: number
   stages: { id: string; title: string }[]
 }
 
-function MyCreationsPage() {
+function MyActivitiesPage() {
   const navigate = useNavigate()
   const { user, session, isLoading: isAuthLoading } = useAuthStore()
   const [activeTab, setActiveTab] = useState<TabType>('all')
-  const [creations, setCreations] = useState<CreationItem[]>([])
+  const [activities, setActivities] = useState<ActivityItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     if (!isAuthLoading && session) {
-      loadCreations()
+      loadActivities()
     }
   }, [isAuthLoading, session])
 
-  const loadCreations = async () => {
+  const loadActivities = async () => {
     if (!session) return
 
     setIsLoading(true)
     try {
-      const data = await getUserCreations({
+      const data = await getUserActivities({
         data: { accessToken: session.access_token },
       })
-      setCreations(data || [])
+      setActivities(data || [])
     } catch (error) {
-      toast.error('Failed to load your creations')
+      toast.error('Failed to load your activities')
     } finally {
       setIsLoading(false)
     }
@@ -86,10 +86,10 @@ function MyCreationsPage() {
 
     setIsDeleting(true)
     try {
-      await deleteCreation({
-        data: { creationId: deleteId, accessToken: session.access_token },
+      await deleteActivity({
+        data: { activityId: deleteId, accessToken: session.access_token },
       })
-      setCreations((prev) => prev.filter((c) => c.id !== deleteId))
+      setActivities((prev) => prev.filter((c) => c.id !== deleteId))
       toast.success('Deleted successfully')
       setDeleteId(null)
     } catch (error) {
@@ -110,7 +110,7 @@ function MyCreationsPage() {
               Login Required
             </h2>
             <p className="text-muted-foreground mb-6">
-              Please login to view your creations
+              Please login to view your activities
             </p>
             <Button asChild>
               <Link to="/login">Login</Link>
@@ -121,13 +121,13 @@ function MyCreationsPage() {
     )
   }
 
-  // Filter creations based on active tab
-  const filteredCreations = creations.filter((creation) => {
+  // Filter activities based on active tab
+  const filteredActivities = activities.filter((activity) => {
     if (activeTab === 'all') return true
     // For now, all are quizzes/quests - flashcard coming soon
     if (activeTab === 'flashcard') return false
     // Determine type by number of stages
-    const isQuest = creation.stages.length > 1
+    const isQuest = activity.stages.length > 1
     if (activeTab === 'quest') return isQuest
     if (activeTab === 'quiz') return !isQuest
     return true
@@ -142,7 +142,7 @@ function MyCreationsPage() {
     })
   }
 
-  const deletingCreation = creations.find((c) => c.id === deleteId)
+  const deletingActivity = activities.find((c) => c.id === deleteId)
 
   return (
     <div className="min-h-screen bg-background py-8 px-6">
@@ -154,7 +154,7 @@ function MyCreationsPage() {
           className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8"
         >
           <div>
-            <h1 className="text-3xl font-bold text-foreground">My Creations</h1>
+            <h1 className="text-3xl font-bold text-foreground">My Activities</h1>
             <p className="text-muted-foreground mt-1">
               Manage your quizzes, quests, and flashcards
             </p>
@@ -196,7 +196,7 @@ function MyCreationsPage() {
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
-        ) : filteredCreations.length === 0 ? (
+        ) : filteredActivities.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -216,7 +216,7 @@ function MyCreationsPage() {
             <h3 className="text-lg font-semibold text-foreground mb-2">
               {activeTab === 'flashcard'
                 ? 'Flashcards coming soon!'
-                : 'No creations yet'}
+                : 'No activities yet'}
             </h3>
             <p className="text-muted-foreground mb-6">
               {activeTab === 'flashcard'
@@ -240,11 +240,11 @@ function MyCreationsPage() {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
           >
             <AnimatePresence mode="popLayout">
-              {filteredCreations.map((creation, index) => {
-                const isQuest = creation.stages.length > 1
+              {filteredActivities.map((activity, index) => {
+                const isQuest = activity.stages.length > 1
                 return (
                   <motion.div
-                    key={creation.id}
+                    key={activity.id}
                     layout
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -277,26 +277,26 @@ function MyCreationsPage() {
                           <div
                             className={cn(
                               'flex items-center gap-1 text-xs px-2 py-1 rounded-full',
-                              creation.status === 'public'
+                              activity.status === 'public'
                                 ? 'bg-emerald-500/20 text-emerald-500'
-                                : creation.status === 'link'
+                                : activity.status === 'link'
                                   ? 'bg-blue-500/20 text-blue-500'
-                                  : creation.status === 'private_group'
+                                  : activity.status === 'private_group'
                                     ? 'bg-amber-500/20 text-amber-500'
                                     : 'bg-muted text-muted-foreground',
                             )}
                           >
-                            {creation.status === 'public' ? (
+                            {activity.status === 'public' ? (
                               <>
                                 <Globe className="w-3 h-3" />
                                 Public
                               </>
-                            ) : creation.status === 'link' ? (
+                            ) : activity.status === 'link' ? (
                               <>
                                 <Link2 className="w-3 h-3" />
                                 Link
                               </>
-                            ) : creation.status === 'private_group' ? (
+                            ) : activity.status === 'private_group' ? (
                               <>
                                 <Users className="w-3 h-3" />
                                 Group
@@ -312,18 +312,18 @@ function MyCreationsPage() {
 
                         {/* Title */}
                         <h3 className="font-semibold text-foreground line-clamp-2 mb-3">
-                          {creation.title}
+                          {activity.title}
                         </h3>
 
                         {/* Meta */}
                         <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
                           <div className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
-                            {formatDate(creation.created_at)}
+                            {formatDate(activity.created_at)}
                           </div>
                           <div className="flex items-center gap-1">
                             <Users className="w-3 h-3" />
-                            {creation.play_count} plays
+                            {activity.play_count} plays
                           </div>
                         </div>
 
@@ -336,8 +336,8 @@ function MyCreationsPage() {
                             asChild
                           >
                             <Link
-                              to="/creation/edit/$id"
-                              params={{ id: creation.id }}
+                              to="/activity/edit/$id"
+                              params={{ id: activity.id }}
                             >
                               <Pencil className="w-4 h-4" />
                               Edit
@@ -345,8 +345,8 @@ function MyCreationsPage() {
                           </Button>
                           <Button size="sm" className="flex-1" asChild>
                             <Link
-                              to="/creation/play/$id"
-                              params={{ id: creation.id }}
+                              to="/activity/play/$id"
+                              params={{ id: activity.id }}
                             >
                               <Play className="w-4 h-4" />
                               Play
@@ -355,7 +355,7 @@ function MyCreationsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => setDeleteId(creation.id)}
+                            onClick={() => setDeleteId(activity.id)}
                             className="text-destructive hover:text-destructive hover:bg-destructive/10"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -375,8 +375,8 @@ function MyCreationsPage() {
       <ConfirmModal
         open={deleteId !== null}
         onOpenChange={(open) => !open && setDeleteId(null)}
-        title="Delete Creation"
-        description={`Are you sure you want to delete "${deletingCreation?.title || 'this creation'}"? This action cannot be undone.`}
+        title="Delete Activity"
+        description={`Are you sure you want to delete "${deletingActivity?.title || 'this activity'}"? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
         variant="danger"
