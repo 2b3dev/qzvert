@@ -1,9 +1,9 @@
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import {
-  createRootRoute,
   HeadContent,
   Outlet,
   Scripts,
+  createRootRoute,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { useEffect, useRef } from 'react'
@@ -22,7 +22,7 @@ export const Route = createRootRoute({
   loader: async () => {
     const [{ theme }, authData] = await Promise.all([
       getTheme(),
-      getAuthSession()
+      getAuthSession(),
     ])
     return { theme, user: authData.user, session: authData.session }
   },
@@ -91,19 +91,17 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className="antialiased transition-colors duration-300">
         {children}
-        {IS_SHOW_DEVTOOL && (
-          <TanStackDevtools
-            config={{
-              position: 'bottom-right',
-            }}
-            plugins={[
-              {
-                name: 'Tanstack Router',
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-            ]}
-          />
-        )}
+        <TanStackDevtools
+          config={{
+            position: 'bottom-right',
+          }}
+          plugins={[
+            {
+              name: 'Tanstack Router',
+              render: <TanStackRouterDevtoolsPanel />,
+            },
+          ]}
+        />
         <Toaster richColors position="top-center" />
         <Scripts />
       </body>

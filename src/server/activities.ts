@@ -172,6 +172,9 @@ export const getPublishedActivities = createServerFn({ method: 'GET' })
         created_at,
         user_id,
         title,
+        description,
+        thumbnail,
+        type,
         theme_config,
         play_count,
         stages (
