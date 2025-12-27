@@ -22,8 +22,10 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ActivityResultsRouteImport } from './routes/activity/results'
 import { Route as ActivityMeRouteImport } from './routes/activity/me'
-import { Route as ActivityUploadIdRouteImport } from './routes/activity/upload.$id'
 import { Route as ActivityPlayIdRouteImport } from './routes/activity/play.$id'
+import { Route as ActivityUploadQuizIdRouteImport } from './routes/activity/upload/quiz.$id'
+import { Route as ActivityUploadQuestIdRouteImport } from './routes/activity/upload/quest.$id'
+import { Route as ActivityUploadLessonIdRouteImport } from './routes/activity/upload/lesson.$id'
 
 const SavedRoute = SavedRouteImport.update({
   id: '/saved',
@@ -90,14 +92,24 @@ const ActivityMeRoute = ActivityMeRouteImport.update({
   path: '/activity/me',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ActivityUploadIdRoute = ActivityUploadIdRouteImport.update({
-  id: '/activity/upload/$id',
-  path: '/activity/upload/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ActivityPlayIdRoute = ActivityPlayIdRouteImport.update({
   id: '/activity/play/$id',
   path: '/activity/play/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActivityUploadQuizIdRoute = ActivityUploadQuizIdRouteImport.update({
+  id: '/activity/upload/quiz/$id',
+  path: '/activity/upload/quiz/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActivityUploadQuestIdRoute = ActivityUploadQuestIdRouteImport.update({
+  id: '/activity/upload/quest/$id',
+  path: '/activity/upload/quest/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActivityUploadLessonIdRoute = ActivityUploadLessonIdRouteImport.update({
+  id: '/activity/upload/lesson/$id',
+  path: '/activity/upload/lesson/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -116,7 +128,9 @@ export interface FileRoutesByFullPath {
   '/activity/me': typeof ActivityMeRoute
   '/activity/results': typeof ActivityResultsRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
-  '/activity/upload/$id': typeof ActivityUploadIdRoute
+  '/activity/upload/lesson/$id': typeof ActivityUploadLessonIdRoute
+  '/activity/upload/quest/$id': typeof ActivityUploadQuestIdRoute
+  '/activity/upload/quiz/$id': typeof ActivityUploadQuizIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -133,7 +147,9 @@ export interface FileRoutesByTo {
   '/activity/me': typeof ActivityMeRoute
   '/activity/results': typeof ActivityResultsRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
-  '/activity/upload/$id': typeof ActivityUploadIdRoute
+  '/activity/upload/lesson/$id': typeof ActivityUploadLessonIdRoute
+  '/activity/upload/quest/$id': typeof ActivityUploadQuestIdRoute
+  '/activity/upload/quiz/$id': typeof ActivityUploadQuizIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -151,7 +167,9 @@ export interface FileRoutesById {
   '/activity/me': typeof ActivityMeRoute
   '/activity/results': typeof ActivityResultsRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
-  '/activity/upload/$id': typeof ActivityUploadIdRoute
+  '/activity/upload/lesson/$id': typeof ActivityUploadLessonIdRoute
+  '/activity/upload/quest/$id': typeof ActivityUploadQuestIdRoute
+  '/activity/upload/quiz/$id': typeof ActivityUploadQuizIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -170,7 +188,9 @@ export interface FileRouteTypes {
     | '/activity/me'
     | '/activity/results'
     | '/activity/play/$id'
-    | '/activity/upload/$id'
+    | '/activity/upload/lesson/$id'
+    | '/activity/upload/quest/$id'
+    | '/activity/upload/quiz/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -187,7 +207,9 @@ export interface FileRouteTypes {
     | '/activity/me'
     | '/activity/results'
     | '/activity/play/$id'
-    | '/activity/upload/$id'
+    | '/activity/upload/lesson/$id'
+    | '/activity/upload/quest/$id'
+    | '/activity/upload/quiz/$id'
   id:
     | '__root__'
     | '/'
@@ -204,7 +226,9 @@ export interface FileRouteTypes {
     | '/activity/me'
     | '/activity/results'
     | '/activity/play/$id'
-    | '/activity/upload/$id'
+    | '/activity/upload/lesson/$id'
+    | '/activity/upload/quest/$id'
+    | '/activity/upload/quiz/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -222,7 +246,9 @@ export interface RootRouteChildren {
   ActivityMeRoute: typeof ActivityMeRoute
   ActivityResultsRoute: typeof ActivityResultsRoute
   ActivityPlayIdRoute: typeof ActivityPlayIdRoute
-  ActivityUploadIdRoute: typeof ActivityUploadIdRoute
+  ActivityUploadLessonIdRoute: typeof ActivityUploadLessonIdRoute
+  ActivityUploadQuestIdRoute: typeof ActivityUploadQuestIdRoute
+  ActivityUploadQuizIdRoute: typeof ActivityUploadQuizIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -318,18 +344,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ActivityMeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/activity/upload/$id': {
-      id: '/activity/upload/$id'
-      path: '/activity/upload/$id'
-      fullPath: '/activity/upload/$id'
-      preLoaderRoute: typeof ActivityUploadIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/activity/play/$id': {
       id: '/activity/play/$id'
       path: '/activity/play/$id'
       fullPath: '/activity/play/$id'
       preLoaderRoute: typeof ActivityPlayIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/activity/upload/quiz/$id': {
+      id: '/activity/upload/quiz/$id'
+      path: '/activity/upload/quiz/$id'
+      fullPath: '/activity/upload/quiz/$id'
+      preLoaderRoute: typeof ActivityUploadQuizIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/activity/upload/quest/$id': {
+      id: '/activity/upload/quest/$id'
+      path: '/activity/upload/quest/$id'
+      fullPath: '/activity/upload/quest/$id'
+      preLoaderRoute: typeof ActivityUploadQuestIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/activity/upload/lesson/$id': {
+      id: '/activity/upload/lesson/$id'
+      path: '/activity/upload/lesson/$id'
+      fullPath: '/activity/upload/lesson/$id'
+      preLoaderRoute: typeof ActivityUploadLessonIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -350,7 +390,9 @@ const rootRouteChildren: RootRouteChildren = {
   ActivityMeRoute: ActivityMeRoute,
   ActivityResultsRoute: ActivityResultsRoute,
   ActivityPlayIdRoute: ActivityPlayIdRoute,
-  ActivityUploadIdRoute: ActivityUploadIdRoute,
+  ActivityUploadLessonIdRoute: ActivityUploadLessonIdRoute,
+  ActivityUploadQuestIdRoute: ActivityUploadQuestIdRoute,
+  ActivityUploadQuizIdRoute: ActivityUploadQuizIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

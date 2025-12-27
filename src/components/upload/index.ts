@@ -1,0 +1,6 @@
+export { UploadHeader } from './UploadHeader'
+export { BasicInfoSection } from './BasicInfoSection'
+export { PlaySettingsSection } from './PlaySettingsSection'
+export { TotalPointsSection } from './TotalPointsSection'
+export { QuestionsEditor } from './QuestionsEditor'
+export { LessonModulesEditor } from './LessonModulesEditor'

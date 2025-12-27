@@ -19,8 +19,8 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { generateQuest } from '../server/gemini'
-import { useAuthStore } from '../stores/auth-store'
 import { useActivityStore } from '../stores/activity-store'
+import { useAuthStore } from '../stores/auth-store'
 import { useProfileStore } from '../stores/profile-store'
 import IconApp from './icon/icon-app'
 import type { QuestSettingsData, QuizSettingsData } from './QuizSettings'
@@ -69,7 +69,7 @@ const outputTypes = [
   {
     type: 'quiz' as OutputType,
     icon: GraduationCap,
-    label: 'Smart Quiz',
+    label: 'Quiz',
     description: 'Multiple choice, T/F, Fill-blank',
     available: true,
   },
@@ -130,7 +130,7 @@ const defaultQuestSettings: QuestSettingsData = {
 export interface LessonSettingsData {
   lessonMode: 'auto' | 'custom'
   moduleCount: 'auto' | number
-  tags: string[]
+  tags: Array<string>
   ageRange: 'auto' | string
 }
 
@@ -155,17 +155,25 @@ export function QuestCreator() {
     useState<QuizSettingsData>(defaultQuizSettings)
   const [questSettings, setQuestSettings] =
     useState<QuestSettingsData>(defaultQuestSettings)
-  const [lessonSettings, setLessonSettings] =
-    useState<LessonSettingsData>(defaultLessonSettings)
+  const [lessonSettings, setLessonSettings] = useState<LessonSettingsData>(
+    defaultLessonSettings,
+  )
 
-  const { setActivity, themeConfig, setThemeConfig, setTimeLimitMinutes, setAgeRange } = useActivityStore()
+  const {
+    setActivity,
+    themeConfig,
+    setThemeConfig,
+    setTimeLimitMinutes,
+    setAgeRange,
+  } = useActivityStore()
   const { user, session, isLoading: isAuthLoading } = useAuthStore()
   const { profile, fetchProfile } = useProfileStore()
   const navigate = useNavigate()
 
   const handleCreateManual = () => {
     // Get question count from settings
-    const questionCount = quizSettings.questionCount === 'auto' ? 5 : quizSettings.questionCount
+    const questionCount =
+      quizSettings.questionCount === 'auto' ? 5 : quizSettings.questionCount
     const choiceCount = quizSettings.choiceCount
 
     // Create empty questions based on settings
@@ -198,7 +206,7 @@ export function QuestCreator() {
     }
 
     setActivity(emptyQuiz, '')
-    navigate({ to: '/activity/upload/$id', params: { id: 'new' } })
+    navigate({ to: '/activity/upload/quiz/$id', params: { id: 'new' } })
   }
 
   // Fetch profile when user is available
@@ -313,12 +321,14 @@ export function QuestCreator() {
 
           if (isBothMode) {
             // Both mode: use separate counts
-            multipleChoiceCount = typeof quizSettings.multipleChoiceCount === 'number'
-              ? quizSettings.multipleChoiceCount
-              : undefined
-            subjectiveCount = typeof quizSettings.subjectiveCount === 'number'
-              ? quizSettings.subjectiveCount
-              : undefined
+            multipleChoiceCount =
+              typeof quizSettings.multipleChoiceCount === 'number'
+                ? quizSettings.multipleChoiceCount
+                : undefined
+            subjectiveCount =
+              typeof quizSettings.subjectiveCount === 'number'
+                ? quizSettings.subjectiveCount
+                : undefined
           } else {
             // Single mode: use questionCount
             questionCount = quizSettings.questionCount
@@ -378,7 +388,9 @@ export function QuestCreator() {
 
       // Set activity time limit (convert seconds to minutes) - only for quiz/quest
       if (selectedOutput !== 'lesson') {
-        const timerSettings = currentSettings as QuizSettingsData | QuestSettingsData
+        const timerSettings = currentSettings as
+          | QuizSettingsData
+          | QuestSettingsData
         if (timerSettings.timerEnabled && timerSettings.timerSeconds > 0) {
           setTimeLimitMinutes(Math.ceil(timerSettings.timerSeconds / 60))
         } else {
@@ -396,8 +408,14 @@ export function QuestCreator() {
         setTimeLimitMinutes(null)
       }
 
-      // Navigate to upload page for review before saving
-      navigate({ to: '/activity/upload/$id', params: { id: 'new' } })
+      // Navigate to upload page for review before saving based on type
+      const uploadRoute =
+        selectedOutput === 'quiz'
+          ? '/activity/upload/quiz/$id'
+          : selectedOutput === 'quest'
+            ? '/activity/upload/quest/$id'
+            : '/activity/upload/lesson/$id'
+      navigate({ to: uploadRoute, params: { id: 'new' } })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate quest')
     } finally {
@@ -746,7 +764,7 @@ export function QuestCreator() {
                 ) : (
                   <>
                     <Wand2 className="w-5 h-5" />
-                    Generate Quiz
+                    Generate Activity
                   </>
                 )}
               </Button>

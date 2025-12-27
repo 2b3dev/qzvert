@@ -345,7 +345,13 @@ function MyActivitiesPage() {
                             asChild
                           >
                             <Link
-                              to="/activity/upload/$id"
+                              to={
+                                activityType === 'quiz'
+                                  ? '/activity/upload/quiz/$id'
+                                  : activityType === 'quest'
+                                    ? '/activity/upload/quest/$id'
+                                    : '/activity/upload/lesson/$id'
+                              }
                               params={{ id: activity.id }}
                             >
                               <Pencil className="w-4 h-4" />
