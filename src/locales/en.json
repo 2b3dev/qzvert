@@ -1,0 +1,154 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "generating": "Generating...",
+    "loading": "Loading...",
+    "comingSoon": "Coming Soon",
+    "new": "New",
+    "beta": "Beta",
+    "login": "Login",
+    "logout": "Logout",
+    "or": "or"
+  },
+  "create": {
+    "title": "Create Activity",
+    "subtitle": "Choose the type of activity you want to create",
+    "sidebar": {
+      "learningContent": "Learning Content",
+      "organization": "Organization",
+      "mediaAssets": "Media & Assets",
+      "recent": "Recent",
+      "templates": "Templates"
+    },
+    "types": {
+      "quiz": {
+        "name": "Quiz",
+        "description": "Create multiple choice, T/F, or fill-in questions"
+      },
+      "quest": {
+        "name": "Quest",
+        "description": "Multi-stage learning journey"
+      },
+      "lesson": {
+        "name": "Lesson",
+        "description": "Structured reading content"
+      },
+      "flashcard": {
+        "name": "Flashcard",
+        "description": "Spaced repetition memory cards"
+      },
+      "roleplay": {
+        "name": "Roleplay",
+        "description": "Practice conversations with AI"
+      },
+      "course": {
+        "name": "Course",
+        "description": "Complete learning package"
+      },
+      "classroom": {
+        "name": "Classroom",
+        "description": "Assign activities to students"
+      },
+      "collection": {
+        "name": "Collection",
+        "description": "Group activities into learning paths"
+      },
+      "challenge": {
+        "name": "Challenge",
+        "description": "Time-limited competition"
+      },
+      "template": {
+        "name": "Template",
+        "description": "Save settings for reuse"
+      },
+      "aiTutor": {
+        "name": "AI Tutor",
+        "description": "Create specialized AI teaching assistant"
+      },
+      "infographic": {
+        "name": "Infographic",
+        "description": "Visual content summary"
+      },
+      "diagram": {
+        "name": "Diagram",
+        "description": "Flowchart and mind maps"
+      },
+      "cards": {
+        "name": "Illustrated Cards",
+        "description": "Visual vocabulary cards"
+      },
+      "slides": {
+        "name": "Slides",
+        "description": "Content presentation slides"
+      },
+      "cover": {
+        "name": "Cover Art",
+        "description": "Thumbnails and cover images"
+      }
+    },
+    "dashboard": {
+      "welcome": "Welcome",
+      "welcomeMessage": "Choose an activity type from the menu, or start quickly",
+      "quickStart": "Quick Start",
+      "recentActivities": "Recent Activities",
+      "noRecent": "No recent activities yet",
+      "popularTemplates": "Popular Templates",
+      "noTemplates": "No templates yet"
+    },
+    "contentInput": {
+      "label": "Your Content",
+      "placeholder": "Paste your content to transform into an activity... (articles, notes, documents, etc.)",
+      "tip": "The more detailed your content, the better the results!",
+      "characters": "characters"
+    },
+    "inputSource": {
+      "label": "Input Source",
+      "text": "Text",
+      "textDesc": "Paste content",
+      "pdf": "PDF",
+      "pdfDesc": "Coming soon",
+      "video": "YouTube",
+      "videoDesc": "Coming soon"
+    },
+    "language": {
+      "label": "Content Language",
+      "th": "Thai",
+      "en": "English"
+    },
+    "actions": {
+      "generate": "Generate with AI",
+      "manual": "Create Manually",
+      "creditUsed": "Uses 1 credit",
+      "remaining": "remaining"
+    },
+    "settings": {
+      "auto": "Auto",
+      "custom": "Custom",
+      "questionCount": "Question Count",
+      "choiceCount": "Choice Count",
+      "stageCount": "Stage Count",
+      "questionsPerStage": "Questions per Stage",
+      "timer": "Timer",
+      "timerEnabled": "Enable Timer",
+      "minutes": "minutes",
+      "tags": "Tags",
+      "addTag": "Add tag",
+      "ageRange": "Age Range"
+    },
+    "auth": {
+      "loginRequired": "Login to Create Activities",
+      "loginMessage": "Sign up for free to start creating your activities",
+      "features": {
+        "ai": "AI generates activities from content in seconds",
+        "gamified": "Gamified learning map",
+        "quiz": "Multiple quiz types with explanations"
+      },
+      "loginButton": "Login / Sign Up",
+      "freeStart": "Start for free, no cost"
+    }
+  }
+}

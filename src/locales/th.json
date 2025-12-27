@@ -1,0 +1,154 @@
+{
+  "common": {
+    "save": "บันทึก",
+    "cancel": "ยกเลิก",
+    "delete": "ลบ",
+    "edit": "แก้ไข",
+    "create": "สร้าง",
+    "generating": "กำลังสร้าง...",
+    "loading": "กำลังโหลด...",
+    "comingSoon": "เร็วๆ นี้",
+    "new": "ใหม่",
+    "beta": "ทดลอง",
+    "login": "เข้าสู่ระบบ",
+    "logout": "ออกจากระบบ",
+    "or": "หรือ"
+  },
+  "create": {
+    "title": "สร้างกิจกรรม",
+    "subtitle": "เลือกประเภทกิจกรรมที่ต้องการสร้าง",
+    "sidebar": {
+      "learningContent": "เนื้อหาการเรียนรู้",
+      "organization": "การจัดการ",
+      "mediaAssets": "สื่อและรูปภาพ",
+      "recent": "ล่าสุด",
+      "templates": "เทมเพลต"
+    },
+    "types": {
+      "quiz": {
+        "name": "แบบทดสอบ",
+        "description": "สร้างคำถามแบบหลายตัวเลือก ถูก/ผิด หรือเติมคำ"
+      },
+      "quest": {
+        "name": "เควส",
+        "description": "การเดินทางการเรียนรู้หลายด่าน"
+      },
+      "lesson": {
+        "name": "บทเรียน",
+        "description": "เนื้อหาบทเรียนแบบอ่าน"
+      },
+      "flashcard": {
+        "name": "แฟลชการ์ด",
+        "description": "การ์ดจำแบบ Spaced Repetition"
+      },
+      "roleplay": {
+        "name": "บทสนทนา",
+        "description": "ฝึกสนทนากับ AI"
+      },
+      "course": {
+        "name": "คอร์ส",
+        "description": "ชุดบทเรียนครบวงจร"
+      },
+      "classroom": {
+        "name": "ห้องเรียน",
+        "description": "มอบหมายกิจกรรมให้นักเรียน"
+      },
+      "collection": {
+        "name": "คอลเลกชัน",
+        "description": "รวมกิจกรรมเป็น Learning Path"
+      },
+      "challenge": {
+        "name": "ชาเลนจ์",
+        "description": "กิจกรรมแข่งขันช่วงเวลาจำกัด"
+      },
+      "template": {
+        "name": "เทมเพลต",
+        "description": "บันทึก settings สำหรับใช้ซ้ำ"
+      },
+      "aiTutor": {
+        "name": "AI Tutor",
+        "description": "สร้าง AI ช่วยสอนเฉพาะทาง"
+      },
+      "infographic": {
+        "name": "อินโฟกราฟิก",
+        "description": "สรุปเนื้อหาเป็นภาพสวยงาม"
+      },
+      "diagram": {
+        "name": "ไดอะแกรม",
+        "description": "แผนผัง Flowchart Mind map"
+      },
+      "cards": {
+        "name": "การ์ดภาพ",
+        "description": "การ์ดคำศัพท์พร้อมรูปภาพ"
+      },
+      "slides": {
+        "name": "สไลด์",
+        "description": "สไลด์สรุปเนื้อหา"
+      },
+      "cover": {
+        "name": "ปก/Thumbnail",
+        "description": "ปกและรูปประกอบกิจกรรม"
+      }
+    },
+    "dashboard": {
+      "welcome": "ยินดีต้อนรับ",
+      "welcomeMessage": "เลือกประเภทกิจกรรมจากเมนูด้านซ้าย หรือเริ่มต้นอย่างรวดเร็ว",
+      "quickStart": "เริ่มต้นอย่างรวดเร็ว",
+      "recentActivities": "กิจกรรมล่าสุด",
+      "noRecent": "ยังไม่มีกิจกรรมล่าสุด",
+      "popularTemplates": "เทมเพลตยอดนิยม",
+      "noTemplates": "ยังไม่มีเทมเพลต"
+    },
+    "contentInput": {
+      "label": "เนื้อหาของคุณ",
+      "placeholder": "วางเนื้อหาที่ต้องการแปลงเป็นกิจกรรมที่นี่... (บทความ, โน้ต, เอกสาร ฯลฯ)",
+      "tip": "ยิ่งเนื้อหาละเอียด ผลลัพธ์จะยิ่งดี!",
+      "characters": "ตัวอักษร"
+    },
+    "inputSource": {
+      "label": "แหล่งข้อมูล",
+      "text": "ข้อความ",
+      "textDesc": "วางเนื้อหา",
+      "pdf": "PDF",
+      "pdfDesc": "เร็วๆ นี้",
+      "video": "YouTube",
+      "videoDesc": "เร็วๆ นี้"
+    },
+    "language": {
+      "label": "ภาษาเนื้อหา",
+      "th": "ไทย",
+      "en": "English"
+    },
+    "actions": {
+      "generate": "สร้างด้วย AI",
+      "manual": "สร้างเอง",
+      "creditUsed": "ใช้ 1 เครดิต",
+      "remaining": "เหลือ"
+    },
+    "settings": {
+      "auto": "อัตโนมัติ",
+      "custom": "กำหนดเอง",
+      "questionCount": "จำนวนคำถาม",
+      "choiceCount": "จำนวนตัวเลือก",
+      "stageCount": "จำนวนด่าน",
+      "questionsPerStage": "คำถามต่อด่าน",
+      "timer": "จับเวลา",
+      "timerEnabled": "เปิดจับเวลา",
+      "minutes": "นาที",
+      "tags": "แท็ก",
+      "addTag": "เพิ่มแท็ก",
+      "ageRange": "ช่วงอายุ"
+    },
+    "auth": {
+      "loginRequired": "เข้าสู่ระบบเพื่อสร้างกิจกรรม",
+      "loginMessage": "สมัครสมาชิกฟรี เพื่อเริ่มต้นสร้างกิจกรรมของคุณ",
+      "features": {
+        "ai": "AI สร้างกิจกรรมจากเนื้อหาในไม่กี่วินาที",
+        "gamified": "แผนที่การเรียนรู้แบบ Gamified",
+        "quiz": "Quiz หลายรูปแบบ พร้อมคำอธิบาย"
+      },
+      "loginButton": "เข้าสู่ระบบ / สมัครสมาชิก",
+      "freeStart": "เริ่มต้นใช้งานฟรี ไม่มีค่าใช้จ่าย"
+    }
+  }
+}
