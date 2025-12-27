@@ -21,37 +21,37 @@ import {
 } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { DefaultLayout } from '../components/layouts/DefaultLayout'
+import { useTranslation } from '../hooks/useTranslation'
 
 export const Route = createFileRoute('/about')({ component: AboutPage })
 
 function AboutPage() {
+  const { t } = useTranslation()
+
   const coreValues = [
     {
       icon: Crown,
-      title: 'Context Over Content',
-      titleThai: 'บริบทคือราชา',
-      description:
-        'เพราะความรู้ที่ปราศจากสถานการณ์จริงคือความรู้ที่ตายแล้ว เรามุ่งมั่นที่จะเปลี่ยนทุกบรรทัดของตัวหนังสือ และทุกนาทีของวิดีโอ ให้กลายเป็นสถานการณ์จำลองที่ผู้เรียนต้อง "ใช้" ความรู้จริงเพื่อพิชิตภารกิจ',
+      title: t('about.values.context.title'),
+      titleThai: t('about.values.context.titleThai'),
+      description: t('about.values.context.description'),
       color: 'from-amber-500 to-orange-500',
       bgColor: 'bg-amber-500/10',
       borderColor: 'border-amber-500/30',
     },
     {
       icon: Gamepad2,
-      title: 'Frictionless Fun',
-      titleThai: 'สนุกแบบไร้แรงเสียดทาน',
-      description:
-        'เราคือวิศวกรแห่งความสนุก AI ของเราถูกออกแบบมาเพื่อทำงานหนักหลังบ้าน เพื่อเปลี่ยนกระบวนการ Gamification ที่ซับซ้อนให้กลายเป็นประสบการณ์ที่ง่ายที่สุดสำหรับผู้สร้าง และสนุกที่สุดสำหรับผู้เรียน',
+      title: t('about.values.fun.title'),
+      titleThai: t('about.values.fun.titleThai'),
+      description: t('about.values.fun.description'),
       color: 'from-primary to-cyan-500',
       bgColor: 'bg-primary/10',
       borderColor: 'border-primary/30',
     },
     {
       icon: Rocket,
-      title: 'Empowering Human Potential',
-      titleThai: 'ปลดล็อกศักยภาพที่ไร้ขีดจำกัด',
-      description:
-        'เรามีพันธกิจในการขจัด "ความน่าเบื่อ" ซึ่งเป็นอุปสรรคที่ใหญ่ที่สุดของการพัฒนาตนเอง เมื่อมนุษย์มีความสุขในการเรียนรู้ ศักยภาพที่ซ่อนอยู่จะถูกปลดล็อกออกมาอย่างไม่มีที่สิ้นสุด',
+      title: t('about.values.potential.title'),
+      titleThai: t('about.values.potential.titleThai'),
+      description: t('about.values.potential.description'),
       color: 'from-purple-500 to-pink-500',
       bgColor: 'bg-purple-500/10',
       borderColor: 'border-purple-500/30',
@@ -59,50 +59,50 @@ function AboutPage() {
   ]
 
   const stats = [
-    { value: '10K+', label: 'เควสที่ถูกสร้าง', icon: Map },
-    { value: '50K+', label: 'ผู้เรียนทั่วโลก', icon: Users },
-    { value: '95%', label: 'อัตราความพึงพอใจ', icon: Heart },
-    { value: '3x', label: 'เพิ่มการจดจำ', icon: Brain },
+    { value: '10K+', label: t('about.stats.questsCreated'), icon: Map },
+    { value: '50K+', label: t('about.stats.learnersWorldwide'), icon: Users },
+    { value: '95%', label: t('about.stats.satisfactionRate'), icon: Heart },
+    { value: '3x', label: t('about.stats.retentionIncrease'), icon: Brain },
   ]
 
   const team = [
     {
-      role: 'Vision',
-      description: 'เราเชื่อว่าการเรียนรู้ควรเป็นการผจญภัย',
+      role: t('about.drives.vision.title'),
+      description: t('about.drives.vision.description'),
       icon: Lightbulb,
     },
     {
-      role: 'Technology',
-      description: 'AI ที่เข้าใจบริบทและสร้างประสบการณ์ที่มีความหมาย',
+      role: t('about.drives.technology.title'),
+      description: t('about.drives.technology.description'),
       icon: Zap,
     },
     {
-      role: 'Design',
-      description: 'ทุกรายละเอียดถูกออกแบบมาเพื่อสร้างความสนุก',
+      role: t('about.drives.design.title'),
+      description: t('about.drives.design.description'),
       icon: Sparkles,
     },
   ]
 
   const milestones = [
     {
-      year: '2024',
-      title: 'จุดเริ่มต้น',
-      description: 'ไอเดียเกิดขึ้นจากความเชื่อที่ว่าการเรียนรู้ไม่ควรน่าเบื่อ',
+      year: t('about.timeline.start.year'),
+      title: t('about.timeline.start.title'),
+      description: t('about.timeline.start.description'),
     },
     {
-      year: '2024',
-      title: 'AI Engine',
-      description: 'พัฒนา AI Context Engine รุ่นแรกสำเร็จ',
+      year: t('about.timeline.aiEngine.year'),
+      title: t('about.timeline.aiEngine.title'),
+      description: t('about.timeline.aiEngine.description'),
     },
     {
-      year: '2025',
-      title: 'Beta Launch',
-      description: 'เปิดให้ทดลองใช้และได้รับผลตอบรับที่ดีเยี่ยม',
+      year: t('about.timeline.beta.year'),
+      title: t('about.timeline.beta.title'),
+      description: t('about.timeline.beta.description'),
     },
     {
-      year: 'Future',
-      title: 'Global Expansion',
-      description: 'มุ่งหน้าสู่การเป็นแพลตฟอร์มการเรียนรู้ระดับโลก',
+      year: t('about.timeline.future.year'),
+      title: t('about.timeline.future.title'),
+      description: t('about.timeline.future.description'),
     },
   ]
 
@@ -124,25 +124,24 @@ function AboutPage() {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm font-medium mb-6">
               <Globe className="w-4 h-4" />
-              About QzVert
+              {t('about.hero.badge')}
             </div>
 
             <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight">
-              <span className="text-foreground">We Don't Just Teach.</span>
+              <span className="text-foreground">{t('about.hero.title1')}</span>
               <br />
-              <span className="bg-gradient-to-r from-primary via-pink-500 to-orange-400 bg-clip-text text-transparent">
-                We Build Worlds.
+              <span className="bg-linear-to-r from-primary via-pink-500 to-orange-400 bg-clip-text text-transparent">
+                {t('about.hero.title2')}
               </span>
             </h1>
 
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              ที่ Qzvert เราเชื่อว่า{' '}
-              <span className="text-foreground font-semibold">"การเรียนรู้"</span> ไม่ควรเป็นภาระ
-              แต่มันควรจะเป็น
+              {t('about.hero.subtitle1')}{' '}
+              <span className="text-foreground font-semibold">{t('about.hero.subtitleHighlight')}</span> {t('about.hero.subtitle2')}
               <span className="text-primary font-semibold">
-                การผจญภัยที่น่าตื่นเต้นที่สุด
+                {' '}{t('about.hero.subtitleHighlight2')}
               </span>
-              ในชีวิตมนุษย์
+              {' '}{t('about.hero.subtitleEnd')}
             </p>
           </motion.div>
         </div>
@@ -161,9 +160,9 @@ function AboutPage() {
             <div className="relative">
               <BookOpen className="w-12 h-12 text-primary mb-6" />
               <p className="text-lg md:text-xl text-foreground leading-relaxed">
-                ในโลกที่ข้อมูลท่วมท้นจนเราสำลัก แต่ความเข้าใจกลับลดลง เราจึงสร้าง{' '}
-                <span className="text-primary font-bold">AI Context Engine</span> เพื่อชุบชีวิตเนื้อหาที่หยุดนิ่งให้กลายเป็น
-                <span className="text-primary font-bold">โลกที่โต้ตอบได้</span>
+                {t('about.mission.text1')}{' '}
+                <span className="text-primary font-bold">{t('about.mission.highlight1')}</span> {t('about.mission.text2')}
+                <span className="text-primary font-bold"> {t('about.mission.highlight2')}</span>
               </p>
             </div>
           </motion.div>
@@ -181,13 +180,13 @@ function AboutPage() {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm font-medium mb-4">
               <Shield className="w-4 h-4" />
-              Our Core Values
+              {t('about.values.badge')}
             </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              3 เสาหลักของเรา
+              {t('about.values.title')}
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              หลักการที่เราใช้ขับเคลื่อนทุกสิ่งที่เราสร้าง
+              {t('about.values.subtitle')}
             </p>
           </motion.div>
 
@@ -242,7 +241,7 @@ function AboutPage() {
             className="text-center mb-12"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              ตัวเลขที่<span className="text-primary">พิสูจน์</span>ความสำเร็จ
+              {t('about.stats.title')}<span className="text-primary">{t('about.stats.titleHighlight')}</span>{t('about.stats.titleEnd')}
             </h2>
           </motion.div>
 
@@ -277,10 +276,10 @@ function AboutPage() {
             className="text-center mb-12"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              สิ่งที่<span className="text-primary">ขับเคลื่อน</span>เรา
+              {t('about.drives.title')}<span className="text-primary">{t('about.drives.titleHighlight')}</span>{t('about.drives.titleEnd')}
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              ทุกวันเราตื่นขึ้นมาด้วยเป้าหมายเดียวกัน
+              {t('about.drives.subtitle')}
             </p>
           </motion.div>
 
@@ -315,10 +314,10 @@ function AboutPage() {
             className="text-center mb-12"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              เส้นทางของ<span className="text-primary">เรา</span>
+              {t('about.timeline.title')}<span className="text-primary">{t('about.timeline.titleHighlight')}</span>
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              จากไอเดียสู่การเปลี่ยนแปลงการเรียนรู้
+              {t('about.timeline.subtitle')}
             </p>
           </motion.div>
 
@@ -367,44 +366,44 @@ function AboutPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary/20 to-pink-500/20 text-primary text-sm font-medium mb-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-linear-to-r from-primary/20 to-pink-500/20 text-primary text-sm font-medium mb-6">
               <Star className="w-4 h-4" />
-              Join the Adventure
+              {t('about.cta.badge')}
             </div>
 
             <h2 className="text-3xl md:text-5xl font-black mb-6">
-              <span className="text-foreground">พร้อมที่จะเป็นส่วนหนึ่ง</span>
+              <span className="text-foreground">{t('about.cta.title1')}</span>
               <br />
-              <span className="bg-gradient-to-r from-primary via-pink-500 to-orange-400 bg-clip-text text-transparent">
-                ของการปฏิวัติการเรียนรู้?
+              <span className="bg-linear-to-r from-primary via-pink-500 to-orange-400 bg-clip-text text-transparent">
+                {t('about.cta.title2')}
               </span>
             </h2>
 
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-              ไม่ว่าคุณจะเป็นผู้เรียนที่อยากสนุก หรือผู้สร้างที่อยากสร้างสรรค์
+              {t('about.cta.subtitle')}
               <br />
-              QzVert พร้อมพาคุณไปสู่โลกแห่งการเรียนรู้ที่ไม่เหมือนใคร
+              {t('about.cta.subtitleEnd')}
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Button
                 size="lg"
-                className="text-lg px-8 py-6 bg-gradient-to-r from-primary to-cyan-500 hover:from-primary/90 hover:to-cyan-500/90"
+                className="text-lg px-8 py-6 bg-linear-to-r from-primary to-cyan-500 hover:from-primary/90 hover:to-cyan-500/90"
                 asChild
               >
                 <Link to="/explore">
                   <Target className="w-5 h-5" />
-                  สำรวจเควส
+                  {t('about.cta.exploreQuests')}
                 </Link>
               </Button>
               <Button
                 size="lg"
-                className="text-lg px-8 py-6 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-500/90 hover:to-pink-500/90"
+                className="text-lg px-8 py-6 bg-linear-to-r from-purple-500 to-pink-500 hover:from-purple-500/90 hover:to-pink-500/90"
                 asChild
               >
                 <Link to="/" hash="create">
                   <Wand2 className="w-5 h-5" />
-                  สร้างเควสของคุณ
+                  {t('about.cta.createYourQuest')}
                 </Link>
               </Button>
             </div>
@@ -422,9 +421,9 @@ function AboutPage() {
           >
             <Trophy className="w-12 h-12 text-primary mx-auto mb-6" />
             <blockquote className="text-xl md:text-2xl text-foreground font-medium leading-relaxed italic">
-              "เราไม่ได้สร้างแค่แพลตฟอร์ม เราสร้างโลกใหม่ที่ทุกคนอยากเรียนรู้"
+              "{t('about.finalQuote.text')}"
             </blockquote>
-            <p className="text-muted-foreground mt-4">— Team QzVert</p>
+            <p className="text-muted-foreground mt-4">— {t('about.finalQuote.author')}</p>
           </motion.div>
         </div>
       </section>

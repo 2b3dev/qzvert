@@ -17,15 +17,18 @@ import {
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { DefaultLayout } from '../components/layouts/DefaultLayout'
+import { useTranslation } from '../hooks/useTranslation'
 
 export const Route = createFileRoute('/contact')({ component: ContactPage })
 
 function ContactPage() {
+  const { t } = useTranslation()
+
   const socialLinks = [
     {
       name: 'YouTube',
-      handle: '@Qzvert_Official',
-      description: 'ดูตัวอย่างการเปลี่ยนคอร์สแห้งๆ ให้กลายเป็นเกม และ Tutorial การใช้งาน AI',
+      handle: t('contact.social.youtube.handle'),
+      description: t('contact.social.youtube.description'),
       icon: Youtube,
       color: 'from-red-500 to-red-600',
       hoverColor: 'hover:bg-red-500/10',
@@ -34,8 +37,8 @@ function ContactPage() {
     },
     {
       name: 'Facebook',
-      handle: 'Qzvert - AI Edutainment Platform',
-      description: 'อัปเดตข่าวสาร กิจกรรมพิเศษ และแชร์ประสบการณ์จากผู้ใช้งานทั่วโลก',
+      handle: t('contact.social.facebook.handle'),
+      description: t('contact.social.facebook.description'),
       icon: Facebook,
       color: 'from-blue-600 to-blue-700',
       hoverColor: 'hover:bg-blue-500/10',
@@ -44,8 +47,8 @@ function ContactPage() {
     },
     {
       name: 'TikTok',
-      handle: '@Qzvert.Learning',
-      description: 'คลิปสั้นไอเดียเด็ด เปลี่ยนเรื่องยากให้สนุกได้ใน 60 วินาที',
+      handle: t('contact.social.tiktok.handle'),
+      description: t('contact.social.tiktok.description'),
       icon: () => (
         <svg viewBox="0 0 24 24" className="w-6 h-6" fill="currentColor">
           <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
@@ -58,8 +61,8 @@ function ContactPage() {
     },
     {
       name: 'X (Twitter)',
-      handle: '@Qzvert',
-      description: 'คุยกับเราแบบ Real-time และติดตามเทรนด์ AI EdTech ล่าสุด',
+      handle: t('contact.social.twitter.handle'),
+      description: t('contact.social.twitter.description'),
       icon: Twitter,
       color: 'from-gray-800 to-gray-900 dark:from-white dark:to-gray-300',
       hoverColor: 'hover:bg-gray-500/10',
@@ -86,21 +89,21 @@ function ContactPage() {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm font-medium mb-6">
               <MessageCircle className="w-4 h-4" />
-              Contact Us
+              {t('contact.hero.badge')}
             </div>
 
             <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight">
-              <span className="text-foreground">Let's Build the Future of</span>
+              <span className="text-foreground">{t('contact.hero.title1')}</span>
               <br />
-              <span className="bg-gradient-to-r from-primary via-pink-500 to-orange-400 bg-clip-text text-transparent">
-                Learning Together
+              <span className="bg-linear-to-r from-primary via-pink-500 to-orange-400 bg-clip-text text-transparent">
+                {t('contact.hero.title2')}
               </span>
             </h1>
 
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              มีคำถาม ข้อเสนอแนะ หรืออยากแชร์ไอเดียเควสสุดเจ๋งของคุณ?
+              {t('contact.hero.subtitle1')}
               <br />
-              ทีม <span className="text-primary font-semibold">Game Master</span> ของเราพร้อมรับฟังและช่วยเหลือคุณเสมอ
+              {t('contact.hero.subtitle2')} <span className="text-primary font-semibold">{t('contact.hero.subtitleHighlight')}</span> {t('contact.hero.subtitleEnd')}
             </p>
           </motion.div>
         </div>
@@ -128,11 +131,11 @@ function ContactPage() {
                   <div className="flex-1">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-3">
                       <Sparkles className="w-3 h-3" />
-                      Direct Support
+                      {t('contact.directSupport.badge')}
                     </div>
-                    <h2 className="text-2xl md:text-3xl font-bold mb-3">ติดต่อสอบถาม</h2>
+                    <h2 className="text-2xl md:text-3xl font-bold mb-3">{t('contact.directSupport.title')}</h2>
                     <p className="text-muted-foreground mb-4">
-                      สำหรับปัญหาด้านการใช้งาน การแจ้งบั๊ก หรือการสอบถามข้อมูลแพ็กเกจ Enterprise สามารถส่งอีเมลหาเราได้โดยตรง
+                      {t('contact.directSupport.subtitle')}
                     </p>
 
                     <a
@@ -140,13 +143,13 @@ function ContactPage() {
                       className="inline-flex items-center gap-2 text-xl md:text-2xl font-bold text-primary hover:text-primary/80 transition-colors group"
                     >
                       <Mail className="w-6 h-6" />
-                      support@qzvert.com
+                      {t('contact.directSupport.email')}
                       <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </a>
 
                     <div className="flex items-center gap-2 mt-4 text-sm text-muted-foreground">
                       <Clock className="w-4 h-4" />
-                      <span>เราจะตอบกลับภายใน 24 ชั่วโมง ในวันทำการ</span>
+                      <span>{t('contact.directSupport.responseTime')}</span>
                     </div>
                   </div>
                 </div>
@@ -165,15 +168,15 @@ function ContactPage() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary/20 to-pink-500/20 text-primary text-sm font-medium mb-4">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-linear-to-r from-primary/20 to-pink-500/20 text-primary text-sm font-medium mb-4">
               <Globe className="w-4 h-4" />
-              Join the Community
+              {t('contact.social.badge')}
             </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              ติดตามเรา<span className="text-primary">บนโซเชียล</span>
+              {t('contact.social.title')}<span className="text-primary">{t('contact.social.titleHighlight')}</span>
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              มาร่วมเป็นส่วนหนึ่งของวิวัฒนาการการเรียนรู้ อัปเดตฟีเจอร์ใหม่ๆ รับไอเดียการสร้างเควส และพูดคุยกับเพื่อนร่วมอุดมการณ์
+              {t('contact.social.subtitle')}
             </p>
           </motion.div>
 
@@ -230,27 +233,27 @@ function ContactPage() {
                   <MapPin className="w-8 h-8 text-white" />
                 </div>
 
-                <h2 className="text-2xl md:text-3xl font-bold mb-4">Location</h2>
+                <h2 className="text-2xl md:text-3xl font-bold mb-4">{t('contact.location.title')}</h2>
 
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted mb-4">
                   <Globe className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium">Cloud-Based Team</span>
+                  <span className="text-sm font-medium">{t('contact.location.badge')}</span>
                 </div>
 
-                <p className="text-lg text-foreground font-semibold mb-2">Qzvert Co., Ltd.</p>
+                <p className="text-lg text-foreground font-semibold mb-2">{t('contact.location.company')}</p>
                 <p className="text-muted-foreground">
-                  Globally Minded | Founded in Thailand
+                  {t('contact.location.tagline')}
                 </p>
 
                 <div className="flex flex-wrap justify-center gap-3 mt-6">
                   <span className="px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm">
-                    Remote First
+                    {t('contact.location.tags.remoteFirst')}
                   </span>
                   <span className="px-3 py-1.5 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 text-sm">
-                    Global Team
+                    {t('contact.location.tags.globalTeam')}
                   </span>
                   <span className="px-3 py-1.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 text-sm">
-                    Thai Startup
+                    {t('contact.location.tags.thaiStartup')}
                   </span>
                 </div>
               </CardContent>
@@ -268,23 +271,23 @@ function ContactPage() {
             viewport={{ once: true }}
             className="text-center"
           >
-            <h3 className="text-2xl font-bold mb-6">ไม่อยากรอ?</h3>
+            <h3 className="text-2xl font-bold mb-6">{t('contact.quickLinks.title')}</h3>
 
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Button variant="outline" size="lg" className="text-lg px-6 py-6" asChild>
                 <Link to="/pricing" hash="faq">
                   <HelpCircle className="w-5 h-5" />
-                  หาคำตอบใน FAQ
+                  {t('contact.quickLinks.faq')}
                 </Link>
               </Button>
               <Button
                 size="lg"
-                className="text-lg px-6 py-6 bg-gradient-to-r from-primary to-cyan-500 hover:from-primary/90 hover:to-cyan-500/90"
+                className="text-lg px-6 py-6 bg-linear-to-r from-primary to-cyan-500 hover:from-primary/90 hover:to-cyan-500/90"
                 asChild
               >
                 <Link to="/" hash="create">
                   <Wand2 className="w-5 h-5" />
-                  เริ่มสร้างเควสแรกของคุณเลย
+                  {t('contact.quickLinks.createQuest')}
                 </Link>
               </Button>
             </div>
@@ -302,11 +305,11 @@ function ContactPage() {
           >
             <div className="text-5xl mb-6">🎮</div>
             <blockquote className="text-xl md:text-2xl text-foreground font-medium leading-relaxed italic">
-              "ทุกคำถามคือจุดเริ่มต้นของการผจญภัยใหม่
+              "{t('contact.finalQuote.text1')}
               <br />
-              เราพร้อมอยู่เคียงข้างคุณในทุกด่าน"
+              {t('contact.finalQuote.text2')}"
             </blockquote>
-            <p className="text-muted-foreground mt-4">— Team Qzvert</p>
+            <p className="text-muted-foreground mt-4">— {t('contact.finalQuote.author')}</p>
           </motion.div>
         </div>
       </section>

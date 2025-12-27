@@ -315,5 +315,414 @@
       "loginButton": "เข้าสู่ระบบ / สมัครสมาชิก",
       "freeStart": "เริ่มต้นใช้งานฟรี ไม่มีค่าใช้จ่าย"
     }
+  },
+  "pricing": {
+    "hero": {
+      "badge": "Pricing Plans",
+      "title1": "เลือกเส้นทางสู่",
+      "title2": "ความเชี่ยวชาญ",
+      "subtitle": "ไม่ว่าคุณจะเป็นนักศึกษาที่ต้องการจำสอบ หรือ Creator ที่ต้องการสร้าง Academy ระดับโลก",
+      "subtitleHighlight": "อัปเลเวล",
+      "subtitleEnd": "เรามีเครื่องมือที่พร้อมจะพาคุณ"
+    },
+    "plans": {
+      "explorer": {
+        "name": "Explorer",
+        "nameThai": "นักสำรวจ",
+        "description": "เรียนได้ไม่จำกัด ทดลองสร้างด้วย AI"
+      },
+      "hero": {
+        "name": "Hero",
+        "nameThai": "ฮีโร่",
+        "description": "Creator และติวเตอร์ที่เริ่มต้น"
+      },
+      "legend": {
+        "name": "Legend",
+        "nameThai": "ตำนาน",
+        "description": "Creator มืออาชีพที่ต้องการความยืดหยุ่น"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "nameThai": "องค์กร",
+        "description": "โรงเรียน, มหาวิทยาลัย และองค์กร"
+      },
+      "free": "ฟรี",
+      "forever": "ตลอดกาล",
+      "perMonth": "/ เดือน",
+      "contactUs": "ติดต่อเรา",
+      "mostPopular": "ยอดนิยม",
+      "startFree": "เริ่มต้นฟรี",
+      "getStarted": "เริ่มต้นใช้งาน",
+      "upgradeLegend": "อัปเกรดเป็น Legend"
+    },
+    "features": {
+      "freeLearn": "เรียนฟรี",
+      "unlimited": "ไม่จำกัด",
+      "createActivity": "สร้าง Activity เอง",
+      "freeUnlimited": "ฟรีไม่จำกัด",
+      "trackProgress": "ติดตามความก้าวหน้า",
+      "viewOwnStats": "ดูสถิติการเรียนรู้ของตัวเอง",
+      "aiCredits": "AI Credits",
+      "creditsPerMonth": "credits / เดือน",
+      "storage": "Storage",
+      "contentSource": "Content Source",
+      "docPages": "เอกสาร 5 หน้า / วิดีโอ 5 นาที",
+      "unlimitedLength": "ไม่จำกัดความยาว",
+      "customBranding": "Custom Branding",
+      "customHeaderFooter": "Custom Header & Footer",
+      "fullWhitelabel": "Full White-label",
+      "aiRoleplay": "AI Roleplay Agent",
+      "basicNpc": "พื้นฐาน (Simple NPC)",
+      "advancedAi": "Advanced (Emotional AI)",
+      "customScenarios": "Fully Custom Scenarios",
+      "analytics": "Analytics",
+      "basicDashboard": "Dashboard พื้นฐาน",
+      "individualAnalytics": "Dashboard วิเคราะห์ผู้เรียนรายบุคคล",
+      "deepInsights": "Deep Insights & API Export",
+      "gamification": "Gamification",
+      "basicXp": "Level & XP พื้นฐาน",
+      "customItems": "สร้างไอเทมและของรางวัลเองได้",
+      "whitelabelGuild": "White-label & Guild System",
+      "support": "Support",
+      "communitySupport": "Community Support",
+      "emailSupport": "Email Support",
+      "prioritySupport": "Priority Email Support",
+      "dedicatedManager": "Dedicated Success Manager",
+      "selfHosted": "Self-hosted Server",
+      "installOwn": "ติดตั้งบน Server ของคุณเอง"
+    },
+    "comparison": {
+      "title": "เปรียบเทียบ",
+      "titleHighlight": "ฟีเจอร์",
+      "titleEnd": "ทั้งหมด",
+      "subtitle": "ดูรายละเอียดแต่ละแพ็กเกจเพื่อเลือกแผนที่เหมาะกับคุณ"
+    },
+    "earlyBird": {
+      "badge": "Early Bird Exclusive",
+      "title": "สมัครวันนี้รับ Exclusive",
+      "titleHighlight": "\"Early Bird\" Badge",
+      "subtitle": "Badge พิเศษสำหรับโปรไฟล์ของคุณ แสดงให้ทุกคนเห็นว่าคุณเป็นผู้บุกเบิกคนแรกๆ",
+      "cta": "เริ่มต้นสร้างเควสแรกของคุณเลย"
+    },
+    "faq": {
+      "badge": "FAQ",
+      "title": "คำถามที่",
+      "titleHighlight": "พบบ่อย",
+      "subtitle": "หาคำตอบสำหรับคำถามยอดนิยมเกี่ยวกับ Qzvert",
+      "categories": {
+        "general": "ข้อมูลทั่วไป",
+        "forCreators": "สำหรับผู้สร้างคอร์สและครู",
+        "forLearners": "สำหรับผู้เรียน",
+        "techPricing": "เทคนิคและราคา"
+      },
+      "items": {
+        "whatIsQzvert": {
+          "question": "Qzvert คืออะไร? ต่างจากแอปเรียนออนไลน์ทั่วไปอย่างไร?",
+          "answer": "Qzvert คือ \"AI Edutainment Platform\" ที่เปลี่ยนเนื้อหาการเรียนรู้แห้งๆ ให้กลายเป็นโลกจำลอง (Contextual Learning) เราไม่ได้ให้คุณแค่อ่านหรือดู แต่เราให้คุณ \"สวมบทบาท\" และใช้ความรู้จริงเพื่อพิชิตภารกิจ ทำให้การเรียนสนุกเหมือนการเล่นเกม RPG"
+        },
+        "needSkills": {
+          "question": "ต้องมีทักษะการเขียนโปรแกรมหรือออกแบบเกมไหมถึงจะใช้งานได้?",
+          "answer": "ไม่จำเป็นเลยครับ! นั่นคือหัวใจของ Qzvert คุณมีหน้าที่เพียงแค่อัปโหลดเนื้อหา (วิดีโอ, PDF หรือลิงก์บทความ) AI GM ของเราจะทำหน้าที่ \"วิศวกรเกม\" เนรมิตแผนที่ ด่าน และควิซให้คุณโดยอัตโนมัติในไม่กี่วินาที"
+        },
+        "existingCourse": {
+          "question": "ฉันสามารถนำ Qzvert ไปใช้กับคอร์สที่ฉันขายอยู่แล้วได้ไหม?",
+          "answer": "ได้แน่นอนครับ! Qzvert ถูกออกแบบมาเพื่อเป็น \"Add-on Layer\" คุณสามารถส่งลิงก์ Quest ให้ผู้เรียนของคุณเข้าไปเล่นหลังจากดูบทเรียนจบ เพื่อเพิ่มอัตราความเข้าใจ (Retention) และทำให้ผู้เรียนประทับใจจนต้องบอกต่อ"
+        },
+        "dataSafe": {
+          "question": "ข้อมูลเนื้อหาที่ฉันอัปโหลดจะปลอดภัยไหม?",
+          "answer": "เราให้ความสำคัญกับความเป็นส่วนตัวและความปลอดภัยของข้อมูลเป็นอันดับหนึ่ง เนื้อหาที่คุณอัปโหลดจะถูกใช้เพื่อสร้างเควสในบัญชีของคุณเท่านั้น และเรามีระบบเข้ารหัสข้อมูลมาตรฐานสากลเพื่อป้องกันการเข้าถึงจากบุคคลภายนอก"
+        },
+        "wrongAnswers": {
+          "question": "ถ้าฉันตอบคำถามผิดบ่อยๆ จะเกิดอะไรขึ้น?",
+          "answer": "ในโลกของ Qzvert การตอบผิดไม่ใช่ความล้มเหลว แต่คือการเรียนรู้! หากคุณตอบผิด พลังชีวิต (Energy) อาจลดลง หรือเนื้อเรื่องอาจเปลี่ยนไปในทางที่ท้าทายขึ้น แต่อย่าห่วง AI ของเราจะส่ง \"Hint\" หรือตัวช่วยลับๆ มาให้เพื่อช่วยให้คุณพัฒนาและกลับมาพิชิตบอสได้อีกครั้ง"
+        },
+        "xpItems": {
+          "question": "แต้ม XP และไอเทมที่ได้ มีไว้ทำอะไร?",
+          "answer": "แต้มเหล่านี้ใช้เพื่อแสดงความก้าวหน้า (Progression) ของคุณ คุณสามารถนำไปอัปเกรด Avatar, ปลดล็อกด่านลับ หรือแลกรับสิทธิพิเศษจาก Creator (เช่น ส่วนลดคอร์สถัดไป หรือเอกสารลับ) ซึ่งจะช่วยสร้างความภูมิใจในทุกย่างก้าวของการเรียนรู้"
+        },
+        "aiAccuracy": {
+          "question": "AI ที่ใช้ประมวลผลมีความแม่นยำแค่ไหน?",
+          "answer": "เราใช้ขุมพลังจาก Gemini 2.5 Flash ซึ่งเป็น AI รุ่นล่าสุดที่เน้นความรวดเร็วและความแม่นยำสูง อย่างไรก็ตาม ระบบจะมีเครื่องมือให้ Creator สามารถ \"ตรวจสอบและปรับแต่ง\" (Review & Edit) เนื้อหาที่ AI สร้างขึ้นก่อนเผยแพร่จริงได้เสมอ"
+        },
+        "cancelSubscription": {
+          "question": "หากสมัครสมาชิกรายเดือน (Pro) แล้วสามารถยกเลิกได้เมื่อไหร่?",
+          "answer": "คุณมีอิสระเต็มที่ครับ! คุณสามารถยกเลิกการสมัครสมาชิกได้ทุกเมื่อผ่านหน้า Dashboard โดยจะไม่มีค่าธรรมเนียมแอบแฝง และเควสที่คุณสร้างไว้แล้วจะยังคงถูกเก็บรักษาไว้ในระบบ (ตามเงื่อนไขของแพ็กเกจ)"
+        }
+      },
+      "stillQuestions": {
+        "title": "ยังสงสัย?",
+        "subtitle": "คุยกับทีมงานของเราได้เลย เรายินดีช่วยเหลือคุณทุกคำถาม",
+        "cta": "คุยกับทีมงาน"
+      }
+    },
+    "closing": {
+      "quote1": "เพราะทุกนาทีของความรู้มีค่า...",
+      "quote2": "อย่าปล่อยให้มันถูกลืมไปในกองกระดาษ",
+      "quote3": "เริ่มต้นใช้ Qzvert วันนี้",
+      "quote4": "เพื่อเปลี่ยนการเรียนรู้ให้สนุกอย่างที่ไม่เคยมีมาก่อน",
+      "cta": "เริ่มต้นฟรีวันนี้"
+    }
+  },
+  "about": {
+    "hero": {
+      "badge": "About QzVert",
+      "title1": "We Don't Just Teach.",
+      "title2": "We Build Worlds.",
+      "subtitle1": "ที่ Qzvert เราเชื่อว่า",
+      "subtitleHighlight": "\"การเรียนรู้\"",
+      "subtitle2": "ไม่ควรเป็นภาระ แต่มันควรจะเป็น",
+      "subtitleHighlight2": "การผจญภัยที่น่าตื่นเต้นที่สุด",
+      "subtitleEnd": "ในชีวิตมนุษย์"
+    },
+    "mission": {
+      "text1": "ในโลกที่ข้อมูลท่วมท้นจนเราสำลัก แต่ความเข้าใจกลับลดลง เราจึงสร้าง",
+      "highlight1": "AI Context Engine",
+      "text2": "เพื่อชุบชีวิตเนื้อหาที่หยุดนิ่งให้กลายเป็น",
+      "highlight2": "โลกที่โต้ตอบได้"
+    },
+    "values": {
+      "badge": "Our Core Values",
+      "title": "3 เสาหลักของเรา",
+      "subtitle": "หลักการที่เราใช้ขับเคลื่อนทุกสิ่งที่เราสร้าง",
+      "context": {
+        "title": "Context Over Content",
+        "titleThai": "บริบทคือราชา",
+        "description": "เพราะความรู้ที่ปราศจากสถานการณ์จริงคือความรู้ที่ตายแล้ว เรามุ่งมั่นที่จะเปลี่ยนทุกบรรทัดของตัวหนังสือ และทุกนาทีของวิดีโอ ให้กลายเป็นสถานการณ์จำลองที่ผู้เรียนต้อง \"ใช้\" ความรู้จริงเพื่อพิชิตภารกิจ"
+      },
+      "fun": {
+        "title": "Frictionless Fun",
+        "titleThai": "สนุกแบบไร้แรงเสียดทาน",
+        "description": "เราคือวิศวกรแห่งความสนุก AI ของเราถูกออกแบบมาเพื่อทำงานหนักหลังบ้าน เพื่อเปลี่ยนกระบวนการ Gamification ที่ซับซ้อนให้กลายเป็นประสบการณ์ที่ง่ายที่สุดสำหรับผู้สร้าง และสนุกที่สุดสำหรับผู้เรียน"
+      },
+      "potential": {
+        "title": "Empowering Human Potential",
+        "titleThai": "ปลดล็อกศักยภาพที่ไร้ขีดจำกัด",
+        "description": "เรามีพันธกิจในการขจัด \"ความน่าเบื่อ\" ซึ่งเป็นอุปสรรคที่ใหญ่ที่สุดของการพัฒนาตนเอง เมื่อมนุษย์มีความสุขในการเรียนรู้ ศักยภาพที่ซ่อนอยู่จะถูกปลดล็อกออกมาอย่างไม่มีที่สิ้นสุด"
+      }
+    },
+    "stats": {
+      "title": "ตัวเลขที่",
+      "titleHighlight": "พิสูจน์",
+      "titleEnd": "ความสำเร็จ",
+      "questsCreated": "เควสที่ถูกสร้าง",
+      "learnersWorldwide": "ผู้เรียนทั่วโลก",
+      "satisfactionRate": "อัตราความพึงพอใจ",
+      "retentionIncrease": "เพิ่มการจดจำ"
+    },
+    "drives": {
+      "title": "สิ่งที่",
+      "titleHighlight": "ขับเคลื่อน",
+      "titleEnd": "เรา",
+      "subtitle": "ทุกวันเราตื่นขึ้นมาด้วยเป้าหมายเดียวกัน",
+      "vision": {
+        "title": "Vision",
+        "description": "เราเชื่อว่าการเรียนรู้ควรเป็นการผจญภัย"
+      },
+      "technology": {
+        "title": "Technology",
+        "description": "AI ที่เข้าใจบริบทและสร้างประสบการณ์ที่มีความหมาย"
+      },
+      "design": {
+        "title": "Design",
+        "description": "ทุกรายละเอียดถูกออกแบบมาเพื่อสร้างความสนุก"
+      }
+    },
+    "timeline": {
+      "title": "เส้นทางของ",
+      "titleHighlight": "เรา",
+      "subtitle": "จากไอเดียสู่การเปลี่ยนแปลงการเรียนรู้",
+      "start": {
+        "year": "2024",
+        "title": "จุดเริ่มต้น",
+        "description": "ไอเดียเกิดขึ้นจากความเชื่อที่ว่าการเรียนรู้ไม่ควรน่าเบื่อ"
+      },
+      "aiEngine": {
+        "year": "2024",
+        "title": "AI Engine",
+        "description": "พัฒนา AI Context Engine รุ่นแรกสำเร็จ"
+      },
+      "beta": {
+        "year": "2025",
+        "title": "Beta Launch",
+        "description": "เปิดให้ทดลองใช้และได้รับผลตอบรับที่ดีเยี่ยม"
+      },
+      "future": {
+        "year": "Future",
+        "title": "Global Expansion",
+        "description": "มุ่งหน้าสู่การเป็นแพลตฟอร์มการเรียนรู้ระดับโลก"
+      }
+    },
+    "cta": {
+      "badge": "Join the Adventure",
+      "title1": "พร้อมที่จะเป็นส่วนหนึ่ง",
+      "title2": "ของการปฏิวัติการเรียนรู้?",
+      "subtitle": "ไม่ว่าคุณจะเป็นผู้เรียนที่อยากสนุก หรือผู้สร้างที่อยากสร้างสรรค์",
+      "subtitleEnd": "QzVert พร้อมพาคุณไปสู่โลกแห่งการเรียนรู้ที่ไม่เหมือนใคร",
+      "exploreQuests": "สำรวจเควส",
+      "createYourQuest": "สร้างเควสของคุณ"
+    },
+    "finalQuote": {
+      "text": "เราไม่ได้สร้างแค่แพลตฟอร์ม เราสร้างโลกใหม่ที่ทุกคนอยากเรียนรู้",
+      "author": "Team QzVert"
+    }
+  },
+  "contact": {
+    "hero": {
+      "badge": "Contact Us",
+      "title1": "Let's Build the Future of",
+      "title2": "Learning Together",
+      "subtitle1": "มีคำถาม ข้อเสนอแนะ หรืออยากแชร์ไอเดียเควสสุดเจ๋งของคุณ?",
+      "subtitle2": "ทีม",
+      "subtitleHighlight": "Game Master",
+      "subtitleEnd": "ของเราพร้อมรับฟังและช่วยเหลือคุณเสมอ"
+    },
+    "directSupport": {
+      "badge": "Direct Support",
+      "title": "ติดต่อสอบถาม",
+      "subtitle": "สำหรับปัญหาด้านการใช้งาน การแจ้งบั๊ก หรือการสอบถามข้อมูลแพ็กเกจ Enterprise สามารถส่งอีเมลหาเราได้โดยตรง",
+      "email": "support@qzvert.com",
+      "responseTime": "เราจะตอบกลับภายใน 24 ชั่วโมง ในวันทำการ"
+    },
+    "social": {
+      "badge": "Join the Community",
+      "title": "ติดตามเรา",
+      "titleHighlight": "บนโซเชียล",
+      "subtitle": "มาร่วมเป็นส่วนหนึ่งของวิวัฒนาการการเรียนรู้ อัปเดตฟีเจอร์ใหม่ๆ รับไอเดียการสร้างเควส และพูดคุยกับเพื่อนร่วมอุดมการณ์",
+      "youtube": {
+        "handle": "@Qzvert_Official",
+        "description": "ดูตัวอย่างการเปลี่ยนคอร์สแห้งๆ ให้กลายเป็นเกม และ Tutorial การใช้งาน AI"
+      },
+      "facebook": {
+        "handle": "Qzvert - AI Edutainment Platform",
+        "description": "อัปเดตข่าวสาร กิจกรรมพิเศษ และแชร์ประสบการณ์จากผู้ใช้งานทั่วโลก"
+      },
+      "tiktok": {
+        "handle": "@Qzvert.Learning",
+        "description": "คลิปสั้นไอเดียเด็ด เปลี่ยนเรื่องยากให้สนุกได้ใน 60 วินาที"
+      },
+      "twitter": {
+        "handle": "@Qzvert",
+        "description": "คุยกับเราแบบ Real-time และติดตามเทรนด์ AI EdTech ล่าสุด"
+      }
+    },
+    "location": {
+      "title": "Location",
+      "badge": "Cloud-Based Team",
+      "company": "Qzvert Co., Ltd.",
+      "tagline": "Globally Minded | Founded in Thailand",
+      "tags": {
+        "remoteFirst": "Remote First",
+        "globalTeam": "Global Team",
+        "thaiStartup": "Thai Startup"
+      }
+    },
+    "quickLinks": {
+      "title": "ไม่อยากรอ?",
+      "faq": "หาคำตอบใน FAQ",
+      "createQuest": "เริ่มสร้างเควสแรกของคุณเลย"
+    },
+    "finalQuote": {
+      "text1": "ทุกคำถามคือจุดเริ่มต้นของการผจญภัยใหม่",
+      "text2": "เราพร้อมอยู่เคียงข้างคุณในทุกด่าน",
+      "author": "Team Qzvert"
+    }
+  },
+  "privacy": {
+    "hero": {
+      "badge": "Privacy Policy",
+      "backToHome": "กลับหน้าหลัก",
+      "title1": "นโยบาย",
+      "title2": "ความเป็นส่วนตัว",
+      "subtitle1": "QzVert ให้ความสำคัญกับความเป็นส่วนตัวของคุณ",
+      "subtitle2": "เราปฏิบัติตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562 (PDPA)",
+      "lastUpdated": "อัปเดตล่าสุด: 24 ธันวาคม 2567"
+    },
+    "sections": {
+      "dataCollect": {
+        "title": "ข้อมูลที่เราเก็บรวบรวม",
+        "titleEn": "Data We Collect",
+        "accountData": "ข้อมูลบัญชี",
+        "items": {
+          "email": "อีเมล - ใช้สำหรับการเข้าสู่ระบบและติดต่อสื่อสาร",
+          "displayName": "ชื่อที่แสดง (Display Name) - ใช้แสดงในระบบ",
+          "avatar": "รูปโปรไฟล์ (ถ้ามี) - จาก Google หรืออัปโหลดเอง"
+        },
+        "usageData": "ข้อมูลการใช้งาน",
+        "usageItems": {
+          "quests": "เควสและควิซที่สร้าง",
+          "scores": "คะแนนและความคืบหน้าในการเรียน",
+          "history": "ประวัติการเล่นเกม"
+        }
+      },
+      "dataUse": {
+        "title": "วัตถุประสงค์ในการใช้ข้อมูล",
+        "titleEn": "How We Use Your Data",
+        "subtitle": "เราใช้ข้อมูลของคุณเพื่อ",
+        "items": {
+          "verify": "ยืนยันตัวตนและรักษาความปลอดภัยของบัญชี",
+          "display": "แสดงข้อมูลส่วนตัวในโปรไฟล์ของคุณ",
+          "notify": "ส่งการแจ้งเตือนที่สำคัญเกี่ยวกับบัญชี",
+          "improve": "ปรับปรุงประสบการณ์การใช้งาน",
+          "analyze": "วิเคราะห์และปรับปรุงบริการ (ข้อมูลรวม ไม่ระบุตัวตน)"
+        }
+      },
+      "dataProtection": {
+        "title": "การปกป้องข้อมูล",
+        "titleEn": "Data Protection",
+        "subtitle": "มาตรการรักษาความปลอดภัย",
+        "items": {
+          "ssl": "เข้ารหัสข้อมูลระหว่างการส่ง (SSL/TLS)",
+          "hash": "จัดเก็บรหัสผ่านแบบเข้ารหัส (Hash)",
+          "rls": "Row Level Security (RLS) จำกัดการเข้าถึงข้อมูล",
+          "own": "คุณเห็นได้เฉพาะข้อมูลของตัวเองเท่านั้น",
+          "admin": "ผู้ดูแลระบบเข้าถึงได้เฉพาะเมื่อจำเป็น"
+        }
+      },
+      "rights": {
+        "title": "สิทธิ์ของคุณ",
+        "titleEn": "Your Rights",
+        "subtitle": "ตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล (PDPA)",
+        "items": {
+          "access": "สิทธิ์ในการเข้าถึง - ดูข้อมูลที่เราเก็บเกี่ยวกับคุณ",
+          "correct": "สิทธิ์ในการแก้ไข - แก้ไขข้อมูลให้ถูกต้อง",
+          "delete": "สิทธิ์ในการลบ - ขอลบข้อมูลของคุณ",
+          "withdraw": "สิทธิ์ในการเพิกถอนความยินยอม - ถอนความยินยอมได้ทุกเมื่อ",
+          "object": "สิทธิ์ในการคัดค้าน - คัดค้านการประมวลผลข้อมูล",
+          "transfer": "สิทธิ์ในการโอนย้าย - ขอรับข้อมูลในรูปแบบที่อ่านได้"
+        }
+      },
+      "dataSharing": {
+        "title": "การเปิดเผยข้อมูล",
+        "titleEn": "Data Sharing",
+        "subtitle": "เราไม่ขายข้อมูลของคุณ",
+        "items": {
+          "noSell": "ไม่ขายหรือให้เช่าข้อมูลส่วนบุคคลแก่บุคคลที่สาม",
+          "legal": "เปิดเผยเฉพาะเมื่อกฎหมายบังคับ",
+          "services": "ใช้บริการของ Supabase และ Google Gemini สำหรับโครงสร้างพื้นฐาน",
+          "standards": "ผู้ให้บริการเหล่านี้ปฏิบัติตามมาตรฐานความปลอดภัยสากล"
+        }
+      },
+      "dataDeletion": {
+        "title": "การลบข้อมูล",
+        "titleEn": "Data Deletion",
+        "subtitle": "เมื่อคุณต้องการลบบัญชี",
+        "items": {
+          "contact": "ติดต่อเราเพื่อขอลบบัญชีและข้อมูลทั้งหมด",
+          "timeline": "ข้อมูลจะถูกลบภายใน 30 วันหลังยืนยัน",
+          "legal": "ข้อมูลบางส่วนอาจเก็บไว้ตามที่กฎหมายกำหนด"
+        }
+      }
+    },
+    "contact": {
+      "title": "ติดต่อเรา",
+      "titleEn": "Contact Us",
+      "description": "หากคุณมีคำถามเกี่ยวกับนโยบายความเป็นส่วนตัว หรือต้องการใช้สิทธิ์ตาม PDPA สามารถติดต่อเราได้ที่:",
+      "contactTeam": "ติดต่อทีมงาน",
+      "email": "privacy@qzvert.com"
+    },
+    "consent": {
+      "text1": "การสมัครใช้งาน QzVert ถือว่าคุณยินยอมให้เราเก็บรวบรวมและใช้ข้อมูลตามนโยบายนี้",
+      "text2": "คุณสามารถเพิกถอนความยินยอมได้ทุกเมื่อโดยติดต่อเรา"
+    }
   }
 }

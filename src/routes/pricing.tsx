@@ -27,6 +27,7 @@ import {
   CardHeader,
   CardTitle,
 } from '../components/ui/card'
+import { useTranslation } from '../hooks/useTranslation'
 
 export const Route = createFileRoute('/pricing')({ component: PricingPage })
 
@@ -45,6 +46,7 @@ interface FAQItem {
 }
 
 function PricingPage() {
+  const { t } = useTranslation()
   const [openFAQ, setOpenFAQ] = useState<number | null>(null)
 
   const toggleFAQ = (index: number) => {
@@ -55,54 +57,46 @@ function PricingPage() {
     // General
     {
       category: 'General',
-      question: 'Qzvert คืออะไร? ต่างจากแอปเรียนออนไลน์ทั่วไปอย่างไร?',
-      answer:
-        'Qzvert คือ "AI Edutainment Platform" ที่เปลี่ยนเนื้อหาการเรียนรู้แห้งๆ ให้กลายเป็นโลกจำลอง (Contextual Learning) เราไม่ได้ให้คุณแค่อ่านหรือดู แต่เราให้คุณ "สวมบทบาท" และใช้ความรู้จริงเพื่อพิชิตภารกิจ ทำให้การเรียนสนุกเหมือนการเล่นเกม RPG',
+      question: t('pricing.faq.items.whatIsQzvert.question'),
+      answer: t('pricing.faq.items.whatIsQzvert.answer'),
     },
     {
       category: 'General',
-      question: 'ต้องมีทักษะการเขียนโปรแกรมหรือออกแบบเกมไหมถึงจะใช้งานได้?',
-      answer:
-        'ไม่จำเป็นเลยครับ! นั่นคือหัวใจของ Qzvert คุณมีหน้าที่เพียงแค่อัปโหลดเนื้อหา (วิดีโอ, PDF หรือลิงก์บทความ) AI GM ของเราจะทำหน้าที่ "วิศวกรเกม" เนรมิตแผนที่ ด่าน และควิซให้คุณโดยอัตโนมัติในไม่กี่วินาที',
+      question: t('pricing.faq.items.needSkills.question'),
+      answer: t('pricing.faq.items.needSkills.answer'),
     },
     // For Creators
     {
       category: 'For Creators',
-      question: 'ฉันสามารถนำ Qzvert ไปใช้กับคอร์สที่ฉันขายอยู่แล้วได้ไหม?',
-      answer:
-        'ได้แน่นอนครับ! Qzvert ถูกออกแบบมาเพื่อเป็น "Add-on Layer" คุณสามารถส่งลิงก์ Quest ให้ผู้เรียนของคุณเข้าไปเล่นหลังจากดูบทเรียนจบ เพื่อเพิ่มอัตราความเข้าใจ (Retention) และทำให้ผู้เรียนประทับใจจนต้องบอกต่อ',
+      question: t('pricing.faq.items.existingCourse.question'),
+      answer: t('pricing.faq.items.existingCourse.answer'),
     },
     {
       category: 'For Creators',
-      question: 'ข้อมูลเนื้อหาที่ฉันอัปโหลดจะปลอดภัยไหม?',
-      answer:
-        'เราให้ความสำคัญกับความเป็นส่วนตัวและความปลอดภัยของข้อมูลเป็นอันดับหนึ่ง เนื้อหาที่คุณอัปโหลดจะถูกใช้เพื่อสร้างเควสในบัญชีของคุณเท่านั้น และเรามีระบบเข้ารหัสข้อมูลมาตรฐานสากลเพื่อป้องกันการเข้าถึงจากบุคคลภายนอก',
+      question: t('pricing.faq.items.dataSafe.question'),
+      answer: t('pricing.faq.items.dataSafe.answer'),
     },
     // For Learners
     {
       category: 'For Learners',
-      question: 'ถ้าฉันตอบคำถามผิดบ่อยๆ จะเกิดอะไรขึ้น?',
-      answer:
-        'ในโลกของ Qzvert การตอบผิดไม่ใช่ความล้มเหลว แต่คือการเรียนรู้! หากคุณตอบผิด พลังชีวิต (Energy) อาจลดลง หรือเนื้อเรื่องอาจเปลี่ยนไปในทางที่ท้าทายขึ้น แต่อย่าห่วง AI ของเราจะส่ง "Hint" หรือตัวช่วยลับๆ มาให้เพื่อช่วยให้คุณพัฒนาและกลับมาพิชิตบอสได้อีกครั้ง',
+      question: t('pricing.faq.items.wrongAnswers.question'),
+      answer: t('pricing.faq.items.wrongAnswers.answer'),
     },
     {
       category: 'For Learners',
-      question: 'แต้ม XP และไอเทมที่ได้ มีไว้ทำอะไร?',
-      answer:
-        'แต้มเหล่านี้ใช้เพื่อแสดงความก้าวหน้า (Progression) ของคุณ คุณสามารถนำไปอัปเกรด Avatar, ปลดล็อกด่านลับ หรือแลกรับสิทธิพิเศษจาก Creator (เช่น ส่วนลดคอร์สถัดไป หรือเอกสารลับ) ซึ่งจะช่วยสร้างความภูมิใจในทุกย่างก้าวของการเรียนรู้',
+      question: t('pricing.faq.items.xpItems.question'),
+      answer: t('pricing.faq.items.xpItems.answer'),
     },
     // Technology & Pricing
     {
       category: 'Technology & Pricing',
-      question: 'AI ที่ใช้ประมวลผลมีความแม่นยำแค่ไหน?',
-      answer:
-        'เราใช้ขุมพลังจาก Gemini 2.5 Flash ซึ่งเป็น AI รุ่นล่าสุดที่เน้นความรวดเร็วและความแม่นยำสูง อย่างไรก็ตาม ระบบจะมีเครื่องมือให้ Creator สามารถ "ตรวจสอบและปรับแต่ง" (Review & Edit) เนื้อหาที่ AI สร้างขึ้นก่อนเผยแพร่จริงได้เสมอ',
+      question: t('pricing.faq.items.aiAccuracy.question'),
+      answer: t('pricing.faq.items.aiAccuracy.answer'),
     },
     {
       category: 'Technology & Pricing',
-      question: 'หากสมัครสมาชิกรายเดือน (Pro) แล้วสามารถยกเลิกได้เมื่อไหร่?',
-      answer:
-        'คุณมีอิสระเต็มที่ครับ! คุณสามารถยกเลิกการสมัครสมาชิกได้ทุกเมื่อผ่านหน้า Dashboard โดยจะไม่มีค่าธรรมเนียมแอบแฝง และเควสที่คุณสร้างไว้แล้วจะยังคงถูกเก็บรักษาไว้ในระบบ (ตามเงื่อนไขของแพ็กเกจ)',
+      question: t('pricing.faq.items.cancelSubscription.question'),
+      answer: t('pricing.faq.items.cancelSubscription.answer'),
     },
   ]
 
@@ -111,10 +105,10 @@ function PricingPage() {
   const plans = [
     {
       name: 'Explorer',
-      nameThai: 'นักสำรวจ',
-      description: 'เรียนได้ไม่จำกัด ทดลองสร้างด้วย AI',
-      price: 'Free',
-      priceSuffix: 'Forever',
+      nameThai: t('pricing.plans.explorer.nameThai'),
+      description: t('pricing.plans.explorer.description'),
+      price: t('pricing.plans.free'),
+      priceSuffix: t('pricing.plans.forever'),
       icon: GraduationCap,
       color: 'from-emerald-500 to-teal-500',
       borderColor: 'border-emerald-500/30',
@@ -123,10 +117,10 @@ function PricingPage() {
     },
     {
       name: 'Hero',
-      nameThai: 'ฮีโร่',
-      description: 'Creator และติวเตอร์ที่เริ่มต้น',
+      nameThai: t('pricing.plans.hero.nameThai'),
+      description: t('pricing.plans.hero.description'),
       price: '฿290',
-      priceSuffix: '/ month',
+      priceSuffix: t('pricing.plans.perMonth'),
       icon: Rocket,
       color: 'from-primary to-cyan-500',
       borderColor: 'border-primary/50',
@@ -135,10 +129,10 @@ function PricingPage() {
     },
     {
       name: 'Legend',
-      nameThai: 'ตำนาน',
-      description: 'Creator มืออาชีพที่ต้องการความยืดหยุ่น',
+      nameThai: t('pricing.plans.legend.nameThai'),
+      description: t('pricing.plans.legend.description'),
       price: '฿790',
-      priceSuffix: '/ month',
+      priceSuffix: t('pricing.plans.perMonth'),
       icon: Crown,
       color: 'from-amber-500 to-orange-500',
       borderColor: 'border-amber-500/30',
@@ -147,10 +141,10 @@ function PricingPage() {
     },
     {
       name: 'Enterprise',
-      nameThai: 'องค์กร',
-      description: 'โรงเรียน, มหาวิทยาลัย และองค์กร',
-      price: 'Contact',
-      priceSuffix: 'Us',
+      nameThai: t('pricing.plans.enterprise.nameThai'),
+      description: t('pricing.plans.enterprise.description'),
+      price: t('pricing.plans.contactUs'),
+      priceSuffix: '',
       icon: Building2,
       color: 'from-purple-500 to-pink-500',
       borderColor: 'border-purple-500/30',
@@ -161,88 +155,88 @@ function PricingPage() {
 
   const features: Array<PlanFeature> = [
     {
-      name: 'เรียนฟรี',
-      explorer: 'ไม่จำกัด',
-      hero: 'ไม่จำกัด',
-      legend: 'ไม่จำกัด',
-      enterprise: 'ไม่จำกัด',
+      name: t('pricing.features.freeLearn'),
+      explorer: t('pricing.features.unlimited'),
+      hero: t('pricing.features.unlimited'),
+      legend: t('pricing.features.unlimited'),
+      enterprise: t('pricing.features.unlimited'),
     },
     {
-      name: 'สร้าง Activity เอง',
-      explorer: 'ฟรีไม่จำกัด',
-      hero: 'ฟรีไม่จำกัด',
-      legend: 'ฟรีไม่จำกัด',
-      enterprise: 'ฟรีไม่จำกัด',
+      name: t('pricing.features.createActivity'),
+      explorer: t('pricing.features.freeUnlimited'),
+      hero: t('pricing.features.freeUnlimited'),
+      legend: t('pricing.features.freeUnlimited'),
+      enterprise: t('pricing.features.freeUnlimited'),
     },
     {
-      name: 'ติดตามความก้าวหน้า',
-      explorer: 'ดูสถิติการเรียนรู้ของตัวเอง',
-      hero: 'ดูสถิติการเรียนรู้ของตัวเอง',
-      legend: 'ดูสถิติการเรียนรู้ของตัวเอง',
-      enterprise: 'ดูสถิติการเรียนรู้ของตัวเอง',
+      name: t('pricing.features.trackProgress'),
+      explorer: t('pricing.features.viewOwnStats'),
+      hero: t('pricing.features.viewOwnStats'),
+      legend: t('pricing.features.viewOwnStats'),
+      enterprise: t('pricing.features.viewOwnStats'),
     },
     {
-      name: 'AI Credits',
-      explorer: '3 credits / เดือน',
-      hero: '30 credits / เดือน',
-      legend: '100 credits / เดือน',
-      enterprise: 'ไม่จำกัด',
+      name: t('pricing.features.aiCredits'),
+      explorer: `3 ${t('pricing.features.creditsPerMonth')}`,
+      hero: `30 ${t('pricing.features.creditsPerMonth')}`,
+      legend: `100 ${t('pricing.features.creditsPerMonth')}`,
+      enterprise: t('pricing.features.unlimited'),
     },
     {
-      name: 'Storage',
+      name: t('pricing.features.storage'),
       explorer: '25 MB',
       hero: '1 GB',
       legend: '5 GB',
-      enterprise: 'ไม่จำกัด',
+      enterprise: t('pricing.features.unlimited'),
     },
     {
-      name: 'Content Source',
-      explorer: 'เอกสาร 5 หน้า / วิดีโอ 5 นาที',
-      hero: 'ไม่จำกัดความยาว',
-      legend: 'ไม่จำกัดความยาว',
-      enterprise: 'ไม่จำกัดความยาว',
+      name: t('pricing.features.contentSource'),
+      explorer: t('pricing.features.docPages'),
+      hero: t('pricing.features.unlimitedLength'),
+      legend: t('pricing.features.unlimitedLength'),
+      enterprise: t('pricing.features.unlimitedLength'),
     },
     {
-      name: 'Custom Branding',
+      name: t('pricing.features.customBranding'),
       explorer: false,
       hero: false,
-      legend: 'Custom Header & Footer',
-      enterprise: 'Full White-label',
+      legend: t('pricing.features.customHeaderFooter'),
+      enterprise: t('pricing.features.fullWhitelabel'),
     },
     {
-      name: 'AI Roleplay Agent',
-      explorer: 'พื้นฐาน (Simple NPC)',
-      hero: 'Advanced (Emotional AI)',
-      legend: 'Advanced (Emotional AI)',
-      enterprise: 'Fully Custom Scenarios',
+      name: t('pricing.features.aiRoleplay'),
+      explorer: t('pricing.features.basicNpc'),
+      hero: t('pricing.features.advancedAi'),
+      legend: t('pricing.features.advancedAi'),
+      enterprise: t('pricing.features.customScenarios'),
     },
     {
-      name: 'Analytics',
+      name: t('pricing.features.analytics'),
       explorer: false,
-      hero: 'Dashboard พื้นฐาน',
-      legend: 'Dashboard วิเคราะห์ผู้เรียนรายบุคคล',
-      enterprise: 'Deep Insights & API Export',
+      hero: t('pricing.features.basicDashboard'),
+      legend: t('pricing.features.individualAnalytics'),
+      enterprise: t('pricing.features.deepInsights'),
     },
     {
-      name: 'Gamification',
-      explorer: 'Level & XP พื้นฐาน',
-      hero: 'สร้างไอเทมและของรางวัลเองได้',
-      legend: 'สร้างไอเทมและของรางวัลเองได้',
-      enterprise: 'White-label & Guild System',
+      name: t('pricing.features.gamification'),
+      explorer: t('pricing.features.basicXp'),
+      hero: t('pricing.features.customItems'),
+      legend: t('pricing.features.customItems'),
+      enterprise: t('pricing.features.whitelabelGuild'),
     },
     {
-      name: 'Support',
-      explorer: 'Community Support',
-      hero: 'Email Support',
-      legend: 'Priority Email Support',
-      enterprise: 'Dedicated Success Manager',
+      name: t('pricing.features.support'),
+      explorer: t('pricing.features.communitySupport'),
+      hero: t('pricing.features.emailSupport'),
+      legend: t('pricing.features.prioritySupport'),
+      enterprise: t('pricing.features.dedicatedManager'),
     },
     {
-      name: 'Self-hosted Server',
+      name: t('pricing.features.selfHosted'),
       explorer: false,
       hero: false,
       legend: false,
-      enterprise: 'ติดตั้งบน Server ของคุณเอง',
+      enterprise: t('pricing.features.installOwn'),
     },
   ]
 
@@ -275,24 +269,23 @@ function PricingPage() {
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm font-medium mb-6">
                 <Sparkles className="w-4 h-4" />
-                Pricing Plans
+                {t('pricing.hero.badge')}
               </div>
 
               <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight">
-                <span className="text-foreground">Choose Your Path to</span>
+                <span className="text-foreground">{t('pricing.hero.title1')}</span>
                 <br />
-                <span className="bg-gradient-to-r from-primary via-pink-500 to-orange-400 bg-clip-text text-transparent">
-                  Mastery
+                <span className="bg-linear-to-r from-primary via-pink-500 to-orange-400 bg-clip-text text-transparent">
+                  {t('pricing.hero.title2')}
                 </span>
               </h1>
 
               <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-4">
-                ไม่ว่าคุณจะเป็นนักศึกษาที่ต้องการจำสอบ หรือ Creator
-                ที่ต้องการสร้าง Academy ระดับโลก
+                {t('pricing.hero.subtitle')}
               </p>
               <p className="text-base text-muted-foreground/80 max-w-2xl mx-auto">
-                เรามีเครื่องมือที่พร้อมจะพาคุณ
-                <span className="text-primary font-semibold">อัปเลเวล</span>
+                {t('pricing.hero.subtitleEnd')}
+                <span className="text-primary font-semibold"> {t('pricing.hero.subtitleHighlight')}</span>
               </p>
             </motion.div>
           </div>
@@ -312,9 +305,9 @@ function PricingPage() {
                 >
                   {plan.popular && (
                     <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
-                      <div className="px-4 py-1.5 rounded-full bg-gradient-to-r from-primary to-cyan-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg">
+                      <div className="px-4 py-1.5 rounded-full bg-linear-to-r from-primary to-cyan-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg">
                         <Star className="w-4 h-4" />
-                        Most Popular
+                        {t('pricing.plans.mostPopular')}
                       </div>
                     </div>
                   )}
@@ -416,7 +409,7 @@ function PricingPage() {
                         >
                           <Link to="/contact">
                             <Building2 className="w-4 h-4" />
-                            Contact Us
+                            {t('pricing.plans.contactUs')}
                           </Link>
                         </Button>
                       ) : plan.name === 'Legend' ? (
@@ -427,14 +420,14 @@ function PricingPage() {
                         >
                           <Link to="/" hash="create">
                             <Crown className="w-4 h-4" />
-                            อัปเกรดเป็น Legend
+                            {t('pricing.plans.upgradeLegend')}
                           </Link>
                         </Button>
                       ) : (
                         <Button
                           className={`w-full ${
                             plan.popular
-                              ? `bg-gradient-to-r ${plan.color} hover:opacity-90`
+                              ? `bg-linear-to-r ${plan.color} hover:opacity-90`
                               : ''
                           }`}
                           variant={plan.popular ? 'default' : 'outline'}
@@ -444,8 +437,8 @@ function PricingPage() {
                           <Link to="/" hash="create">
                             <Zap className="w-4 h-4" />
                             {plan.name === 'Explorer'
-                              ? 'เริ่มต้นฟรี'
-                              : 'เริ่มต้นใช้งาน'}
+                              ? t('pricing.plans.startFree')
+                              : t('pricing.plans.getStarted')}
                           </Link>
                         </Button>
                       )}
@@ -467,10 +460,10 @@ function PricingPage() {
               className="text-center mb-12"
             >
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                เปรียบเทียบ<span className="text-primary">ฟีเจอร์</span>ทั้งหมด
+                {t('pricing.comparison.title')}<span className="text-primary">{t('pricing.comparison.titleHighlight')}</span>
               </h2>
               <p className="text-muted-foreground">
-                ดูรายละเอียดแต่ละแพ็กเกจเพื่อเลือกแผนที่เหมาะกับคุณ
+                {t('pricing.comparison.subtitle')}
               </p>
             </motion.div>
 
@@ -566,30 +559,29 @@ function PricingPage() {
               <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
 
               <div className="relative text-center">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-500 text-sm font-medium mb-4">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-linear-to-r from-amber-500/20 to-orange-500/20 text-amber-500 text-sm font-medium mb-4">
                   <Shield className="w-4 h-4" />
-                  Early Bird Exclusive
+                  {t('pricing.earlyBird.badge')}
                 </div>
 
                 <h3 className="text-2xl md:text-3xl font-bold mb-4">
-                  สมัครวันนี้รับ Exclusive{' '}
-                  <span className="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
-                    "Early Bird" Badge
+                  {t('pricing.earlyBird.title')}{' '}
+                  <span className="bg-linear-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
+                    {t('pricing.earlyBird.titleHighlight')}
                   </span>
                 </h3>
                 <p className="text-muted-foreground mb-6">
-                  Badge พิเศษสำหรับโปรไฟล์ของคุณ
-                  แสดงให้ทุกคนเห็นว่าคุณเป็นผู้บุกเบิกคนแรกๆ
+                  {t('pricing.earlyBird.subtitle')}
                 </p>
 
                 <Button
                   size="lg"
-                  className="text-lg px-8 py-6 bg-gradient-to-r from-primary to-cyan-500 hover:from-primary/90 hover:to-cyan-500/90"
+                  className="text-lg px-8 py-6 bg-linear-to-r from-primary to-cyan-500 hover:from-primary/90 hover:to-cyan-500/90"
                   asChild
                 >
                   <Link to="/" hash="create">
                     <Wand2 className="w-5 h-5" />
-                    เริ่มต้นสร้างเควสแรกของคุณเลย
+                    {t('pricing.earlyBird.cta')}
                   </Link>
                 </Button>
               </div>
@@ -608,13 +600,13 @@ function PricingPage() {
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm font-medium mb-4">
                 <HelpCircle className="w-4 h-4" />
-                FAQ
+                {t('pricing.faq.badge')}
               </div>
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                คำถามที่<span className="text-primary">พบบ่อย</span>
+                {t('pricing.faq.title')}<span className="text-primary">{t('pricing.faq.titleHighlight')}</span>
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                หาคำตอบสำหรับคำถามยอดนิยมเกี่ยวกับ Qzvert
+                {t('pricing.faq.subtitle')}
               </p>
             </motion.div>
 
@@ -640,10 +632,10 @@ function PricingPage() {
                     {category === 'Technology & Pricing' && (
                       <Zap className="w-5 h-5" />
                     )}
-                    {category === 'General' && 'ข้อมูลทั่วไป'}
-                    {category === 'For Creators' && 'สำหรับผู้สร้างคอร์สและครู'}
-                    {category === 'For Learners' && 'สำหรับผู้เรียน'}
-                    {category === 'Technology & Pricing' && 'เทคนิคและราคา'}
+                    {category === 'General' && t('pricing.faq.categories.general')}
+                    {category === 'For Creators' && t('pricing.faq.categories.forCreators')}
+                    {category === 'For Learners' && t('pricing.faq.categories.forLearners')}
+                    {category === 'Technology & Pricing' && t('pricing.faq.categories.techPricing')}
                   </h3>
 
                   <div className="space-y-3">
@@ -706,21 +698,21 @@ function PricingPage() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="mt-12 p-6 rounded-2xl bg-gradient-to-r from-primary/10 to-cyan-500/10 border border-primary/20 text-center"
+              className="mt-12 p-6 rounded-2xl bg-linear-to-r from-primary/10 to-cyan-500/10 border border-primary/20 text-center"
             >
               <MessageCircle className="w-10 h-10 text-primary mx-auto mb-4" />
-              <h3 className="text-xl font-bold mb-2">ยังสงสัย?</h3>
+              <h3 className="text-xl font-bold mb-2">{t('pricing.faq.stillQuestions.title')}</h3>
               <p className="text-muted-foreground mb-4">
-                คุยกับทีมงานของเราได้เลย เรายินดีช่วยเหลือคุณทุกคำถาม
+                {t('pricing.faq.stillQuestions.subtitle')}
               </p>
               <Button
-                className="bg-gradient-to-r from-primary to-cyan-500 hover:from-primary/90 hover:to-cyan-500/90"
+                className="bg-linear-to-r from-primary to-cyan-500 hover:from-primary/90 hover:to-cyan-500/90"
                 size="lg"
                 asChild
               >
                 <Link to="/contact">
                   <MessageCircle className="w-4 h-4" />
-                  คุยกับทีมงาน
+                  {t('pricing.faq.stillQuestions.cta')}
                 </Link>
               </Button>
             </motion.div>
@@ -728,7 +720,7 @@ function PricingPage() {
         </section>
 
         {/* Closing Hook */}
-        <section className="py-20 px-6 bg-gradient-to-b from-muted/30 to-background">
+        <section className="py-20 px-6 bg-linear-to-b from-muted/30 to-background">
           <div className="max-w-4xl mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -737,26 +729,26 @@ function PricingPage() {
             >
               <div className="text-5xl mb-6">💎</div>
               <blockquote className="text-xl md:text-2xl text-foreground font-medium leading-relaxed mb-8">
-                "เพราะทุกนาทีของความรู้มีค่า...
+                "{t('pricing.closing.quote1')}
                 <br />
-                อย่าปล่อยให้มันถูกลืมไปในกองกระดาษ
+                {t('pricing.closing.quote2')}
                 <br />
-                <span className="bg-gradient-to-r from-primary via-pink-500 to-orange-400 bg-clip-text text-transparent">
-                  เริ่มต้นใช้ Qzvert วันนี้
+                <span className="bg-linear-to-r from-primary via-pink-500 to-orange-400 bg-clip-text text-transparent">
+                  {t('pricing.closing.quote3')}
                 </span>
                 <br />
-                เพื่อเปลี่ยนการเรียนรู้ให้สนุกอย่างที่ไม่เคยมีมาก่อน"
+                {t('pricing.closing.quote4')}"
               </blockquote>
 
               <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <Button
                   size="lg"
-                  className="text-lg px-8 py-6 bg-gradient-to-r from-primary to-cyan-500 hover:from-primary/90 hover:to-cyan-500/90"
+                  className="text-lg px-8 py-6 bg-linear-to-r from-primary to-cyan-500 hover:from-primary/90 hover:to-cyan-500/90"
                   asChild
                 >
                   <Link to="/" hash="create">
                     <Sparkles className="w-5 h-5" />
-                    เริ่มต้นฟรีวันนี้
+                    {t('pricing.closing.cta')}
                   </Link>
                 </Button>
               </div>

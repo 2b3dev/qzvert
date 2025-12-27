@@ -315,5 +315,413 @@
       "loginButton": "Login / Sign Up",
       "freeStart": "Start for free, no cost"
     }
+  },
+  "pricing": {
+    "hero": {
+      "badge": "Pricing Plans",
+      "title1": "Choose Your Path to",
+      "title2": "Mastery",
+      "subtitle": "Whether you're a student preparing for exams or a Creator building a world-class Academy",
+      "subtitleHighlight": "level up",
+      "subtitleEnd": "We have the tools ready to help you"
+    },
+    "plans": {
+      "explorer": {
+        "name": "Explorer",
+        "nameThai": "Explorer",
+        "description": "Unlimited learning, try AI creation"
+      },
+      "hero": {
+        "name": "Hero",
+        "nameThai": "Hero",
+        "description": "For starting Creators and tutors"
+      },
+      "legend": {
+        "name": "Legend",
+        "nameThai": "Legend",
+        "description": "Professional Creators who need flexibility"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "nameThai": "Enterprise",
+        "description": "Schools, universities, and organizations"
+      },
+      "free": "Free",
+      "forever": "Forever",
+      "perMonth": "/ month",
+      "contactUs": "Contact Us",
+      "mostPopular": "Most Popular",
+      "startFree": "Start Free",
+      "getStarted": "Get Started",
+      "upgradeLegend": "Upgrade to Legend"
+    },
+    "features": {
+      "freeLearn": "Free Learning",
+      "unlimited": "Unlimited",
+      "createActivity": "Create Activities",
+      "freeUnlimited": "Free Unlimited",
+      "trackProgress": "Track Progress",
+      "viewOwnStats": "View your own learning stats",
+      "aiCredits": "AI Credits",
+      "creditsPerMonth": "credits / month",
+      "storage": "Storage",
+      "contentSource": "Content Source",
+      "docPages": "5-page doc / 5-min video",
+      "unlimitedLength": "Unlimited length",
+      "customBranding": "Custom Branding",
+      "customHeaderFooter": "Custom Header & Footer",
+      "fullWhitelabel": "Full White-label",
+      "aiRoleplay": "AI Roleplay Agent",
+      "basicNpc": "Basic (Simple NPC)",
+      "advancedAi": "Advanced (Emotional AI)",
+      "customScenarios": "Fully Custom Scenarios",
+      "analytics": "Analytics",
+      "basicDashboard": "Basic Dashboard",
+      "individualAnalytics": "Individual Learner Analytics",
+      "deepInsights": "Deep Insights & API Export",
+      "gamification": "Gamification",
+      "basicXp": "Basic Level & XP",
+      "customItems": "Create custom items and rewards",
+      "whitelabelGuild": "White-label & Guild System",
+      "support": "Support",
+      "communitySupport": "Community Support",
+      "emailSupport": "Email Support",
+      "prioritySupport": "Priority Email Support",
+      "dedicatedManager": "Dedicated Success Manager",
+      "selfHosted": "Self-hosted Server",
+      "installOwn": "Install on your own server"
+    },
+    "comparison": {
+      "title": "Compare All",
+      "titleHighlight": "Features",
+      "subtitle": "View details of each package to choose the right plan for you"
+    },
+    "earlyBird": {
+      "badge": "Early Bird Exclusive",
+      "title": "Sign up today and get an Exclusive",
+      "titleHighlight": "\"Early Bird\" Badge",
+      "subtitle": "A special badge for your profile showing everyone you're one of the first pioneers",
+      "cta": "Start creating your first quest now"
+    },
+    "faq": {
+      "badge": "FAQ",
+      "title": "Frequently Asked",
+      "titleHighlight": "Questions",
+      "subtitle": "Find answers to popular questions about Qzvert",
+      "categories": {
+        "general": "General Information",
+        "forCreators": "For Course Creators & Teachers",
+        "forLearners": "For Learners",
+        "techPricing": "Technology & Pricing"
+      },
+      "items": {
+        "whatIsQzvert": {
+          "question": "What is Qzvert? How is it different from regular online learning apps?",
+          "answer": "Qzvert is an \"AI Edutainment Platform\" that transforms dry learning content into simulated worlds (Contextual Learning). We don't just let you read or watch - we let you \"play a role\" and use real knowledge to conquer missions, making learning as fun as playing an RPG game."
+        },
+        "needSkills": {
+          "question": "Do I need programming or game design skills to use it?",
+          "answer": "Not at all! That's the heart of Qzvert. You just need to upload content (video, PDF, or article link). Our AI GM will act as a \"game engineer\" to create maps, stages, and quizzes for you automatically in seconds."
+        },
+        "existingCourse": {
+          "question": "Can I use Qzvert with courses I'm already selling?",
+          "answer": "Absolutely! Qzvert is designed to be an \"Add-on Layer\". You can share Quest links to your learners after they finish watching lessons to increase retention and impress them enough to spread the word."
+        },
+        "dataSafe": {
+          "question": "Is my uploaded content data safe?",
+          "answer": "We prioritize privacy and data security as number one. Content you upload will only be used to create quests in your account, and we have international standard encryption to prevent unauthorized access."
+        },
+        "wrongAnswers": {
+          "question": "What happens if I answer questions wrong frequently?",
+          "answer": "In Qzvert's world, wrong answers aren't failure - they're learning! If you answer wrong, your Energy might decrease or the story might become more challenging. But don't worry, our AI will send \"Hints\" or secret helpers to help you improve and conquer the boss again."
+        },
+        "xpItems": {
+          "question": "What are XP points and items for?",
+          "answer": "These points show your progression. You can use them to upgrade your Avatar, unlock secret stages, or redeem special privileges from Creators (like discounts on next courses or secret documents), creating pride in every step of learning."
+        },
+        "aiAccuracy": {
+          "question": "How accurate is the AI processing?",
+          "answer": "We use Gemini 2.5 Flash, the latest AI focused on speed and high accuracy. However, the system always provides tools for Creators to \"Review & Edit\" AI-generated content before publishing."
+        },
+        "cancelSubscription": {
+          "question": "If I subscribe monthly (Pro), when can I cancel?",
+          "answer": "You have complete freedom! You can cancel your subscription anytime through the Dashboard with no hidden fees. Quests you've created will still be stored in the system (according to package terms)."
+        }
+      },
+      "stillQuestions": {
+        "title": "Still have questions?",
+        "subtitle": "Talk to our team. We're happy to help with any question.",
+        "cta": "Talk to the Team"
+      }
+    },
+    "closing": {
+      "quote1": "Because every minute of knowledge is valuable...",
+      "quote2": "Don't let it be forgotten in a pile of papers",
+      "quote3": "Start using Qzvert today",
+      "quote4": "to make learning more fun than ever before",
+      "cta": "Start Free Today"
+    }
+  },
+  "about": {
+    "hero": {
+      "badge": "About QzVert",
+      "title1": "We Don't Just Teach.",
+      "title2": "We Build Worlds.",
+      "subtitle1": "At Qzvert, we believe",
+      "subtitleHighlight": "\"learning\"",
+      "subtitle2": "shouldn't be a burden. It should be",
+      "subtitleHighlight2": "the most exciting adventure",
+      "subtitleEnd": "in human life."
+    },
+    "mission": {
+      "text1": "In a world flooded with information until we're drowning, yet understanding keeps decreasing, we created",
+      "highlight1": "AI Context Engine",
+      "text2": "to revive stagnant content into",
+      "highlight2": "interactive worlds"
+    },
+    "values": {
+      "badge": "Our Core Values",
+      "title": "Our 3 Pillars",
+      "subtitle": "The principles that drive everything we create",
+      "context": {
+        "title": "Context Over Content",
+        "titleThai": "Context is King",
+        "description": "Because knowledge without real-world situations is dead knowledge. We're committed to transforming every line of text and every minute of video into simulated scenarios where learners must \"use\" real knowledge to conquer missions."
+      },
+      "fun": {
+        "title": "Frictionless Fun",
+        "titleThai": "Fun Without Friction",
+        "description": "We are engineers of fun. Our AI is designed to do the heavy lifting behind the scenes, transforming complex Gamification processes into the easiest experience for creators and the most fun for learners."
+      },
+      "potential": {
+        "title": "Empowering Human Potential",
+        "titleThai": "Unlock Limitless Potential",
+        "description": "We're on a mission to eliminate \"boredom\" - the biggest obstacle to self-development. When humans enjoy learning, hidden potential is unlocked without limit."
+      }
+    },
+    "stats": {
+      "title": "Numbers That",
+      "titleHighlight": "Prove",
+      "titleEnd": "Success",
+      "questsCreated": "Quests Created",
+      "learnersWorldwide": "Learners Worldwide",
+      "satisfactionRate": "Satisfaction Rate",
+      "retentionIncrease": "Retention Increase"
+    },
+    "drives": {
+      "title": "What",
+      "titleHighlight": "Drives",
+      "titleEnd": "Us",
+      "subtitle": "Every day we wake up with the same goal",
+      "vision": {
+        "title": "Vision",
+        "description": "We believe learning should be an adventure"
+      },
+      "technology": {
+        "title": "Technology",
+        "description": "AI that understands context and creates meaningful experiences"
+      },
+      "design": {
+        "title": "Design",
+        "description": "Every detail is designed to create fun"
+      }
+    },
+    "timeline": {
+      "title": "Our",
+      "titleHighlight": "Journey",
+      "subtitle": "From idea to transforming education",
+      "start": {
+        "year": "2024",
+        "title": "The Beginning",
+        "description": "The idea was born from the belief that learning shouldn't be boring"
+      },
+      "aiEngine": {
+        "year": "2024",
+        "title": "AI Engine",
+        "description": "Successfully developed the first AI Context Engine"
+      },
+      "beta": {
+        "year": "2025",
+        "title": "Beta Launch",
+        "description": "Opened for testing and received excellent feedback"
+      },
+      "future": {
+        "year": "Future",
+        "title": "Global Expansion",
+        "description": "Heading toward becoming a world-class learning platform"
+      }
+    },
+    "cta": {
+      "badge": "Join the Adventure",
+      "title1": "Ready to be part of",
+      "title2": "the learning revolution?",
+      "subtitle": "Whether you're a learner who wants fun or a creator who wants to innovate",
+      "subtitleEnd": "QzVert is ready to take you to a learning world like no other",
+      "exploreQuests": "Explore Quests",
+      "createYourQuest": "Create Your Quest"
+    },
+    "finalQuote": {
+      "text": "We don't just build a platform. We build a new world where everyone wants to learn.",
+      "author": "Team QzVert"
+    }
+  },
+  "contact": {
+    "hero": {
+      "badge": "Contact Us",
+      "title1": "Let's Build the Future of",
+      "title2": "Learning Together",
+      "subtitle1": "Have questions, suggestions, or want to share your awesome quest ideas?",
+      "subtitle2": "Our",
+      "subtitleHighlight": "Game Master",
+      "subtitleEnd": "team is always ready to listen and help you."
+    },
+    "directSupport": {
+      "badge": "Direct Support",
+      "title": "Contact Us",
+      "subtitle": "For usage issues, bug reports, or Enterprise package inquiries, you can email us directly",
+      "email": "support@qzvert.com",
+      "responseTime": "We'll respond within 24 hours on business days"
+    },
+    "social": {
+      "badge": "Join the Community",
+      "title": "Follow Us on",
+      "titleHighlight": "Social",
+      "subtitle": "Join the evolution of learning. Get updates on new features, quest creation ideas, and chat with like-minded friends.",
+      "youtube": {
+        "handle": "@Qzvert_Official",
+        "description": "Watch examples of turning dry courses into games, and AI tutorials"
+      },
+      "facebook": {
+        "handle": "Qzvert - AI Edutainment Platform",
+        "description": "News updates, special events, and shared experiences from users worldwide"
+      },
+      "tiktok": {
+        "handle": "@Qzvert.Learning",
+        "description": "Short clips with great ideas, making hard things fun in 60 seconds"
+      },
+      "twitter": {
+        "handle": "@Qzvert",
+        "description": "Chat with us in real-time and follow the latest AI EdTech trends"
+      }
+    },
+    "location": {
+      "title": "Location",
+      "badge": "Cloud-Based Team",
+      "company": "Qzvert Co., Ltd.",
+      "tagline": "Globally Minded | Founded in Thailand",
+      "tags": {
+        "remoteFirst": "Remote First",
+        "globalTeam": "Global Team",
+        "thaiStartup": "Thai Startup"
+      }
+    },
+    "quickLinks": {
+      "title": "Don't want to wait?",
+      "faq": "Find answers in FAQ",
+      "createQuest": "Start creating your first quest now"
+    },
+    "finalQuote": {
+      "text1": "Every question is the beginning of a new adventure.",
+      "text2": "We're ready to stand by you at every stage.",
+      "author": "Team Qzvert"
+    }
+  },
+  "privacy": {
+    "hero": {
+      "badge": "Privacy Policy",
+      "backToHome": "Back to Home",
+      "title1": "Privacy ",
+      "title2": "Policy",
+      "subtitle1": "QzVert values your privacy.",
+      "subtitle2": "We comply with the Personal Data Protection Act B.E. 2562 (PDPA).",
+      "lastUpdated": "Last updated: December 24, 2024"
+    },
+    "sections": {
+      "dataCollect": {
+        "title": "Data We Collect",
+        "titleEn": "Data We Collect",
+        "accountData": "Account Data",
+        "items": {
+          "email": "Email - Used for login and communication",
+          "displayName": "Display Name - Shown in the system",
+          "avatar": "Profile picture (if any) - From Google or self-uploaded"
+        },
+        "usageData": "Usage Data",
+        "usageItems": {
+          "quests": "Quests and quizzes created",
+          "scores": "Scores and learning progress",
+          "history": "Gameplay history"
+        }
+      },
+      "dataUse": {
+        "title": "How We Use Your Data",
+        "titleEn": "How We Use Your Data",
+        "subtitle": "We use your data to",
+        "items": {
+          "verify": "Verify identity and maintain account security",
+          "display": "Display personal information in your profile",
+          "notify": "Send important account notifications",
+          "improve": "Improve user experience",
+          "analyze": "Analyze and improve services (aggregated, anonymized)"
+        }
+      },
+      "dataProtection": {
+        "title": "Data Protection",
+        "titleEn": "Data Protection",
+        "subtitle": "Security Measures",
+        "items": {
+          "ssl": "Data encryption in transit (SSL/TLS)",
+          "hash": "Password storage with encryption (Hash)",
+          "rls": "Row Level Security (RLS) restricts data access",
+          "own": "You can only see your own data",
+          "admin": "Administrators access only when necessary"
+        }
+      },
+      "rights": {
+        "title": "Your Rights",
+        "titleEn": "Your Rights",
+        "subtitle": "Under the Personal Data Protection Act (PDPA)",
+        "items": {
+          "access": "Right to access - View data we collect about you",
+          "correct": "Right to correct - Correct your data",
+          "delete": "Right to delete - Request deletion of your data",
+          "withdraw": "Right to withdraw consent - Withdraw consent anytime",
+          "object": "Right to object - Object to data processing",
+          "transfer": "Right to portability - Request data in readable format"
+        }
+      },
+      "dataSharing": {
+        "title": "Data Sharing",
+        "titleEn": "Data Sharing",
+        "subtitle": "We don't sell your data",
+        "items": {
+          "noSell": "We don't sell or rent personal data to third parties",
+          "legal": "Disclosed only when required by law",
+          "services": "Use services from Supabase and Google Gemini for infrastructure",
+          "standards": "These providers comply with international security standards"
+        }
+      },
+      "dataDeletion": {
+        "title": "Data Deletion",
+        "titleEn": "Data Deletion",
+        "subtitle": "When you want to delete your account",
+        "items": {
+          "contact": "Contact us to request account and data deletion",
+          "timeline": "Data will be deleted within 30 days after confirmation",
+          "legal": "Some data may be retained as required by law"
+        }
+      }
+    },
+    "contact": {
+      "title": "Contact Us",
+      "titleEn": "Contact Us",
+      "description": "If you have questions about the privacy policy or want to exercise your PDPA rights, contact us at:",
+      "contactTeam": "Contact Team",
+      "email": "privacy@qzvert.com"
+    },
+    "consent": {
+      "text1": "By signing up for QzVert, you consent to us collecting and using data according to this policy.",
+      "text2": "You can withdraw consent anytime by contacting us."
+    }
   }
 }
