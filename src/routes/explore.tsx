@@ -4,23 +4,20 @@ import {
   ArrowDownAZ,
   ArrowRight,
   ArrowUpDown,
-  Bookmark,
   Check,
   ChevronDown,
   Clock,
   Compass,
-  Flag,
   Flame,
   Loader2,
-  MoreVertical,
   Search,
-  Share2,
   Users,
   X,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { DefaultLayout } from '../components/layouts/DefaultLayout'
+import { ActivityOptionsDropdown } from '../components/ui/ActivityOptionsDropdown'
 import { Button } from '../components/ui/button'
 import {
   Card,
@@ -30,13 +27,13 @@ import {
   CardTitle,
 } from '../components/ui/card'
 import { Input } from '../components/ui/input'
+import { ReportModal } from '../components/ui/ReportModal'
+import { SaveToCollectionModal } from '../components/ui/SaveToCollectionModal'
 import { cn } from '../lib/utils'
 import { getActivityById, getPublishedActivities } from '../server/activities'
-import { useActivityStore } from '../stores/activity-store'
 import { unsaveActivity } from '../server/saved'
+import { useActivityStore } from '../stores/activity-store'
 import { useAuthStore } from '../stores/auth-store'
-import { SaveToCollectionModal } from '../components/ui/SaveToCollectionModal'
-import { ReportModal } from '../components/ui/ReportModal'
 
 export const Route = createFileRoute('/explore')({
   component: ExplorePage,
@@ -423,96 +420,39 @@ function ExplorePage() {
                           )}
                         </Button>
                         {/* Options Dropdown */}
-                        <div data-options-dropdown className="relative">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setOpenOptionsId(
-                                openOptionsId === activity.id
-                                  ? null
-                                  : activity.id,
-                              )
-                            }}
-                          >
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-
-                          <AnimatePresence>
-                            {openOptionsId === activity.id && (
-                              <motion.div
-                                initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                                transition={{ duration: 0.15 }}
-                                className="absolute bottom-full right-0 mb-1 z-50 min-w-[140px] p-1 rounded-lg border border-border bg-background shadow-lg"
-                              >
-                                <button
-                                  type="button"
-                                  onClick={async (e) => {
-                                    e.stopPropagation()
-                                    if (!user) {
-                                      toast.error('Please login to save')
-                                      setOpenOptionsId(null)
-                                      return
-                                    }
-                                    const isSaved = savedActivities[activity.id]
-                                    if (isSaved) {
-                                      // Unsave directly
-                                      try {
-                                        await unsaveActivity({ data: { activityId: activity.id, collectionId: isSaved } })
-                                        setSavedActivities(prev => {
-                                          const next = { ...prev }
-                                          delete next[activity.id]
-                                          return next
-                                        })
-                                        toast.success('Removed from saved')
-                                      } catch (err) {
-                                        toast.error(err instanceof Error ? err.message : 'Failed')
-                                      }
-                                    } else {
-                                      // Open modal to select collection
-                                      setSaveModalActivityId(activity.id)
-                                    }
-                                    setOpenOptionsId(null)
-                                  }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-left hover:bg-secondary/50 transition-colors"
-                                >
-                                  <Bookmark className={cn('w-4 h-4', savedActivities[activity.id] && 'fill-current')} />
-                                  <span>{savedActivities[activity.id] ? 'Unsave' : 'Save'}</span>
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    navigator.clipboard.writeText(
-                                      `${window.location.origin}/activity/play/${activity.id}`,
-                                    )
-                                    toast.success('Link copied!')
-                                    setOpenOptionsId(null)
-                                  }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-left hover:bg-secondary/50 transition-colors"
-                                >
-                                  <Share2 className="w-4 h-4" />
-                                  <span>Share</span>
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setReportActivity({ id: activity.id, title: activity.title })
-                                    setOpenOptionsId(null)
-                                  }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-left hover:bg-secondary/50 transition-colors text-destructive"
-                                >
-                                  <Flag className="w-4 h-4" />
-                                  <span>Report</span>
-                                </button>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
+                        <ActivityOptionsDropdown
+                          activityId={activity.id}
+                          activityTitle={activity.title}
+                          isOpen={openOptionsId === activity.id}
+                          onToggle={() => setOpenOptionsId(openOptionsId === activity.id ? null : activity.id)}
+                          onClose={() => setOpenOptionsId(null)}
+                          isSaved={!!savedActivities[activity.id]}
+                          onSave={!savedActivities[activity.id] ? () => {
+                            if (!user) {
+                              toast.error('Please login to save')
+                              return
+                            }
+                            setSaveModalActivityId(activity.id)
+                          } : undefined}
+                          onUnsave={savedActivities[activity.id] ? async () => {
+                            try {
+                              await unsaveActivity({ data: { activityId: activity.id, collectionId: savedActivities[activity.id] } })
+                              setSavedActivities(prev => {
+                                const next = { ...prev }
+                                delete next[activity.id]
+                                return next
+                              })
+                              toast.success('Removed from saved')
+                            } catch (err) {
+                              toast.error(err instanceof Error ? err.message : 'Failed')
+                            }
+                          } : undefined}
+                          onShare={() => {
+                            navigator.clipboard.writeText(`${window.location.origin}/activity/play/${activity.id}`)
+                            toast.success('Link copied!')
+                          }}
+                          onReport={() => setReportActivity({ id: activity.id, title: activity.title })}
+                        />
                       </div>
                     </CardContent>
                   </Card>
@@ -549,10 +489,10 @@ function ExplorePage() {
         isOpen={saveModalActivityId !== null}
         onClose={() => setSaveModalActivityId(null)}
         activityId={saveModalActivityId || ''}
-        onSaved={(collectionId) => {
+        onSaved={(collectionId, collectionName) => {
           if (saveModalActivityId) {
             setSavedActivities(prev => ({ ...prev, [saveModalActivityId]: collectionId }))
-            toast.success('Saved to collection!')
+            toast.success(`Saved to "${collectionName}"`)
           }
         }}
       />

@@ -138,6 +138,7 @@ export const deleteCollection = createServerFn({ method: 'POST' })
   })
 
 // Save activity to collection (null collection_id = "All Saved")
+// This will MOVE the activity to the new collection (delete from old, add to new)
 export const saveActivity = createServerFn({ method: 'POST' })
   .inputValidator((data: { activityId: string; collectionId?: string | null }) => data)
   .handler(async ({ data }): Promise<{ success: boolean; itemId: string | null; collectionId: string | null; alreadySaved: boolean }> => {
@@ -150,6 +151,13 @@ export const saveActivity = createServerFn({ method: 'POST' })
 
     // Use null for "All Saved" (virtual collection with id='all' or no collection specified)
     const collectionId = data.collectionId === 'all' ? null : (data.collectionId ?? null)
+
+    // Delete any existing saved items for this activity (move behavior)
+    await supabase
+      .from('saved_items')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('activity_id', data.activityId)
 
     const { data: created, error } = await supabase
       .from('saved_items')
@@ -258,7 +266,7 @@ export const getSavedItems = createServerFn({ method: 'GET' })
   })
 
 // Check if activity is saved
-export const isActivitySaved = createServerFn({ method: 'GET' })
+export const isActivitySaved = createServerFn({ method: 'POST' })
   .inputValidator((data: { activityId: string }) => data)
   .handler(async ({ data }): Promise<{ saved: boolean; collectionIds: (string | null)[] }> => {
     const supabase = getSupabaseFromCookies()

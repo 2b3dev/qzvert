@@ -19,6 +19,7 @@ import {
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { DefaultLayout } from '../components/layouts/DefaultLayout'
+import { ActivityOptionsDropdown } from '../components/ui/ActivityOptionsDropdown'
 import { Button } from '../components/ui/button'
 import {
   Card,
@@ -28,6 +29,7 @@ import {
   CardTitle,
 } from '../components/ui/card'
 import { Input } from '../components/ui/input'
+import { SaveToCollectionModal } from '../components/ui/SaveToCollectionModal'
 import { cn } from '../lib/utils'
 import { getActivityById } from '../server/activities'
 import {
@@ -59,6 +61,9 @@ function SavedPage() {
   const [loading, setLoading] = useState(true)
   const [loadingActivityId, setLoadingActivityId] = useState<string | null>(null)
   const [openOptionsId, setOpenOptionsId] = useState<string | null>(null)
+
+  // Move to collection modal
+  const [moveModalActivityId, setMoveModalActivityId] = useState<string | null>(null)
 
   // Create/Edit collection modal
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -563,13 +568,23 @@ function SavedPage() {
                               </>
                             )}
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleUnsaveActivity(item.activity_id, item.collection_id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          <ActivityOptionsDropdown
+                            activityId={item.activity_id}
+                            activityTitle={item.activity.title}
+                            isOpen={openOptionsId === item.id}
+                            onToggle={() => setOpenOptionsId(openOptionsId === item.id ? null : item.id)}
+                            onClose={() => setOpenOptionsId(null)}
+                            isSaved
+                            onSave={() => setMoveModalActivityId(item.activity_id)}
+                            saveLabel="Save to"
+                            onShare={() => {
+                              navigator.clipboard.writeText(`${window.location.origin}/activity/play/${item.activity_id}`)
+                              toast.success('Link copied!')
+                            }}
+                            showRemoveOption
+                            onRemove={() => handleUnsaveActivity(item.activity_id, item.collection_id)}
+                            position="top"
+                          />
                         </div>
                       </CardContent>
                     </Card>
@@ -668,6 +683,27 @@ function SavedPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Move to Collection Modal */}
+      <SaveToCollectionModal
+        isOpen={moveModalActivityId !== null}
+        onClose={() => setMoveModalActivityId(null)}
+        activityId={moveModalActivityId || ''}
+        onSaved={async (_collectionId, collectionName) => {
+          // Refresh data after moving
+          try {
+            const [collectionsData, itemsData] = await Promise.all([
+              getCollections(),
+              getSavedItems({ data: { collectionId: selectedCollectionId || undefined } }),
+            ])
+            setCollections(collectionsData)
+            setSavedItems(itemsData)
+            toast.success(`Saved to "${collectionName}"`)
+          } catch {
+            toast.error('Failed to refresh data')
+          }
+        }}
+      />
     </DefaultLayout>
   )
 }

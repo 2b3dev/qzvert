@@ -2,10 +2,11 @@ import IconApp from '@/components/icon/icon-app'
 import { setTheme, type Theme } from '@/server/theme'
 import { Link, useRouter } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Heart, LayoutGrid, LogIn, LogOut, Menu, Moon, Plus, Sun, User, X } from 'lucide-react'
+import { Heart, LayoutGrid, LogIn, LogOut, Menu, Moon, Plus, Settings, Sun, User, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Route } from '../routes/__root'
 import { useAuthStore } from '../stores/auth-store'
+import { useProfileStore } from '../stores/profile-store'
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
@@ -17,6 +18,18 @@ export default function Header() {
 
   // Use store user if available (for client-side updates), fallback to loader user (SSR)
   const user = storeUser ?? loaderUser
+
+  // Get profile for role checking
+  const { profile, fetchProfile } = useProfileStore()
+
+  // Fetch profile when user is available
+  useEffect(() => {
+    if (user?.id && !profile) {
+      fetchProfile(user.id)
+    }
+  }, [user?.id, profile, fetchProfile])
+
+  const isAdmin = profile?.role === 'admin'
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -160,6 +173,16 @@ export default function Header() {
                           <Heart className="w-4 h-4" />
                           My Saved
                         </Link>
+                        {isAdmin && (
+                          <Link
+                            to="/admin"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-amber-500 hover:text-amber-400 hover:bg-accent transition-colors"
+                          >
+                            <Settings className="w-4 h-4" />
+                            Admin Dashboard
+                          </Link>
+                        )}
                         <button
                           onClick={handleSignOut}
                           className="w-full flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
@@ -268,6 +291,16 @@ export default function Header() {
                   <Heart className="w-5 h-5" />
                   My Saved
                 </Link>
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setIsOpen(false)}
+                    className="w-full flex items-center gap-3 p-3 rounded-lg text-amber-500 hover:text-amber-400 hover:bg-accent transition-colors"
+                  >
+                    <Settings className="w-5 h-5" />
+                    Admin Dashboard
+                  </Link>
+                )}
                 <button
                   onClick={() => {
                     handleSignOut()

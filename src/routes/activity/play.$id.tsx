@@ -58,7 +58,7 @@ function ActivityPlayPage() {
   } = useActivityStore()
   const { session, user, signOut } = useAuthStore()
 
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [gameState, setGameState] = useState<GameState>('intro')
   const [canPlayResult, setCanPlayResult] = useState<CanUserPlayResult | null>(null)
   const [playRecordId, setPlayRecordId] = useState<string | null>(null)

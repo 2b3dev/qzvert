@@ -4,14 +4,14 @@ import { X, Plus, Check, Folder, Star, Loader2 } from 'lucide-react'
 import { Button } from './button'
 import { Input } from './input'
 import { cn } from '../../lib/utils'
-import { getCollections, createCollection, saveActivity } from '../../server/saved'
+import { getCollections, createCollection, saveActivity, isActivitySaved, unsaveActivity } from '../../server/saved'
 import type { CollectionWithCount } from '../../types/database'
 
 interface SaveToCollectionModalProps {
   isOpen: boolean
   onClose: () => void
   activityId: string
-  onSaved: (collectionId: string) => void
+  onSaved: (collectionId: string, collectionName: string) => void
 }
 
 export function SaveToCollectionModal({
@@ -22,13 +22,14 @@ export function SaveToCollectionModal({
 }: SaveToCollectionModalProps) {
   const [collections, setCollections] = useState<CollectionWithCount[]>([])
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const [savingToId, setSavingToId] = useState<string | null>(null)
+  const [removingFromId, setRemovingFromId] = useState<string | null>(null)
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null)
   const [showCreateNew, setShowCreateNew] = useState(false)
   const [newCollectionName, setNewCollectionName] = useState('')
   const [creating, setCreating] = useState(false)
 
-  // Fetch collections when modal opens
+  // Fetch collections and check if activity is already saved when modal opens
   useEffect(() => {
     if (isOpen) {
       setLoading(true)
@@ -36,13 +37,18 @@ export function SaveToCollectionModal({
       setShowCreateNew(false)
       setNewCollectionName('')
 
-      getCollections()
-        .then((data) => {
-          setCollections(data)
-          // Auto-select "All Saved" collection (first item with id='all')
-          const allSavedCollection = data.find(c => c.id === 'all')
-          if (allSavedCollection) {
-            setSelectedCollectionId(allSavedCollection.id)
+      Promise.all([
+        getCollections(),
+        isActivitySaved({ data: { activityId } })
+      ])
+        .then(([collectionsData, savedData]) => {
+          setCollections(collectionsData)
+
+          // If activity is already saved, select the collection it's in
+          if (savedData.saved && savedData.collectionIds.length > 0) {
+            // collectionId null means "All Saved" (virtual collection with id='all')
+            const savedCollectionId = savedData.collectionIds[0] === null ? 'all' : savedData.collectionIds[0]
+            setSelectedCollectionId(savedCollectionId)
           }
         })
         .catch(() => {
@@ -52,7 +58,7 @@ export function SaveToCollectionModal({
           setLoading(false)
         })
     }
-  }, [isOpen])
+  }, [isOpen, activityId])
 
   const handleCreateCollection = async () => {
     if (!newCollectionName.trim()) return
@@ -61,7 +67,8 @@ export function SaveToCollectionModal({
     try {
       const newCollection = await createCollection({ data: { name: newCollectionName.trim() } })
       setCollections(prev => [...prev, { ...newCollection, item_count: 0 }])
-      setSelectedCollectionId(newCollection.id)
+      // Auto-save to newly created collection
+      await handleSelectCollection(newCollection.id, newCollection.name)
       setShowCreateNew(false)
       setNewCollectionName('')
     } catch {
@@ -71,18 +78,35 @@ export function SaveToCollectionModal({
     }
   }
 
-  const handleSave = async () => {
-    if (!selectedCollectionId) return
+  const handleSelectCollection = async (collectionId: string, collectionName?: string) => {
+    if (collectionId === selectedCollectionId) return // Already selected
 
-    setSaving(true)
+    setSavingToId(collectionId)
     try {
-      await saveActivity({ data: { activityId, collectionId: selectedCollectionId } })
-      onSaved(selectedCollectionId)
-      onClose()
+      await saveActivity({ data: { activityId, collectionId } })
+      const name = collectionName || collections.find(c => c.id === collectionId)?.name || 'collection'
+      setSelectedCollectionId(collectionId)
+      onSaved(collectionId, name)
     } catch {
       // Handle error silently
     } finally {
-      setSaving(false)
+      setSavingToId(null)
+    }
+  }
+
+  const handleRemove = async (e: React.MouseEvent, collectionId: string) => {
+    e.stopPropagation()
+
+    setRemovingFromId(collectionId)
+    try {
+      // Use 'all' for null collection_id
+      const dbCollectionId = collectionId === 'all' ? null : collectionId
+      await unsaveActivity({ data: { activityId, collectionId: dbCollectionId } })
+      setSelectedCollectionId(null)
+    } catch {
+      // Handle error silently
+    } finally {
+      setRemovingFromId(null)
     }
   }
 
@@ -128,38 +152,61 @@ export function SaveToCollectionModal({
                 ) : (
                   <div className="space-y-2">
                     {/* Collections list */}
-                    {collections.map((collection) => (
-                      <button
-                        key={collection.id}
-                        onClick={() => setSelectedCollectionId(collection.id)}
-                        className={cn(
-                          'w-full flex items-center gap-3 p-3 rounded-lg border transition-all',
-                          selectedCollectionId === collection.id
-                            ? 'border-primary bg-primary/10'
-                            : 'border-border hover:border-primary/50 hover:bg-accent/50'
-                        )}
-                      >
-                        <div className={cn(
-                          'w-10 h-10 rounded-lg flex items-center justify-center',
-                          collection.id === 'all' ? 'bg-amber-500/20' : 'bg-primary/20'
-                        )}>
-                          {collection.id === 'all' ? (
-                            <Star className="w-5 h-5 text-amber-500" />
-                          ) : (
-                            <Folder className="w-5 h-5 text-primary" />
+                    {collections.map((collection) => {
+                      const isSelected = selectedCollectionId === collection.id
+                      const isSaving = savingToId === collection.id
+                      const isRemoving = removingFromId === collection.id
+
+                      return (
+                        <button
+                          key={collection.id}
+                          onClick={() => handleSelectCollection(collection.id)}
+                          disabled={isSaving || isRemoving}
+                          className={cn(
+                            'w-full flex items-center gap-3 p-3 rounded-lg border transition-all',
+                            isSelected
+                              ? 'border-primary bg-primary/10'
+                              : 'border-border hover:border-primary/50 hover:bg-accent/50',
+                            (isSaving || isRemoving) && 'opacity-70'
                           )}
-                        </div>
-                        <div className="flex-1 text-left">
-                          <p className="font-medium text-foreground">{collection.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {collection.item_count} {collection.item_count === 1 ? 'item' : 'items'}
-                          </p>
-                        </div>
-                        {selectedCollectionId === collection.id && (
-                          <Check className="w-5 h-5 text-primary" />
-                        )}
-                      </button>
-                    ))}
+                        >
+                          <div className={cn(
+                            'w-10 h-10 rounded-lg flex items-center justify-center',
+                            collection.id === 'all' ? 'bg-amber-500/20' : 'bg-primary/20'
+                          )}>
+                            {collection.id === 'all' ? (
+                              <Star className="w-5 h-5 text-amber-500" />
+                            ) : (
+                              <Folder className="w-5 h-5 text-primary" />
+                            )}
+                          </div>
+                          <div className="flex-1 text-left">
+                            <p className="font-medium text-foreground">{collection.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {collection.item_count} {collection.item_count === 1 ? 'item' : 'items'}
+                            </p>
+                          </div>
+                          {isSaving ? (
+                            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                          ) : isSelected && (
+                            <div className="flex items-center gap-1">
+                              <Check className="w-5 h-5 text-primary" />
+                              {isRemoving ? (
+                                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                              ) : (
+                                <button
+                                  onClick={(e) => handleRemove(e, collection.id)}
+                                  className="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+                                  title="Remove from collection"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </button>
+                      )
+                    })}
 
                     {/* Create new collection */}
                     {showCreateNew ? (
@@ -219,21 +266,8 @@ export function SaveToCollectionModal({
 
               {/* Footer */}
               <div className="flex items-center justify-end gap-2 p-4 border-t border-border bg-muted/30">
-                <Button variant="ghost" onClick={onClose}>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSave}
-                  disabled={!selectedCollectionId || saving}
-                >
-                  {saving ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      Saving...
-                    </>
-                  ) : (
-                    'Save'
-                  )}
+                <Button onClick={onClose}>
+                  Done
                 </Button>
               </div>
             </div>

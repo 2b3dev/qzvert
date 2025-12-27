@@ -23,7 +23,9 @@
       "Bash(npx supabase:*)",
       "Bash(timeout 15 pnpm dev:*)",
       "Bash(find:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(pnpm dev)",
+      "Bash(timeout:*)"
     ]
   }
 }
