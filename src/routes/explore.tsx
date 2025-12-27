@@ -36,6 +36,7 @@ import { useActivityStore } from '../stores/activity-store'
 import { unsaveActivity } from '../server/saved'
 import { useAuthStore } from '../stores/auth-store'
 import { SaveToCollectionModal } from '../components/ui/SaveToCollectionModal'
+import { ReportModal } from '../components/ui/ReportModal'
 
 export const Route = createFileRoute('/explore')({
   component: ExplorePage,
@@ -52,6 +53,10 @@ interface ExploreActivity {
   theme_config: unknown
   play_count: number
   stages: Array<{ id: string; title: string; order_index: number }>
+  profiles: {
+    display_name: string | null
+    avatar_url: string | null
+  } | null
 }
 
 type ActivityType = 'all' | 'quiz' | 'quest' | 'flashcard' | 'roleplay'
@@ -94,6 +99,8 @@ function ExplorePage() {
   const { user } = useAuthStore()
   // Save modal state
   const [saveModalActivityId, setSaveModalActivityId] = useState<string | null>(null)
+  // Report modal state
+  const [reportActivity, setReportActivity] = useState<{ id: string; title: string } | null>(null)
 
   const sortDropdownRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -381,6 +388,24 @@ function ExplorePage() {
                           </span>
                         </div>
                       </div>
+                      {activity.profiles && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+                          {activity.profiles.avatar_url ? (
+                            <img
+                              src={activity.profiles.avatar_url}
+                              alt={activity.profiles.display_name || 'Creator'}
+                              className="w-5 h-5 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-5 h-5 rounded-full bg-secondary flex items-center justify-center text-xs font-medium">
+                              {(activity.profiles.display_name || 'A')[0].toUpperCase()}
+                            </div>
+                          )}
+                          <span className="truncate">
+                            {activity.profiles.display_name || 'Anonymous'}
+                          </span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-2 mt-4">
                         <Button
                           variant="default"
@@ -476,7 +501,7 @@ function ExplorePage() {
                                   type="button"
                                   onClick={(e) => {
                                     e.stopPropagation()
-                                    toast.info('Report submitted')
+                                    setReportActivity({ id: activity.id, title: activity.title })
                                     setOpenOptionsId(null)
                                   }}
                                   className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-left hover:bg-secondary/50 transition-colors text-destructive"
@@ -529,6 +554,17 @@ function ExplorePage() {
             setSavedActivities(prev => ({ ...prev, [saveModalActivityId]: collectionId }))
             toast.success('Saved to collection!')
           }
+        }}
+      />
+
+      {/* Report Modal */}
+      <ReportModal
+        isOpen={reportActivity !== null}
+        onClose={() => setReportActivity(null)}
+        activityId={reportActivity?.id || ''}
+        activityTitle={reportActivity?.title}
+        onReported={() => {
+          toast.success('Report submitted')
         }}
       />
     </DefaultLayout>

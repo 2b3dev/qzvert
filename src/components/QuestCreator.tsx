@@ -134,29 +134,45 @@ export function QuestCreator() {
   const [questSettings, setQuestSettings] =
     useState<QuestSettingsData>(defaultQuestSettings)
 
-  const { setActivity, themeConfig, setThemeConfig, setTimeLimitMinutes } = useActivityStore()
+  const { setActivity, themeConfig, setThemeConfig, setTimeLimitMinutes, setAgeRange } = useActivityStore()
   const { user, session, isLoading: isAuthLoading } = useAuthStore()
   const { profile, fetchProfile } = useProfileStore()
   const navigate = useNavigate()
 
   const handleCreateManual = () => {
-    // Create empty quiz template
+    // Get question count from settings
+    const questionCount = quizSettings.questionCount === 'auto' ? 5 : quizSettings.questionCount
+    const choiceCount = quizSettings.choiceCount
+
+    // Create empty questions based on settings
+    const emptyQuestions = Array.from({ length: questionCount }, () => ({
+      type: 'multiple_choice' as const,
+      question: '',
+      options: Array.from({ length: choiceCount }, () => ''),
+      correct_answer: 0,
+      explanation: '',
+      points: 100,
+    }))
+
+    // Create quiz template with settings
     const emptyQuiz = {
-      title: 'Untitled Quiz',
+      title: 'Untitled',
       description: '',
       type: 'quiz' as const,
-      tags: [],
-      quizzes: [
-        {
-          type: 'multiple_choice' as const,
-          question: '',
-          options: ['', '', '', ''],
-          correct_answer: 0,
-          explanation: '',
-          points: 100,
-        },
-      ],
+      tags: quizSettings.tags,
+      quizzes: emptyQuestions,
     }
+
+    // Set time limit if enabled
+    if (quizSettings.timerEnabled) {
+      setTimeLimitMinutes(Math.floor(quizSettings.timerSeconds / 60))
+    }
+
+    // Set age range if not auto
+    if (quizSettings.ageRange !== 'auto') {
+      setAgeRange(quizSettings.ageRange)
+    }
+
     setActivity(emptyQuiz, '')
     navigate({ to: '/activity/upload/$id', params: { id: 'new' } })
   }
@@ -395,10 +411,10 @@ export function QuestCreator() {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Output Type Selector */}
+          {/* Activity Type Selector */}
           <div>
             <label className="text-sm font-medium text-foreground mb-3 block">
-              Output Type
+              Activity Type
             </label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {outputTypes.map(
@@ -601,34 +617,35 @@ export function QuestCreator() {
 
           {/* Generate Buttons */}
           <div className="grid grid-cols-2 gap-3">
-            <Button
-              size="lg"
-              onClick={handleGenerate}
-              disabled={isGenerating || !content.trim()}
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Wand2 className="w-5 h-5" />
-                  Generate Quiz
-                  {getCreditsDisplay() && (
-                    <span className="ml-1 px-2 py-0.5 rounded-full bg-white/20 text-xs font-medium flex items-center gap-1">
-                      <Sparkles className="w-3 h-3" />
-                      {getCreditsDisplay()}
-                    </span>
-                  )}
-                </>
+            <div className="space-y-1">
+              <Button
+                size="lg"
+                className="w-full"
+                onClick={handleGenerate}
+                disabled={isGenerating || !content.trim()}
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="w-5 h-5" />
+                    Generate Quiz
+                  </>
+                )}
+              </Button>
+              {profile && (
+                <p className="text-xs text-muted-foreground text-center">
+                  <Sparkles className="w-3 h-3 inline mr-1" />
+                  {profile.role === 'admin'
+                    ? `1 credit will be used • ∞ remaining`
+                    : `1 credit will be used • ${profile.ai_credits} remaining`}
+                </p>
               )}
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={handleCreateManual}
-            >
+            </div>
+            <Button size="lg" variant="outline" onClick={handleCreateManual}>
               <PenLine className="w-5 h-5" />
               Create Manual
             </Button>

@@ -13,10 +13,12 @@ interface ActivityState {
   isPlaying: boolean
   rawContent: string | null
   timeLimitMinutes: number | null // Activity time limit from QuestCreator
+  ageRange: string | null // Target age range from QuestCreator
 
   // Actions
   setActivity: (activity: GeneratedQuest, rawContent?: string, activityId?: string) => void
   setTimeLimitMinutes: (minutes: number | null) => void
+  setAgeRange: (ageRange: string | null) => void
   setCurrentStage: (index: number) => void
   setCurrentQuiz: (index: number) => void
   completeStage: (stageIndex: number) => void
@@ -48,6 +50,7 @@ export const useActivityStore = create<ActivityState>((set) => ({
   isPlaying: false,
   rawContent: null,
   timeLimitMinutes: null,
+  ageRange: null,
 
   setActivity: (activity, rawContent, activityId) => set({
     currentActivity: activity,
@@ -61,6 +64,8 @@ export const useActivityStore = create<ActivityState>((set) => ({
   }),
 
   setTimeLimitMinutes: (minutes) => set({ timeLimitMinutes: minutes }),
+
+  setAgeRange: (ageRange) => set({ ageRange }),
 
   setCurrentStage: (index) => set({ currentStageIndex: index, currentQuizIndex: 0 }),
 
@@ -92,6 +97,7 @@ export const useActivityStore = create<ActivityState>((set) => ({
     lives: defaultThemeConfig.maxLives,
     isPlaying: false,
     rawContent: null,
-    timeLimitMinutes: null
+    timeLimitMinutes: null,
+    ageRange: null
   })
 }))

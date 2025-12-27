@@ -57,7 +57,13 @@ const questionCountOptions = [5, 10, 15, 20, 25, 30, 50]
 const choiceCountOptions = [2, 3, 4, 5]
 const stageCountOptions = [3, 4, 5, 6, 7]
 const questionsPerStageOptions = [2, 3, 4, 5]
-const ageRangeOptions = ['6-10', '11-14', '15-18', '18+', 'All ages']
+const ageRangeOptions = [
+  { value: '3-5', label: 'เด็กเล็ก (3-5)', desc: 'ยังอ่านไม่ออก เรียนรู้จากภาพและการเล่น' },
+  { value: '6-9', label: 'ประถมต้น (6-9)', desc: 'อ่านออกแล้ว เข้าใจเหตุผลง่ายๆ' },
+  { value: '10-12', label: 'ประถมปลาย (10-12)', desc: 'คิดเชิงตรรกะได้ เข้าใจแนวคิดนามธรรมเบื้องต้น' },
+  { value: '13-17', label: 'วัยรุ่น (13-17)', desc: 'คิดเชิงนามธรรมได้ดี วิเคราะห์ซับซ้อนขึ้น' },
+  { value: '18+', label: 'ผู้ใหญ่ (18+)', desc: 'ไม่จำกัดความซับซ้อน' },
+]
 
 export function QuizSettings(props: Props) {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
@@ -259,7 +265,7 @@ export function QuizSettings(props: Props) {
                 className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-border bg-secondary/50 hover:border-muted-foreground transition-all duration-200"
               >
                 <span className="font-medium">
-                  {settings.questionCount === 'auto' ? 'Auto (AI decides)' : `${settings.questionCount} questions`}
+                  {settings.questionCount === 'auto' ? 'Auto' : `${settings.questionCount} questions`}
                 </span>
                 <ChevronDown className={cn(
                   "w-5 h-5 text-muted-foreground transition-transform duration-200",
@@ -283,7 +289,7 @@ export function QuizSettings(props: Props) {
                         settings.questionCount === 'auto' ? 'bg-primary/10 text-primary' : ''
                       )}
                     >
-                      <span className="font-medium">Auto (AI decides)</span>
+                      <span className="font-medium">Auto</span>
                       {settings.questionCount === 'auto' && <span className="text-primary">✓</span>}
                     </button>
                     {questionCountOptions.map((count) => (
@@ -369,7 +375,7 @@ export function QuizSettings(props: Props) {
                 className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-border bg-secondary/50 hover:border-muted-foreground transition-all duration-200"
               >
                 <span className="font-medium">
-                  {settings.multipleChoiceCount === 'auto' ? 'Auto (AI decides)' : `${settings.multipleChoiceCount} questions`}
+                  {settings.multipleChoiceCount === 'auto' ? 'Auto' : `${settings.multipleChoiceCount} questions`}
                 </span>
                 <ChevronDown className={cn(
                   "w-5 h-5 text-muted-foreground transition-transform duration-200",
@@ -393,7 +399,7 @@ export function QuizSettings(props: Props) {
                         settings.multipleChoiceCount === 'auto' ? 'bg-primary/10 text-primary' : ''
                       )}
                     >
-                      <span className="font-medium">Auto (AI decides)</span>
+                      <span className="font-medium">Auto</span>
                       {settings.multipleChoiceCount === 'auto' && <span className="text-primary">✓</span>}
                     </button>
                     {questionCountOptions.map((count) => (
@@ -479,7 +485,7 @@ export function QuizSettings(props: Props) {
                 className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-border bg-secondary/50 hover:border-muted-foreground transition-all duration-200"
               >
                 <span className="font-medium">
-                  {settings.subjectiveCount === 'auto' ? 'Auto (AI decides)' : `${settings.subjectiveCount} questions`}
+                  {settings.subjectiveCount === 'auto' ? 'Auto' : `${settings.subjectiveCount} questions`}
                 </span>
                 <ChevronDown className={cn(
                   "w-5 h-5 text-muted-foreground transition-transform duration-200",
@@ -503,7 +509,7 @@ export function QuizSettings(props: Props) {
                         settings.subjectiveCount === 'auto' ? 'bg-primary/10 text-primary' : ''
                       )}
                     >
-                      <span className="font-medium">Auto (AI decides)</span>
+                      <span className="font-medium">Auto</span>
                       {settings.subjectiveCount === 'auto' && <span className="text-primary">✓</span>}
                     </button>
                     {questionCountOptions.map((count) => (
@@ -802,7 +808,7 @@ export function QuizSettings(props: Props) {
               className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-border bg-secondary/50 hover:border-muted-foreground transition-all duration-200"
             >
               <span className="font-medium">
-                {settings.ageRange === 'auto' ? 'Auto (AI estimates)' : settings.ageRange}
+                {settings.ageRange === 'auto' ? 'Auto' : ageRangeOptions.find(a => a.value === settings.ageRange)?.label || settings.ageRange}
               </span>
               <ChevronDown className={cn(
                 "w-5 h-5 text-muted-foreground transition-transform duration-200",
@@ -816,7 +822,7 @@ export function QuizSettings(props: Props) {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg z-20 overflow-hidden"
+                  className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg z-20 overflow-hidden max-h-80 overflow-y-auto"
                 >
                   <button
                     type="button"
@@ -826,21 +832,24 @@ export function QuizSettings(props: Props) {
                       settings.ageRange === 'auto' ? 'bg-primary/10 text-primary' : ''
                     )}
                   >
-                    <span className="font-medium">Auto (AI estimates)</span>
+                    <span className="font-medium">Auto</span>
                     {settings.ageRange === 'auto' && <span className="text-primary">✓</span>}
                   </button>
                   {ageRangeOptions.map((age) => (
                     <button
-                      key={age}
+                      key={age.value}
                       type="button"
-                      onClick={() => { onChange({ ...settings, ageRange: age }); closeDropdowns() }}
+                      onClick={() => { onChange({ ...settings, ageRange: age.value }); closeDropdowns() }}
                       className={cn(
-                        "w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors",
-                        settings.ageRange === age ? 'bg-primary/10 text-primary' : ''
+                        "w-full flex items-start gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left",
+                        settings.ageRange === age.value ? 'bg-primary/10 text-primary' : ''
                       )}
                     >
-                      <span className="font-medium">{age}</span>
-                      {settings.ageRange === age && <span className="text-primary">✓</span>}
+                      <div className="flex-1">
+                        <span className="font-medium">{age.label}</span>
+                        <p className="text-xs text-muted-foreground mt-0.5">{age.desc}</p>
+                      </div>
+                      {settings.ageRange === age.value && <span className="text-primary">✓</span>}
                     </button>
                   ))}
                 </motion.div>
@@ -1217,7 +1226,7 @@ export function QuizSettings(props: Props) {
             className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-border bg-secondary/50 hover:border-muted-foreground transition-all duration-200"
           >
             <span className="font-medium">
-              {settings.ageRange === 'auto' ? 'Auto (AI estimates)' : settings.ageRange}
+              {settings.ageRange === 'auto' ? 'Auto' : ageRangeOptions.find(a => a.value === settings.ageRange)?.label || settings.ageRange}
             </span>
             <ChevronDown className={cn(
               "w-5 h-5 text-muted-foreground transition-transform duration-200",
@@ -1231,7 +1240,7 @@ export function QuizSettings(props: Props) {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg z-20 overflow-hidden"
+                className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg z-20 overflow-hidden max-h-80 overflow-y-auto"
               >
                 <button
                   type="button"
@@ -1241,21 +1250,24 @@ export function QuizSettings(props: Props) {
                     settings.ageRange === 'auto' ? 'bg-primary/10 text-primary' : ''
                   )}
                 >
-                  <span className="font-medium">Auto (AI estimates)</span>
+                  <span className="font-medium">Auto</span>
                   {settings.ageRange === 'auto' && <span className="text-primary">✓</span>}
                 </button>
                 {ageRangeOptions.map((age) => (
                   <button
-                    key={age}
+                    key={age.value}
                     type="button"
-                    onClick={() => { onChange({ ...settings, ageRange: age }); closeDropdowns() }}
+                    onClick={() => { onChange({ ...settings, ageRange: age.value }); closeDropdowns() }}
                     className={cn(
-                      "w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors",
-                      settings.ageRange === age ? 'bg-primary/10 text-primary' : ''
+                      "w-full flex items-start gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left",
+                      settings.ageRange === age.value ? 'bg-primary/10 text-primary' : ''
                     )}
                   >
-                    <span className="font-medium">{age}</span>
-                    {settings.ageRange === age && <span className="text-primary">✓</span>}
+                    <div className="flex-1">
+                      <span className="font-medium">{age.label}</span>
+                      <p className="text-xs text-muted-foreground mt-0.5">{age.desc}</p>
+                    </div>
+                    {settings.ageRange === age.value && <span className="text-primary">✓</span>}
                   </button>
                 ))}
               </motion.div>

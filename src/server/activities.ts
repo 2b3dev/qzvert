@@ -181,6 +181,10 @@ export const getPublishedActivities = createServerFn({ method: 'GET' })
           id,
           title,
           order_index
+        ),
+        profiles (
+          display_name,
+          avatar_url
         )
       `)
       .eq('status', 'public')
@@ -191,7 +195,7 @@ export const getPublishedActivities = createServerFn({ method: 'GET' })
       throw new Error(`Failed to fetch activities: ${error.message}`)
     }
 
-    return data
+    return data || []
   })
 
 export const getActivityById = createServerFn({ method: 'GET' })
@@ -921,6 +925,7 @@ export const updateActivitySettings = createServerFn({ method: 'POST' })
     timeLimitMinutes?: number | null
     availableFrom?: string | null
     availableUntil?: string | null
+    ageRange?: string | null
   }) => data)
   .handler(async ({ data }) => {
     const supabase = getSupabaseFromCookies()
@@ -943,6 +948,9 @@ export const updateActivitySettings = createServerFn({ method: 'POST' })
     }
     if (data.availableUntil !== undefined) {
       updateData.available_until = data.availableUntil
+    }
+    if (data.ageRange !== undefined) {
+      updateData.age_range = data.ageRange
     }
 
     const { error } = await supabase

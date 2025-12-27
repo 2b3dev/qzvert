@@ -20,6 +20,7 @@ import {
   Star,
   Tag,
   Trash2,
+  Users,
   X,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -46,7 +47,7 @@ import {
   updateAllowedEmails,
   updateQuest,
 } from '../../server/activities'
-import { deleteImage } from '../../server/storage'
+import { deleteImage, uploadImage } from '../../server/storage'
 import { useActivityStore } from '../../stores/activity-store'
 import type {
   ActivityStatus,
@@ -59,6 +60,14 @@ export const Route = createFileRoute('/activity/upload/$id')({
   component: ActivityUploadPage,
 })
 
+const ageRangeOptions = [
+  { value: '3-5', label: 'เด็กเล็ก (3-5)', desc: 'ยังอ่านไม่ออก เรียนรู้จากภาพและการเล่น' },
+  { value: '6-9', label: 'ประถมต้น (6-9)', desc: 'อ่านออกแล้ว เข้าใจเหตุผลง่ายๆ' },
+  { value: '10-12', label: 'ประถมปลาย (10-12)', desc: 'คิดเชิงตรรกะได้ เข้าใจแนวคิดนามธรรมเบื้องต้น' },
+  { value: '13-17', label: 'วัยรุ่น (13-17)', desc: 'คิดเชิงนามธรรมได้ดี วิเคราะห์ซับซ้อนขึ้น' },
+  { value: '18+', label: 'ผู้ใหญ่ (18+)', desc: 'ไม่จำกัดความซับซ้อน' },
+]
+
 function ActivityUploadPage() {
   const navigate = useNavigate()
   const { id: activityId } = Route.useParams()
@@ -70,6 +79,7 @@ function ActivityUploadPage() {
     setThemeConfig,
     rawContent,
     timeLimitMinutes: storeTimeLimitMinutes,
+    ageRange: storeAgeRange,
   } = useActivityStore()
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -94,6 +104,7 @@ function ActivityUploadPage() {
   const [timeLimitMinutes, setTimeLimitMinutes] = useState<number | null>(null) // null = unlimited
   const [availableFrom, setAvailableFrom] = useState<string>('') // ISO 8601 format (UTC)
   const [availableUntil, setAvailableUntil] = useState<string>('') // ISO 8601 format (UTC)
+  const [ageRange, setAgeRange] = useState<string | null>(null) // Target age range
 
   // Load activity from database or store
   useEffect(() => {
@@ -124,6 +135,9 @@ function ActivityUploadPage() {
 
           // Load time limit from store (set by QuestCreator)
           setTimeLimitMinutes(storeTimeLimitMinutes)
+
+          // Load age range from store (set by QuestCreator)
+          setAgeRange(storeAgeRange)
         }
         setIsLoading(false)
         return
@@ -173,12 +187,14 @@ function ActivityUploadPage() {
             time_limit_minutes?: number | null
             available_from?: string | null
             available_until?: string | null
+            age_range?: string | null
           }
           setReplayLimit(activityData.replay_limit ?? null)
           setTimeLimitMinutes(activityData.time_limit_minutes ?? null)
           // ISO format is used directly (DateTimePicker handles display)
           setAvailableFrom(activityData.available_from || '')
           setAvailableUntil(activityData.available_until || '')
+          setAgeRange(activityData.age_range ?? null)
 
           // Load allowed emails if private_group
           if (activityStatus === 'private_group') {
@@ -201,7 +217,7 @@ function ActivityUploadPage() {
     }
 
     loadActivity()
-  }, [activityId, loadedActivityId, isNewActivity, currentActivity, storeTimeLimitMinutes, setActivity, setThemeConfig, navigate])
+  }, [activityId, loadedActivityId, isNewActivity, currentActivity, storeTimeLimitMinutes, storeAgeRange, setActivity, setThemeConfig, navigate])
 
   // Show loading state
   if (isLoading) {
@@ -456,6 +472,12 @@ function ActivityUploadPage() {
   }
 
   const handleSave = async () => {
+    // Validate title
+    if (!title.trim() || title.trim() === 'Untitled') {
+      toast.error('Please enter a title for your activity')
+      return
+    }
+
     const validationError = validateQuizzes()
     if (validationError) {
       toast.error(validationError)
@@ -465,10 +487,29 @@ function ActivityUploadPage() {
     setIsSaving(true)
 
     try {
+      // Upload thumbnail if it's base64
+      let finalThumbnail = thumbnail
+      if (thumbnail && thumbnail.startsWith('data:')) {
+        try {
+          const result = await uploadImage({
+            data: {
+              base64Data: thumbnail,
+              fileName: `thumbnail-${Date.now()}.jpg`,
+            },
+          })
+          finalThumbnail = result.url
+          setThumbnail(finalThumbnail)
+        } catch (err) {
+          toast.error('Failed to upload thumbnail')
+          setIsSaving(false)
+          return
+        }
+      }
+
       // Build the updated quest with edited data
       const updatedQuest = isSmartQuiz
-        ? { ...currentActivity, title, description, thumbnail, tags, quizzes }
-        : { ...currentActivity, title, description, thumbnail, tags }
+        ? { ...currentActivity, title, description, thumbnail: finalThumbnail, tags, quizzes }
+        : { ...currentActivity, title, description, thumbnail: finalThumbnail, tags }
 
       setActivity(updatedQuest)
 
@@ -485,7 +526,7 @@ function ActivityUploadPage() {
         const newActivityId = result.activityId
 
         // Save additional settings for new activity
-        if (status !== 'draft' || replayLimit !== null || timeLimitMinutes !== null || availableFrom || availableUntil) {
+        if (status !== 'draft' || replayLimit !== null || timeLimitMinutes !== null || availableFrom || availableUntil || ageRange) {
           await updateActivitySettings({
             data: {
               activityId: newActivityId,
@@ -493,6 +534,7 @@ function ActivityUploadPage() {
               timeLimitMinutes: timeLimitMinutes,
               availableFrom: availableFrom || null,
               availableUntil: availableUntil || null,
+              ageRange: ageRange,
             },
           })
         }
@@ -569,6 +611,7 @@ function ActivityUploadPage() {
             timeLimitMinutes: timeLimitMinutes,
             availableFrom: availableFrom || null,
             availableUntil: availableUntil || null,
+            ageRange: ageRange,
           },
         })
 
@@ -662,6 +705,8 @@ function ActivityUploadPage() {
                 onChange={setThumbnail}
                 placeholder="Add a thumbnail image"
                 aspectRatio="video"
+                maxSizeMB={1}
+                recommendedSize="1200 x 630 px"
               />
             </div>
             <div className="flex-1">
@@ -974,6 +1019,49 @@ function ActivityUploadPage() {
                       : availableFrom
                         ? `Available starting ${new Date(availableFrom).toLocaleString()}`
                         : `Available until ${new Date(availableUntil).toLocaleString()}`}
+                </p>
+              </div>
+
+              {/* Age Range */}
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  <Users className="w-4 h-4 inline-block mr-1" />
+                  Age Range
+                </label>
+                <div className="flex items-center gap-3 mb-3">
+                  <button
+                    type="button"
+                    onClick={() => setAgeRange(null)}
+                    className={cn(
+                      'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                      !ageRange
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground',
+                    )}
+                  >
+                    All Ages
+                  </button>
+                  {ageRangeOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setAgeRange(option.value)}
+                      className={cn(
+                        'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                        ageRange === option.value
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground',
+                      )}
+                      title={option.desc}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {ageRange
+                    ? ageRangeOptions.find((a) => a.value === ageRange)?.desc || 'Target age range for this activity.'
+                    : 'This activity is suitable for all ages.'}
                 </p>
               </div>
             </CardContent>
