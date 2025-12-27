@@ -4,6 +4,7 @@ import { Link, useRouter } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Globe, Heart, LayoutGrid, LogIn, LogOut, Menu, Moon, Plus, Settings, Sun, User, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from '../hooks/useTranslation'
 import { Route } from '../routes/__root'
 import { useAuthStore } from '../stores/auth-store'
 import { useLanguageStore } from '../stores/language-store'
@@ -23,8 +24,9 @@ export default function Header() {
   // Get profile for role checking
   const { profile, fetchProfile } = useProfileStore()
 
-  // Language
+  // Language & Translation
   const { language, toggleLanguage } = useLanguageStore()
+  const { t } = useTranslation()
 
   // Fetch profile when user is available
   useEffect(() => {
@@ -64,10 +66,10 @@ export default function Header() {
   }
 
   const navLinks = [
-    { to: '/explore', label: 'Explore' },
-    { to: '/pricing', label: 'Pricing' },
-    { to: '/about', label: 'About' },
-    { to: '/contact', label: 'Contact' },
+    { to: '/explore', label: t('nav.explore') },
+    { to: '/pricing', label: t('nav.pricing') },
+    { to: '/about', label: t('nav.about') },
+    { to: '/contact', label: t('nav.contact') },
   ]
 
   return (
@@ -108,7 +110,7 @@ export default function Header() {
                 className="flex items-center gap-2 ml-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
               >
                 <Plus className="w-4 h-4" />
-                Create
+                {t('nav.create')}
               </Link>
               {/* Language Toggle */}
               <button
@@ -172,7 +174,7 @@ export default function Header() {
                           className="w-full flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                         >
                           <User className="w-4 h-4" />
-                          โปรไฟล์
+                          {t('nav.profile')}
                         </Link>
                         <Link
                           to="/activity/me"
@@ -180,7 +182,7 @@ export default function Header() {
                           className="w-full flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                         >
                           <LayoutGrid className="w-4 h-4" />
-                          My Activities
+                          {t('nav.myActivities')}
                         </Link>
                         <Link
                           to="/saved"
@@ -188,7 +190,7 @@ export default function Header() {
                           className="w-full flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                         >
                           <Heart className="w-4 h-4" />
-                          My Saved
+                          {t('nav.mySaved')}
                         </Link>
                         {isAdmin && (
                           <Link
@@ -197,7 +199,7 @@ export default function Header() {
                             className="w-full flex items-center gap-2 px-4 py-2 text-sm text-amber-500 hover:text-amber-400 hover:bg-accent transition-colors"
                           >
                             <Settings className="w-4 h-4" />
-                            Admin Dashboard
+                            {t('nav.adminDashboard')}
                           </Link>
                         )}
                         <button
@@ -205,7 +207,7 @@ export default function Header() {
                           className="w-full flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                         >
                           <LogOut className="w-4 h-4" />
-                          ออกจากระบบ
+                          {t('common.logout')}
                         </button>
                       </motion.div>
                     )}
@@ -217,7 +219,7 @@ export default function Header() {
                   className="ml-2 flex items-center gap-2 px-4 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                 >
                   <LogIn className="w-4 h-4" />
-                  เข้าสู่ระบบ
+                  {t('common.login')}
                 </Link>
               )}
             </nav>
@@ -242,7 +244,7 @@ export default function Header() {
         className="fixed inset-y-0 right-0 w-72 bg-card border-l border-border z-50 md:hidden"
       >
         <div className="flex items-center justify-between p-4 border-b border-border">
-          <span className="font-bold text-lg text-foreground">Menu</span>
+          <span className="font-bold text-lg text-foreground">{t('nav.menu')}</span>
           <button
             onClick={() => setIsOpen(false)}
             className="p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
@@ -273,7 +275,7 @@ export default function Header() {
             className="flex items-center gap-3 p-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors mt-4"
           >
             <Plus className="w-5 h-5" />
-            Create Quest
+            {t('nav.createQuest')}
           </Link>
 
           {/* Mobile Language Toggle */}
@@ -282,7 +284,7 @@ export default function Header() {
             className="w-full flex items-center gap-3 p-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors mt-2"
           >
             <Globe className="w-5 h-5" />
-            {language === 'th' ? 'English' : 'ภาษาไทย'}
+            {language === 'th' ? t('nav.switchToEnglish') : t('nav.switchToThai')}
           </button>
 
           {/* Mobile User Section */}
@@ -298,7 +300,7 @@ export default function Header() {
                   className="w-full flex items-center gap-3 p-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                 >
                   <User className="w-5 h-5" />
-                  โปรไฟล์
+                  {t('nav.profile')}
                 </Link>
                 <Link
                   to="/activity/me"
@@ -306,7 +308,7 @@ export default function Header() {
                   className="w-full flex items-center gap-3 p-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                 >
                   <LayoutGrid className="w-5 h-5" />
-                  My Activities
+                  {t('nav.myActivities')}
                 </Link>
                 <Link
                   to="/saved"
@@ -314,7 +316,7 @@ export default function Header() {
                   className="w-full flex items-center gap-3 p-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                 >
                   <Heart className="w-5 h-5" />
-                  My Saved
+                  {t('nav.mySaved')}
                 </Link>
                 {isAdmin && (
                   <Link
@@ -323,7 +325,7 @@ export default function Header() {
                     className="w-full flex items-center gap-3 p-3 rounded-lg text-amber-500 hover:text-amber-400 hover:bg-accent transition-colors"
                   >
                     <Settings className="w-5 h-5" />
-                    Admin Dashboard
+                    {t('nav.adminDashboard')}
                   </Link>
                 )}
                 <button
@@ -334,7 +336,7 @@ export default function Header() {
                   className="w-full flex items-center gap-3 p-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                 >
                   <LogOut className="w-5 h-5" />
-                  ออกจากระบบ
+                  {t('common.logout')}
                 </button>
               </>
             ) : (
@@ -344,7 +346,7 @@ export default function Header() {
                 className="flex items-center gap-3 p-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               >
                 <LogIn className="w-5 h-5" />
-                เข้าสู่ระบบ
+                {t('common.login')}
               </Link>
             )}
           </div>

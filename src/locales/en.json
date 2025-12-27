@@ -34,7 +34,150 @@
     "beta": "Beta",
     "login": "Login",
     "logout": "Logout",
-    "or": "or"
+    "or": "or",
+    "freeStart": "Start for free, no cost"
+  },
+  "nav": {
+    "explore": "Explore",
+    "pricing": "Pricing",
+    "about": "About",
+    "contact": "Contact",
+    "create": "Create",
+    "createQuest": "Create Quest",
+    "menu": "Menu",
+    "profile": "Profile",
+    "myActivities": "My Activities",
+    "mySaved": "My Saved",
+    "adminDashboard": "Admin Dashboard",
+    "switchToThai": "Switch to Thai",
+    "switchToEnglish": "Switch to English"
+  },
+  "footer": {
+    "tagline": "Transform any content into gamified learning quests with AI.",
+    "product": "Product",
+    "company": "Company",
+    "aboutUs": "About Us",
+    "privacyPolicy": "Privacy Policy",
+    "startLearning": "Start Learning",
+    "ctaText": "Turn boring content into exciting adventures.",
+    "createFreeQuest": "Create Free Quest",
+    "allRightsReserved": "All rights reserved.",
+    "madeWith": "Made with",
+    "inThailand": "in Thailand"
+  },
+  "home": {
+    "hero": {
+      "badge": "AI-Powered Edutainment",
+      "title1": "Pause Studying.",
+      "title2": "Start Playing.",
+      "subtitle": "Transform boring lessons into fun activities with AI power.",
+      "description": "Whether you're a learner who wants to enjoy studying, or a teacher/creator who wants to create new experiences.",
+      "ctaLearn": "Start Learning",
+      "ctaCreate": "Create Your Quest"
+    },
+    "audience": {
+      "title": "QzVert for",
+      "titleHighlight": "Everyone",
+      "subtitle": "No matter which side you're on, we make learning more fun.",
+      "learner": {
+        "title": "For Learners",
+        "description": "Learn while playing, so fun you forget you're studying.",
+        "benefit1": "The more you play, the more fun, the better you get.",
+        "benefit2": "See your progress every day.",
+        "benefit3": "Have fun with friends anytime, anywhere.",
+        "cta": "Explore Quests"
+      },
+      "creator": {
+        "title": "For Teachers / Creators / Organizations",
+        "description": "Create memorable learning experiences for students or employees.",
+        "benefit1": "AI creates quests from content in seconds.",
+        "benefit2": "Easy measurement, clear overview.",
+        "benefit3": "Elevate learner experience with memorable content.",
+        "cta": "Create Free Quest"
+      }
+    },
+    "problem": {
+      "title": "\"Why is great knowledge forgotten?\"",
+      "subtitle": "The problem isn't the content, but the",
+      "subtitleHighlight": "\"presentation method\"",
+      "items": {
+        "vocab": {
+          "title": "Same old vocabulary banks",
+          "description": "Just memorization without context (Lack of Context)"
+        },
+        "video": {
+          "title": "Online videos",
+          "description": "One-way information that easily distracts"
+        },
+        "document": {
+          "title": "PDF documents / Articles",
+          "description": "Reading without motivation to take action"
+        }
+      }
+    },
+    "solution": {
+      "badge": "The QzVert Engine",
+      "title": "\"The Universal Context Layer\"",
+      "subtitle": "We don't create new content, we",
+      "subtitleHighlight": "\"revive\"",
+      "subtitleEnd": "the content you already have.",
+      "items": {
+        "mapping": {
+          "title": "Instant World-Mapping",
+          "description": "Whether it's old exam banks, skill videos, or academic documents, AI will turn them into a \"Learning Map\" instantly."
+        },
+        "roleplay": {
+          "title": "Multi-Scenario Roleplay",
+          "description": "Practice skills through simulated scenarios adapted from content, like turning sales lessons into AI NPC deal negotiations."
+        },
+        "reward": {
+          "title": "Reward-Driven Learning",
+          "description": "Turn every understanding into XP, items, and character level-ups to create deep memories."
+        }
+      }
+    },
+    "transform": {
+      "title": "\"Supports all your favorite learning sources\"",
+      "subtitle": "Connect Everything - Whatever you have, you can put it in QzVert.",
+      "items": {
+        "video": {
+          "title": "Video-to-Quest",
+          "description": "Turn online video courses into boss battle quizzes at key moments."
+        },
+        "document": {
+          "title": "Document-to-Dungeon",
+          "description": "Convert PDF documents or long lesson summaries into adventure stages requiring information to pass."
+        },
+        "flashcard": {
+          "title": "Flashcard-to-RPG",
+          "description": "Transform dry vocabulary and definition sets into skill cards for real duels."
+        }
+      }
+    },
+    "creator": {
+      "badge": "For Creators",
+      "title": "Maximize Retention",
+      "subtitle": "Turn your course into a Premium Experience like no other.",
+      "items": {
+        "churn": {
+          "title": "Reduce Dropout Rate",
+          "description": "Reduce Churn Rate with addictive experiences."
+        },
+        "community": {
+          "title": "Build Community",
+          "description": "Guild system and Leaderboard create strong learner groups."
+        },
+        "value": {
+          "title": "Upgrade Content Value",
+          "description": "Make existing content modern and accessible for the AI era."
+        }
+      }
+    },
+    "cta": {
+      "title1": "Ready to make learning",
+      "title2": "more fun than ever?",
+      "subtitle": "Whether you want to learn or teach, QzVert is ready to help you."
+    }
   },
   "create": {
     "title": "Create Activity",

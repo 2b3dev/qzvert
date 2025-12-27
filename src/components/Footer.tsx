@@ -1,22 +1,24 @@
 import IconApp from '@/components/icon/icon-app'
 import { Link } from '@tanstack/react-router'
 import { Github, Globe, Heart, Mail, Twitter } from 'lucide-react'
+import { useTranslation } from '../hooks/useTranslation'
 import { useLanguageStore } from '../stores/language-store'
 
 export default function Footer() {
   const currentYear = new Date().getFullYear()
   const { language, toggleLanguage } = useLanguageStore()
+  const { t } = useTranslation()
 
   const productLinks = [
-    { to: '/explore', label: 'Explore' },
-    { to: '/', hash: 'create', label: 'Create Quest' },
-    { to: '/pricing', label: 'Pricing' },
+    { to: '/explore', label: t('nav.explore') },
+    { to: '/', hash: 'create', label: t('nav.createQuest') },
+    { to: '/pricing', label: t('nav.pricing') },
   ]
 
   const companyLinks = [
-    { to: '/about', label: 'About Us' },
-    { to: '/contact', label: 'Contact' },
-    { to: '/privacy', label: 'Privacy Policy' },
+    { to: '/about', label: t('footer.aboutUs') },
+    { to: '/contact', label: t('nav.contact') },
+    { to: '/privacy', label: t('footer.privacyPolicy') },
   ]
 
   const socialLinks = [
@@ -38,7 +40,7 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-sm text-muted-foreground mb-4">
-              Transform any content into gamified learning quests with AI.
+              {t('footer.tagline')}
             </p>
             <div className="flex items-center gap-3">
               {socialLinks.map(({ href, icon: Icon, label }) => (
@@ -58,7 +60,7 @@ export default function Footer() {
 
           {/* Product Links */}
           <div>
-            <h3 className="font-semibold text-foreground mb-4">Product</h3>
+            <h3 className="font-semibold text-foreground mb-4">{t('footer.product')}</h3>
             <ul className="space-y-3">
               {productLinks.map(({ to, hash, label }) => (
                 <li key={label}>
@@ -76,7 +78,7 @@ export default function Footer() {
 
           {/* Company Links */}
           <div>
-            <h3 className="font-semibold text-foreground mb-4">Company</h3>
+            <h3 className="font-semibold text-foreground mb-4">{t('footer.company')}</h3>
             <ul className="space-y-3">
               {companyLinks.map(({ to, label }) => (
                 <li key={label}>
@@ -94,17 +96,17 @@ export default function Footer() {
           {/* Newsletter / CTA */}
           <div>
             <h3 className="font-semibold text-foreground mb-4">
-              Start Learning
+              {t('footer.startLearning')}
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Turn boring content into exciting adventures.
+              {t('footer.ctaText')}
             </p>
             <Link
               to="/"
               hash="create"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
             >
-              Create Free Quest
+              {t('footer.createFreeQuest')}
             </Link>
           </div>
         </div>
@@ -112,7 +114,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            &copy; {currentYear} QzVert. All rights reserved.
+            &copy; {currentYear} QzVert. {t('footer.allRightsReserved')}
           </p>
           <div className="flex items-center gap-4">
             {/* Language Toggle */}
@@ -125,7 +127,7 @@ export default function Footer() {
               {language === 'th' ? 'ไทย' : 'English'}
             </button>
             <p className="text-sm text-muted-foreground flex items-center gap-1">
-              Made with <Heart className="w-4 h-4 text-destructive fill-destructive" /> in Thailand
+              {t('footer.madeWith')} <Heart className="w-4 h-4 text-destructive fill-destructive" /> {t('footer.inThailand')}
             </p>
           </div>
         </div>

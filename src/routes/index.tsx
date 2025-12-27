@@ -23,69 +23,66 @@ import {
 } from 'lucide-react'
 import { DefaultLayout } from '../components/layouts/DefaultLayout'
 import { Button } from '../components/ui/button'
+import { useTranslation } from '../hooks/useTranslation'
 
 export const Route = createFileRoute('/')({ component: HomePage })
 
 function HomePage() {
+  const { t } = useTranslation()
+
   const problems = [
     {
       icon: BookOpen,
-      title: 'คลังคำศัพท์เดิมๆ',
-      description: 'ให้แค่การท่องจำที่ไร้บริบท (Lack of Context)',
+      title: t('home.problem.items.vocab.title'),
+      description: t('home.problem.items.vocab.description'),
     },
     {
       icon: Video,
-      title: 'วิดีโอออนไลน์',
-      description: 'การรับข้อมูลทางเดียวที่ชวนให้วอกแวกได้ง่าย',
+      title: t('home.problem.items.video.title'),
+      description: t('home.problem.items.video.description'),
     },
     {
       icon: FileText,
-      title: 'เอกสาร PDF / บทความ',
-      description: 'การอ่านที่ขาดแรงกระตุ้นให้ลงมือทำจริง',
+      title: t('home.problem.items.document.title'),
+      description: t('home.problem.items.document.description'),
     },
   ]
 
   const solutions = [
     {
       icon: Map,
-      title: 'Instant World-Mapping',
-      description:
-        'ไม่ว่าจะเป็นคลังข้อสอบเก่า, วิดีโอสอนทักษะ หรือเอกสารวิชาการ AI จะเปลี่ยนให้เป็น "แผนที่การเดินทาง" (Learning Map) ทันที',
+      title: t('home.solution.items.mapping.title'),
+      description: t('home.solution.items.mapping.description'),
     },
     {
       icon: MessageSquare,
-      title: 'Multi-Scenario Roleplay',
-      description:
-        'ฝึกฝนทักษะผ่านสถานการณ์จำลองที่ปรับตามเนื้อหา เช่น เปลี่ยนบทเรียนการขายเป็นการเจรจาปิดดีลกับ AI NPC',
+      title: t('home.solution.items.roleplay.title'),
+      description: t('home.solution.items.roleplay.description'),
     },
     {
       icon: Trophy,
-      title: 'Reward-Driven Learning',
-      description:
-        'เปลี่ยนทุกความเข้าใจให้เป็นแต้ม XP, ไอเทม และการอัปเลเวลตัวละคร เพื่อสร้างความจดจำที่ฝังลึก',
+      title: t('home.solution.items.reward.title'),
+      description: t('home.solution.items.reward.description'),
     },
   ]
 
   const transformTypes = [
     {
       icon: Play,
-      title: 'Video-to-Quest',
-      description:
-        'เปลี่ยนวิดีโอคอร์สออนไลน์ให้เป็นภารกิจสู้บอส (Quiz) ตามช่วงเวลาสำคัญ',
+      title: t('home.transform.items.video.title'),
+      description: t('home.transform.items.video.description'),
       color: 'from-red-500 to-orange-500',
     },
     {
       icon: FileText,
-      title: 'Document-to-Dungeon',
-      description:
-        'แปลงเอกสาร PDF หรือสรุปบทเรียนยาวๆ ให้เป็นด่านผจญภัยที่ต้องใช้ข้อมูลในการผ่านทาง',
+      title: t('home.transform.items.document.title'),
+      description: t('home.transform.items.document.description'),
       color: 'from-blue-500 to-cyan-500',
     },
     {
       icon: Gamepad2,
-      title: 'Flashcard-to-RPG',
-      description:
-        'เปลี่ยนชุดคำศัพท์และนิยามแห้งๆ ให้กลายเป็นสกิลการ์ดที่ใช้ดวลได้จริง',
+      title: t('home.transform.items.flashcard.title'),
+      description: t('home.transform.items.flashcard.description'),
       color: 'from-purple-500 to-pink-500',
     },
   ]
@@ -93,18 +90,18 @@ function HomePage() {
   const creatorBenefits = [
     {
       icon: TrendingUp,
-      title: 'ลดอัตราการเลิกเรียน',
-      description: 'Reduce Churn Rate ด้วยประสบการณ์ที่ทำให้ติดใจ',
+      title: t('home.creator.items.churn.title'),
+      description: t('home.creator.items.churn.description'),
     },
     {
       icon: Users,
-      title: 'สร้าง Community',
-      description: 'ระบบกิลด์และ Leaderboard สร้างกลุ่มผู้เรียนที่แข็งแกร่ง',
+      title: t('home.creator.items.community.title'),
+      description: t('home.creator.items.community.description'),
     },
     {
       icon: Star,
-      title: 'อัปเกรดมูลค่าเนื้อหา',
-      description: 'ทำให้เนื้อหาเดิมดูทันสมัยและเข้าถึงง่ายสำหรับคนยุค AI',
+      title: t('home.creator.items.value.title'),
+      description: t('home.creator.items.value.description'),
     },
   ]
 
@@ -139,26 +136,23 @@ function HomePage() {
                   />
                 </motion.div>
                 <span className="text-primary font-semibold tracking-wide uppercase text-sm">
-                  AI-Powered Edutainment
+                  {t('home.hero.badge')}
                 </span>
               </div>
 
               <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight">
-                <span className="text-foreground">Pause Studying.</span>
+                <span className="text-foreground">{t('home.hero.title1')}</span>
                 <br />
                 <span className="bg-gradient-to-r from-primary via-pink-500 to-orange-400 bg-clip-text text-transparent">
-                  Start Playing.
+                  {t('home.hero.title2')}
                 </span>
               </h1>
 
               <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-4">
-                เปลี่ยนบทเรียนที่น่าเบื่อ ให้กลายเป็นกิจกรรมที่แสนสนุก ด้วยพลัง AI
+                {t('home.hero.subtitle')}
               </p>
               <p className="text-base text-muted-foreground/80 max-w-2xl mx-auto mb-8">
-                ไม่ว่าคุณจะเป็น <span className="text-primary">ผู้เรียน</span>{' '}
-                ที่อยากสนุกกับการเรียน หรือ{' '}
-                <span className="text-pink-400">ครู/Creator</span>{' '}
-                ที่อยากสร้างประสบการณ์ใหม่
+                {t('home.hero.description')}
               </p>
 
               {/* Dual CTA */}
@@ -170,7 +164,7 @@ function HomePage() {
                 >
                   <Link to="/explore">
                     <GraduationCap className="w-5 h-5" />
-                    เริ่มเรียนเลย
+                    {t('home.hero.ctaLearn')}
                   </Link>
                 </Button>
                 <Button
@@ -180,13 +174,13 @@ function HomePage() {
                 >
                   <Link to="/create">
                     <Wand2 className="w-5 h-5" />
-                    สร้างเควสของคุณ
+                    {t('home.hero.ctaCreate')}
                   </Link>
                 </Button>
               </div>
 
               <p className="text-sm text-muted-foreground">
-                เริ่มต้นใช้งานฟรี ไม่มีค่าใช้จ่าย
+                {t('common.freeStart')}
               </p>
             </motion.div>
           </div>
@@ -202,10 +196,10 @@ function HomePage() {
               className="text-center mb-12"
             >
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                QzVert สำหรับ<span className="text-primary">ทุกคน</span>
+                {t('home.audience.title')}<span className="text-primary">{t('home.audience.titleHighlight')}</span>
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                ไม่ว่าคุณจะอยู่ฝั่งไหน เราช่วยให้การเรียนรู้สนุกขึ้น
+                {t('home.audience.subtitle')}
               </p>
             </motion.div>
 
@@ -223,28 +217,28 @@ function HomePage() {
                     <GraduationCap className="w-7 h-7 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold mb-3 text-primary">
-                    สำหรับผู้เรียน
+                    {t('home.audience.learner.title')}
                   </h3>
                   <p className="text-muted-foreground mb-6">
-                    เรียนไปเล่นไป สนุกจนลืมว่ากำลังเรียน
+                    {t('home.audience.learner.description')}
                   </p>
                   <ul className="space-y-3 mb-6">
                     <li className="flex items-center gap-3">
                       <Zap className="w-5 h-5 text-primary" />
                       <span className="text-foreground">
-                        ยิ่งเล่น ยิ่งสนุก ยิ่งเก่ง
+                        {t('home.audience.learner.benefit1')}
                       </span>
                     </li>
                     <li className="flex items-center gap-3">
                       <Trophy className="w-5 h-5 text-primary" />
                       <span className="text-foreground">
-                        เห็นพัฒนาการตัวเองทุกวัน
+                        {t('home.audience.learner.benefit2')}
                       </span>
                     </li>
                     <li className="flex items-center gap-3">
                       <Users className="w-5 h-5 text-primary" />
                       <span className="text-foreground">
-                        สนุกกับเพื่อนๆ ได้ทุกที่ทุกเวลา
+                        {t('home.audience.learner.benefit3')}
                       </span>
                     </li>
                   </ul>
@@ -254,7 +248,7 @@ function HomePage() {
                   >
                     <Link to="/explore">
                       <GraduationCap className="w-4 h-4" />
-                      สำรวจเควส
+                      {t('home.audience.learner.cta')}
                     </Link>
                   </Button>
                 </div>
@@ -273,28 +267,28 @@ function HomePage() {
                     <Briefcase className="w-7 h-7 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold mb-3 text-pink-400">
-                    สำหรับครู / Creator / องค์กร
+                    {t('home.audience.creator.title')}
                   </h3>
                   <p className="text-muted-foreground mb-6">
-                    สร้างประสบการณ์การเรียนรู้ที่น่าจดจำให้นักเรียนหรือพนักงาน
+                    {t('home.audience.creator.description')}
                   </p>
                   <ul className="space-y-3 mb-6">
                     <li className="flex items-center gap-3">
                       <Wand2 className="w-5 h-5 text-pink-400" />
                       <span className="text-foreground">
-                        AI สร้างเควสจากเนื้อหาในไม่กี่วินาที
+                        {t('home.audience.creator.benefit1')}
                       </span>
                     </li>
                     <li className="flex items-center gap-3">
                       <TrendingUp className="w-5 h-5 text-pink-400" />
                       <span className="text-foreground">
-                        วัดผลง่าย เห็นภาพรวมชัด
+                        {t('home.audience.creator.benefit2')}
                       </span>
                     </li>
                     <li className="flex items-center gap-3">
                       <Star className="w-5 h-5 text-pink-400" />
                       <span className="text-foreground">
-                        ยกระดับประสบการณ์ผู้เรียนด้วยเนื้อหาที่น่าจดจำ
+                        {t('home.audience.creator.benefit3')}
                       </span>
                     </li>
                   </ul>
@@ -304,7 +298,7 @@ function HomePage() {
                   >
                     <Link to="/create">
                       <Wand2 className="w-4 h-4" />
-                      สร้างเควสฟรี
+                      {t('home.audience.creator.cta')}
                     </Link>
                   </Button>
                 </div>
@@ -323,12 +317,12 @@ function HomePage() {
               className="text-center mb-12"
             >
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                "ทำไมความรู้ดีๆ ถึงถูกลืม?"
+                {t('home.problem.title')}
               </h2>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                ปัญหาไม่ได้อยู่ที่เนื้อหา แต่อยู่ที่{' '}
+                {t('home.problem.subtitle')}{' '}
                 <span className="text-primary font-semibold">
-                  "วิธีการนำเสนอ"
+                  {t('home.problem.subtitleHighlight')}
                 </span>
               </p>
             </motion.div>
@@ -368,15 +362,15 @@ function HomePage() {
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm font-medium mb-4">
                 <Sparkles className="w-4 h-4" />
-                The QzVert Engine
+                {t('home.solution.badge')}
               </div>
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                "The Universal Context Layer"
+                {t('home.solution.title')}
               </h2>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                เราไม่ได้สร้างเนื้อหาใหม่ แต่เรา{' '}
-                <span className="text-primary font-semibold">"ชุบชีวิต"</span>{' '}
-                เนื้อหาที่คุณมีอยู่แล้ว
+                {t('home.solution.subtitle')}{' '}
+                <span className="text-primary font-semibold">{t('home.solution.subtitleHighlight')}</span>{' '}
+                {t('home.solution.subtitleEnd')}
               </p>
             </motion.div>
 
@@ -415,10 +409,10 @@ function HomePage() {
               className="text-center mb-12"
             >
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                "รองรับทุกแหล่งการเรียนรู้ที่คุณรัก"
+                {t('home.transform.title')}
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Connect Everything - ไม่ว่าจะมีอะไร ก็เอามาใส่ QzVert ได้หมด
+                {t('home.transform.subtitle')}
               </p>
             </motion.div>
 
@@ -467,13 +461,13 @@ function HomePage() {
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-pink-400 text-sm font-medium mb-4">
                 <Target className="w-4 h-4" />
-                For Creators
+                {t('home.creator.badge')}
               </div>
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                เพิ่มความประทับใจ (Retention) ให้ถึงขีดสุด
+                {t('home.creator.title')}
               </h2>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                เปลี่ยนคอร์สของคุณให้เป็น Premium Experience ที่ไม่มีใครเหมือน
+                {t('home.creator.subtitle')}
               </p>
             </motion.div>
 
@@ -508,14 +502,14 @@ function HomePage() {
             >
               <h2 className="text-3xl md:text-5xl font-black mb-">
                 <div className="text-foreground pb-2">
-                  พร้อมเปลี่ยนการเรียนรู้
+                  {t('home.cta.title1')}
                 </div>
                 <div className="bg-gradient-to-r from-primary via-pink-500 to-orange-400 bg-clip-text text-transparent py-2">
-                  ให้สนุกกว่าที่เคย?
+                  {t('home.cta.title2')}
                 </div>
               </h2>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-                ไม่ว่าคุณจะอยากเรียนหรืออยากสอน QzVert พร้อมช่วยคุณ
+                {t('home.cta.subtitle')}
               </p>
 
               <div className="flex flex-col sm:flex-row justify-center gap-4">
@@ -526,7 +520,7 @@ function HomePage() {
                 >
                   <Link to="/explore">
                     <GraduationCap className="w-5 h-5" />
-                    เริ่มเรียนเลย
+                    {t('home.hero.ctaLearn')}
                   </Link>
                 </Button>
                 <Button
@@ -536,7 +530,7 @@ function HomePage() {
                 >
                   <Link to="/create">
                     <Wand2 className="w-5 h-5" />
-                    สร้างเควสของคุณ
+                    {t('home.hero.ctaCreate')}
                   </Link>
                 </Button>
               </div>
