@@ -178,7 +178,7 @@ function ExplorePage() {
       try {
         setLoading(true)
         const data = await getPublishedActivities()
-        setActivities(data || [])
+        setActivities(data)
       } catch (err) {
         console.error('Failed to fetch activities:', err)
         setError('Failed to load activities. Please try again later.')

@@ -19,7 +19,6 @@ import {
 import { QuizPlayer } from '../../components/QuizPlayer'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent } from '../../components/ui/card'
-import type { QuizProgress } from '../../lib/quiz-progress'
 import {
   clearQuizProgress,
   isQuizSessionExpired,
@@ -35,6 +34,7 @@ import { useActivityStore } from '../../stores/activity-store'
 import { useAuthStore } from '../../stores/auth-store'
 import { isQuestCourse } from '../../types/database'
 import type { Activity, CanUserPlayResult } from '../../types/database'
+import type { QuizProgress } from '../../lib/quiz-progress'
 
 export const Route = createFileRoute('/activity/play/$id')({
   component: ActivityPlayPage,
@@ -105,13 +105,11 @@ function ActivityPlayPage() {
       setIsLoading(true)
       try {
         const data = await getActivityById({ data: { activityId } })
-        if (data) {
-          const activity = data.activity as Activity
-          setActivity(data.generatedQuest, activity.raw_content, activityId)
-          setThemeConfig(data.themeConfig)
-          setActivityTimeLimit(activity.time_limit_minutes ?? null)
-          setActivityAvailableUntil(activity.available_until ?? null)
-        }
+        const activity = data.activity as Activity
+        setActivity(data.generatedQuest, activity.raw_content, activityId)
+        setThemeConfig(data.themeConfig)
+        setActivityTimeLimit(activity.time_limit_minutes ?? null)
+        setActivityAvailableUntil(activity.available_until ?? null)
 
         const canPlay = await checkCanUserPlay({ data: { activityId } })
         setCanPlayResult(canPlay)
@@ -195,7 +193,7 @@ function ActivityPlayPage() {
   const handleStartQuiz = async () => {
     clearQuizProgress(activityId)
     const startedAt = new Date().toISOString()
-    let recordId: string | null = null
+    let recordId: string | undefined
 
     if (session) {
       try {
@@ -218,7 +216,7 @@ function ActivityPlayPage() {
       answers: {},
       timestamp: Date.now(),
       startedAt,
-      playRecordId: recordId ?? undefined,
+      playRecordId: recordId,
       timeLimitMinutes: activityTimeLimit,
       availableUntil: activityAvailableUntil,
     }
