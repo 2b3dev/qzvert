@@ -1,9 +1,11 @@
 import IconApp from '@/components/icon/icon-app'
 import { Link } from '@tanstack/react-router'
-import { Github, Twitter, Mail, Heart } from 'lucide-react'
+import { Github, Globe, Heart, Mail, Twitter } from 'lucide-react'
+import { useLanguageStore } from '../stores/language-store'
 
 export default function Footer() {
   const currentYear = new Date().getFullYear()
+  const { language, toggleLanguage } = useLanguageStore()
 
   const productLinks = [
     { to: '/explore', label: 'Explore' },
@@ -112,9 +114,20 @@ export default function Footer() {
           <p className="text-sm text-muted-foreground">
             &copy; {currentYear} QzVert. All rights reserved.
           </p>
-          <p className="text-sm text-muted-foreground flex items-center gap-1">
-            Made with <Heart className="w-4 h-4 text-destructive fill-destructive" /> in Thailand
-          </p>
+          <div className="flex items-center gap-4">
+            {/* Language Toggle */}
+            <button
+              onClick={toggleLanguage}
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Toggle language"
+            >
+              <Globe className="w-4 h-4" />
+              {language === 'th' ? 'ไทย' : 'English'}
+            </button>
+            <p className="text-sm text-muted-foreground flex items-center gap-1">
+              Made with <Heart className="w-4 h-4 text-destructive fill-destructive" /> in Thailand
+            </p>
+          </div>
         </div>
       </div>
     </footer>

@@ -1,4 +1,26 @@
 {
+  "seo": {
+    "siteName": "QzVert",
+    "title": "QzVert - เปลี่ยนการเรียนรู้ให้เป็นการผจญภัย",
+    "description": "AI แปลงเนื้อหาให้เป็นเควสการเรียนรู้แบบ Gamified ในไม่กี่วินาที สร้าง Quiz, Quest, Flashcard และอื่นๆ",
+    "keywords": "การเรียนรู้, gamification, AI, แบบทดสอบ, เควส, แฟลชการ์ด, edtech, การศึกษา",
+    "ogTitle": "QzVert - เปลี่ยนเนื้อหาเป็นเกมการเรียนรู้",
+    "ogDescription": "สร้างกิจกรรมการเรียนรู้แบบ Gamified ด้วย AI ฟรี",
+    "pages": {
+      "create": {
+        "title": "สร้างกิจกรรม - QzVert",
+        "description": "สร้าง Quiz, Quest, บทเรียน และ Flashcard ด้วย AI จากเนื้อหาของคุณ"
+      },
+      "explore": {
+        "title": "สำรวจกิจกรรม - QzVert",
+        "description": "ค้นหาและเล่นกิจกรรมการเรียนรู้ที่น่าสนใจจากผู้สร้างทั่วโลก"
+      },
+      "login": {
+        "title": "เข้าสู่ระบบ - QzVert",
+        "description": "เข้าสู่ระบบหรือสมัครสมาชิกเพื่อเริ่มสร้างกิจกรรมการเรียนรู้"
+      }
+    }
+  },
   "common": {
     "save": "บันทึก",
     "cancel": "ยกเลิก",

@@ -33,7 +33,7 @@ import type { CreatorType } from '../components/create'
 export const Route = createFileRoute('/create')({ component: CreatePage })
 
 function CreatePage() {
-  const { t, language, toggleLanguage } = useTranslation()
+  const { t } = useTranslation()
   const [activeCreator, setActiveCreator] = useState<CreatorType | null>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -233,7 +233,7 @@ function CreatePage() {
     <DefaultLayout>
       <div className="min-h-screen bg-gradient-to-b from-background via-muted/30 to-background">
         {/* Mobile Header */}
-        <div className="md:hidden sticky top-16 z-30 bg-background/80 backdrop-blur-sm border-b border-border px-4 py-3 flex items-center justify-between">
+        <div className="md:hidden sticky top-16 z-30 bg-background/80 backdrop-blur-sm border-b border-border px-4 py-3">
           <Button
             variant="ghost"
             size="sm"
@@ -242,9 +242,6 @@ function CreatePage() {
           >
             <Menu className="w-5 h-5" />
             <span>{t('create.title')}</span>
-          </Button>
-          <Button variant="ghost" size="sm" onClick={toggleLanguage}>
-            {language === 'th' ? '🇹🇭' : '🇺🇸'}
           </Button>
         </div>
 
@@ -261,18 +258,6 @@ function CreatePage() {
 
           {/* Main Content */}
           <main className="flex-1 p-4 md:p-8">
-            {/* Desktop Language Toggle */}
-            <div className="hidden md:flex justify-end mb-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleLanguage}
-                className="flex items-center gap-2"
-              >
-                {language === 'th' ? '🇹🇭 ไทย' : '🇺🇸 English'}
-              </Button>
-            </div>
-
             {/* Back Button when creator is active */}
             <AnimatePresence>
               {activeCreator && (

@@ -1,24 +1,25 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { setLanguage as setLanguageServer } from '../server/language'
 
-type Language = 'th' | 'en'
+import type { Language } from '../server/language'
 
 interface LanguageState {
   language: Language
-  setLanguage: (lang: Language) => void
-  toggleLanguage: () => void
+  setLanguage: (lang: Language) => Promise<void>
+  toggleLanguage: () => Promise<void>
+  initLanguage: (lang: Language) => void
 }
 
-export const useLanguageStore = create<LanguageState>()(
-  persist(
-    (set, get) => ({
-      language: 'th',
-      setLanguage: (language) => set({ language }),
-      toggleLanguage: () =>
-        set({ language: get().language === 'th' ? 'en' : 'th' }),
-    }),
-    {
-      name: 'qzvert-language',
-    },
-  ),
-)
+export const useLanguageStore = create<LanguageState>()((set, get) => ({
+  language: 'en',
+  setLanguage: async (language) => {
+    await setLanguageServer({ data: { language } })
+    set({ language })
+  },
+  toggleLanguage: async () => {
+    const newLang = get().language === 'th' ? 'en' : 'th'
+    await setLanguageServer({ data: { language: newLang } })
+    set({ language: newLang })
+  },
+  initLanguage: (language) => set({ language }),
+}))

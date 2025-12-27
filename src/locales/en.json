@@ -1,4 +1,26 @@
 {
+  "seo": {
+    "siteName": "QzVert",
+    "title": "QzVert - Transform Learning Into Adventure",
+    "description": "AI transforms your content into gamified learning quests in seconds. Create Quizzes, Quests, Flashcards and more.",
+    "keywords": "learning, gamification, AI, quiz, quest, flashcard, edtech, education",
+    "ogTitle": "QzVert - Turn Content Into Learning Games",
+    "ogDescription": "Create gamified learning activities with AI for free.",
+    "pages": {
+      "create": {
+        "title": "Create Activity - QzVert",
+        "description": "Create Quizzes, Quests, Lessons and Flashcards with AI from your content."
+      },
+      "explore": {
+        "title": "Explore Activities - QzVert",
+        "description": "Discover and play exciting learning activities from creators worldwide."
+      },
+      "login": {
+        "title": "Login - QzVert",
+        "description": "Login or sign up to start creating learning activities."
+      }
+    }
+  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",

@@ -2,10 +2,11 @@ import IconApp from '@/components/icon/icon-app'
 import { setTheme, type Theme } from '@/server/theme'
 import { Link, useRouter } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Heart, LayoutGrid, LogIn, LogOut, Menu, Moon, Plus, Settings, Sun, User, X } from 'lucide-react'
+import { Globe, Heart, LayoutGrid, LogIn, LogOut, Menu, Moon, Plus, Settings, Sun, User, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Route } from '../routes/__root'
 import { useAuthStore } from '../stores/auth-store'
+import { useLanguageStore } from '../stores/language-store'
 import { useProfileStore } from '../stores/profile-store'
 
 export default function Header() {
@@ -21,6 +22,9 @@ export default function Header() {
 
   // Get profile for role checking
   const { profile, fetchProfile } = useProfileStore()
+
+  // Language
+  const { language, toggleLanguage } = useLanguageStore()
 
   // Fetch profile when user is available
   useEffect(() => {
@@ -106,9 +110,23 @@ export default function Header() {
                 <Plus className="w-4 h-4" />
                 Create
               </Link>
+              {/* Language Toggle */}
+              <button
+                onClick={toggleLanguage}
+                className="ml-2 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors flex items-center gap-1"
+                aria-label="Toggle language"
+                title={language === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}
+              >
+                <Globe className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  {language === 'th' ? 'TH' : 'EN'}
+                </span>
+              </button>
+
+              {/* Theme Toggle */}
               <button
                 onClick={toggleTheme}
-                className="ml-2 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                 aria-label="Toggle theme"
               >
                 <motion.div
@@ -257,6 +275,15 @@ export default function Header() {
             <Plus className="w-5 h-5" />
             Create Quest
           </Link>
+
+          {/* Mobile Language Toggle */}
+          <button
+            onClick={toggleLanguage}
+            className="w-full flex items-center gap-3 p-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors mt-2"
+          >
+            <Globe className="w-5 h-5" />
+            {language === 'th' ? 'English' : 'ภาษาไทย'}
+          </button>
 
           {/* Mobile User Section */}
           <div className="mt-4 pt-4 border-t border-border">
