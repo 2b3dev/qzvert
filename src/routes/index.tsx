@@ -22,7 +22,6 @@ import {
   Zap,
 } from 'lucide-react'
 import { DefaultLayout } from '../components/layouts/DefaultLayout'
-import { QuestCreator } from '../components/QuestCreator'
 import { Button } from '../components/ui/button'
 
 export const Route = createFileRoute('/')({ component: HomePage })
@@ -179,10 +178,10 @@ function HomePage() {
                   className="text-lg px-8 py-6 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-500/90 hover:to-pink-500/90"
                   asChild
                 >
-                  <a href="#create">
+                  <Link to="/create">
                     <Wand2 className="w-5 h-5" />
                     สร้างเควสของคุณ
-                  </a>
+                  </Link>
                 </Button>
               </div>
 
@@ -303,10 +302,10 @@ function HomePage() {
                     className="bg-gradient-to-r from-purple-500 to-pink-500"
                     asChild
                   >
-                    <a href="#create">
+                    <Link to="/create">
                       <Wand2 className="w-4 h-4" />
                       สร้างเควสฟรี
-                    </a>
+                    </Link>
                   </Button>
                 </div>
               </motion.div>
@@ -535,20 +534,16 @@ function HomePage() {
                   className="text-lg px-8 py-6 bg-gradient-to-r from-purple-500 to-pink-500"
                   asChild
                 >
-                  <a href="#create">
+                  <Link to="/create">
                     <Wand2 className="w-5 h-5" />
                     สร้างเควสของคุณ
-                  </a>
+                  </Link>
                 </Button>
               </div>
             </motion.div>
           </div>
         </section>
 
-        {/* Quest Creator Section */}
-        <section id="create" className="py-16 px-6">
-          <QuestCreator />
-        </section>
       </div>
     </DefaultLayout>
   )
