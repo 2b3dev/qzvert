@@ -252,6 +252,7 @@ export interface Profile {
   display_name: string | null
   avatar_url: string | null
   role: UserRole
+  ai_credits: number
   metadata: Record<string, unknown>
   created_at: string
   updated_at: string

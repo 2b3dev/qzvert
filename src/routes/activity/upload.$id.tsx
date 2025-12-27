@@ -898,34 +898,74 @@ function ActivityUploadPage() {
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
                   <Calendar className="w-4 h-4 inline-block mr-1" />
-                  Availability Window
+                  Date Limit
                 </label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">
-                      Available From
-                    </label>
-                    <DateTimePicker
-                      value={availableFrom}
-                      onChange={setAvailableFrom}
-                      placeholder="Select start date"
-                      outputFormat="iso"
-                      maxDate={availableUntil || undefined}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">
-                      Available Until
-                    </label>
-                    <DateTimePicker
-                      value={availableUntil}
-                      onChange={setAvailableUntil}
-                      placeholder="Select end date"
-                      outputFormat="iso"
-                      minDate={availableFrom || undefined}
-                    />
-                  </div>
+                <div className="flex items-center gap-3 mb-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAvailableFrom('')
+                      setAvailableUntil('')
+                    }}
+                    className={cn(
+                      'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                      !availableFrom && !availableUntil
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground',
+                    )}
+                  >
+                    <Infinity className="w-4 h-4" />
+                    Unlimited
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!availableFrom && !availableUntil) {
+                        // Set default: now to 7 days from now
+                        const now = new Date()
+                        const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+                        setAvailableFrom(now.toISOString())
+                        setAvailableUntil(weekLater.toISOString())
+                      }
+                    }}
+                    className={cn(
+                      'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                      availableFrom || availableUntil
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground',
+                    )}
+                  >
+                    Limited
+                  </button>
                 </div>
+                {(availableFrom || availableUntil) && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">
+                        Available From
+                      </label>
+                      <DateTimePicker
+                        value={availableFrom}
+                        onChange={setAvailableFrom}
+                        placeholder="Select start date"
+                        outputFormat="iso"
+                        maxDate={availableUntil || undefined}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">
+                        Available Until
+                      </label>
+                      <DateTimePicker
+                        value={availableUntil}
+                        onChange={setAvailableUntil}
+                        placeholder="Select end date"
+                        outputFormat="iso"
+                        minDate={availableFrom || undefined}
+                      />
+                    </div>
+                  </div>
+                )}
                 <p className="text-xs text-muted-foreground mt-2">
                   {!availableFrom && !availableUntil
                     ? 'This activity is always available.'

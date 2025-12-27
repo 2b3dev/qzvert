@@ -10,15 +10,17 @@ import {
   Lock,
   Map,
   MessageSquare,
+  PenLine,
   Sparkles,
   Type,
   Video,
   Wand2,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { generateQuest } from '../server/gemini'
 import { useAuthStore } from '../stores/auth-store'
 import { useActivityStore } from '../stores/activity-store'
+import { useProfileStore } from '../stores/profile-store'
 import IconApp from './icon/icon-app'
 import type { QuestSettingsData, QuizSettingsData } from './QuizSettings'
 import { QuizSettings } from './QuizSettings'
@@ -134,7 +136,44 @@ export function QuestCreator() {
 
   const { setActivity, themeConfig, setThemeConfig, setTimeLimitMinutes } = useActivityStore()
   const { user, session, isLoading: isAuthLoading } = useAuthStore()
+  const { profile, fetchProfile } = useProfileStore()
   const navigate = useNavigate()
+
+  const handleCreateManual = () => {
+    // Create empty quiz template
+    const emptyQuiz = {
+      title: 'Untitled Quiz',
+      description: '',
+      type: 'quiz' as const,
+      tags: [],
+      quizzes: [
+        {
+          type: 'multiple_choice' as const,
+          question: '',
+          options: ['', '', '', ''],
+          correct_answer: 0,
+          explanation: '',
+          points: 100,
+        },
+      ],
+    }
+    setActivity(emptyQuiz, '')
+    navigate({ to: '/activity/upload/$id', params: { id: 'new' } })
+  }
+
+  // Fetch profile when user is available
+  useEffect(() => {
+    if (user?.id && !profile) {
+      fetchProfile(user.id)
+    }
+  }, [user?.id, profile, fetchProfile])
+
+  // Format AI credits display
+  const getCreditsDisplay = () => {
+    if (!profile) return null
+    if (profile.role === 'admin') return '∞'
+    return profile.ai_credits.toString()
+  }
 
   // Auth gate - show login prompt if not authenticated
   if (!isAuthLoading && !user) {
@@ -560,40 +599,40 @@ export function QuestCreator() {
             )}
           </AnimatePresence>
 
-          {/* Generate Button */}
-          <Button
-            size="lg"
-            className="w-full"
-            onClick={handleGenerate}
-            disabled={isGenerating || !content.trim()}
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Generating your{' '}
-                {selectedOutput === 'quiz'
-                  ? 'quiz'
-                  : selectedOutput === 'quest'
-                    ? 'quest'
-                    : selectedOutput === 'flashcard'
-                      ? 'flashcard'
-                      : 'roleplay'}
-                ...
-              </>
-            ) : (
-              <>
-                <Wand2 className="w-5 h-5" />
-                Generate{' '}
-                {selectedOutput === 'quiz'
-                  ? 'Quiz'
-                  : selectedOutput === 'quest'
-                    ? 'Quest'
-                    : selectedOutput === 'flashcard'
-                      ? 'Flashcard'
-                      : 'Roleplay'}
-              </>
-            )}
-          </Button>
+          {/* Generate Buttons */}
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              size="lg"
+              onClick={handleGenerate}
+              disabled={isGenerating || !content.trim()}
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Wand2 className="w-5 h-5" />
+                  Generate Quiz
+                  {getCreditsDisplay() && (
+                    <span className="ml-1 px-2 py-0.5 rounded-full bg-white/20 text-xs font-medium flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      {getCreditsDisplay()}
+                    </span>
+                  )}
+                </>
+              )}
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={handleCreateManual}
+            >
+              <PenLine className="w-5 h-5" />
+              Create Manual
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </motion.div>
