@@ -2,6 +2,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   BookOpen,
+  BookOpenCheck,
   ChevronDown,
   FileText,
   Globe,
@@ -35,7 +36,7 @@ import {
 import { Textarea } from './ui/input'
 
 type ContentType = 'text' | 'pdf' | 'video_link'
-type OutputType = 'quiz' | 'quest' | 'flashcard' | 'roleplay'
+type OutputType = 'quiz' | 'quest' | 'flashcard' | 'roleplay' | 'lesson'
 type Language = 'th' | 'en'
 
 const languages = [
@@ -75,8 +76,15 @@ const outputTypes = [
   {
     type: 'quest' as OutputType,
     icon: Map,
-    label: 'Quest Course',
-    description: 'Stages + Learning Map',
+    label: 'Quest',
+    description: 'Multi-stage learning journey',
+    available: true,
+  },
+  {
+    type: 'lesson' as OutputType,
+    icon: BookOpenCheck,
+    label: 'Lesson',
+    description: 'Structured content modules',
     available: true,
   },
   {
@@ -119,6 +127,20 @@ const defaultQuestSettings: QuestSettingsData = {
   ageRange: 'auto',
 }
 
+export interface LessonSettingsData {
+  lessonMode: 'auto' | 'custom'
+  moduleCount: 'auto' | number
+  tags: string[]
+  ageRange: 'auto' | string
+}
+
+const defaultLessonSettings: LessonSettingsData = {
+  lessonMode: 'auto',
+  moduleCount: 'auto',
+  tags: [],
+  ageRange: 'auto',
+}
+
 export function QuestCreator() {
   const [selectedType, setSelectedType] = useState<ContentType>('text')
   const [selectedOutput, setSelectedOutput] = useState<OutputType>('quiz')
@@ -133,6 +155,8 @@ export function QuestCreator() {
     useState<QuizSettingsData>(defaultQuizSettings)
   const [questSettings, setQuestSettings] =
     useState<QuestSettingsData>(defaultQuestSettings)
+  const [lessonSettings, setLessonSettings] =
+    useState<LessonSettingsData>(defaultLessonSettings)
 
   const { setActivity, themeConfig, setThemeConfig, setTimeLimitMinutes, setAgeRange } = useActivityStore()
   const { user, session, isLoading: isAuthLoading } = useAuthStore()
@@ -260,7 +284,11 @@ export function QuestCreator() {
 
     try {
       const currentSettings =
-        selectedOutput === 'quiz' ? quizSettings : questSettings
+        selectedOutput === 'quiz'
+          ? quizSettings
+          : selectedOutput === 'quest'
+            ? questSettings
+            : lessonSettings
 
       // Determine quiz type for API
       let quizTypes: Array<'multiple_choice' | 'subjective'> | undefined
@@ -311,6 +339,12 @@ export function QuestCreator() {
             ? questSettings.questionsPerStage
             : 'auto'
         choiceCount = questSettings.choiceCount
+      } else if (selectedOutput === 'lesson') {
+        // Lesson uses moduleCount from lessonSettings
+        stageCount =
+          lessonSettings.lessonMode === 'custom'
+            ? (lessonSettings.moduleCount as number)
+            : 'auto'
       }
 
       const quest = await generateQuest({
@@ -342,20 +376,25 @@ export function QuestCreator() {
       // Store quest and raw content for editing
       setActivity(quest, content)
 
-      // Set activity time limit (convert seconds to minutes)
-      if (currentSettings.timerEnabled && currentSettings.timerSeconds > 0) {
-        setTimeLimitMinutes(Math.ceil(currentSettings.timerSeconds / 60))
+      // Set activity time limit (convert seconds to minutes) - only for quiz/quest
+      if (selectedOutput !== 'lesson') {
+        const timerSettings = currentSettings as QuizSettingsData | QuestSettingsData
+        if (timerSettings.timerEnabled && timerSettings.timerSeconds > 0) {
+          setTimeLimitMinutes(Math.ceil(timerSettings.timerSeconds / 60))
+        } else {
+          setTimeLimitMinutes(null)
+        }
+
+        // Update theme config (keep for other settings)
+        const updatedThemeConfig = {
+          ...themeConfig,
+          timerEnabled: timerSettings.timerEnabled,
+          timerSeconds: timerSettings.timerSeconds,
+        }
+        setThemeConfig(updatedThemeConfig)
       } else {
         setTimeLimitMinutes(null)
       }
-
-      // Update theme config (keep for other settings)
-      const updatedThemeConfig = {
-        ...themeConfig,
-        timerEnabled: currentSettings.timerEnabled,
-        timerSeconds: currentSettings.timerSeconds,
-      }
-      setThemeConfig(updatedThemeConfig)
 
       // Navigate to upload page for review before saving
       navigate({ to: '/activity/upload/$id', params: { id: 'new' } })
@@ -394,9 +433,11 @@ export function QuestCreator() {
                 ? 'Quiz'
                 : selectedOutput === 'quest'
                   ? 'Quest'
-                  : selectedOutput === 'flashcard'
-                    ? 'Flashcard'
-                    : 'Roleplay'}
+                  : selectedOutput === 'lesson'
+                    ? 'Lesson'
+                    : selectedOutput === 'flashcard'
+                      ? 'Flashcard'
+                      : 'Roleplay'}
             </CardTitle>
           </div>
           <CardDescription className="text-muted-foreground text-lg">
@@ -404,9 +445,11 @@ export function QuestCreator() {
               ? 'Generate smart quiz questions from any content'
               : selectedOutput === 'quest'
                 ? 'Transform content into an epic learning adventure'
-                : selectedOutput === 'flashcard'
-                  ? 'Create flashcards for spaced repetition learning'
-                  : 'Practice with AI conversation scenarios'}
+                : selectedOutput === 'lesson'
+                  ? 'Create structured lesson with content modules'
+                  : selectedOutput === 'flashcard'
+                    ? 'Create flashcards for spaced repetition learning'
+                    : 'Practice with AI conversation scenarios'}
           </CardDescription>
         </CardHeader>
 
@@ -480,6 +523,77 @@ export function QuestCreator() {
                   settings={questSettings}
                   onChange={setQuestSettings}
                 />
+              </motion.div>
+            )}
+            {selectedOutput === 'lesson' && (
+              <motion.div
+                key="lesson-settings"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="space-y-4 p-4 rounded-xl border border-border bg-secondary/30">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Module Count</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setLessonSettings((prev) => ({
+                            ...prev,
+                            lessonMode: 'auto',
+                            moduleCount: 'auto',
+                          }))
+                        }
+                        className={`px-3 py-1 rounded-lg text-sm ${
+                          lessonSettings.lessonMode === 'auto'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-secondary text-muted-foreground'
+                        }`}
+                      >
+                        Auto
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setLessonSettings((prev) => ({
+                            ...prev,
+                            lessonMode: 'custom',
+                            moduleCount: 3,
+                          }))
+                        }
+                        className={`px-3 py-1 rounded-lg text-sm ${
+                          lessonSettings.lessonMode === 'custom'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-secondary text-muted-foreground'
+                        }`}
+                      >
+                        Custom
+                      </button>
+                    </div>
+                  </div>
+                  {lessonSettings.lessonMode === 'custom' && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="range"
+                        min="1"
+                        max="10"
+                        value={lessonSettings.moduleCount as number}
+                        onChange={(e) =>
+                          setLessonSettings((prev) => ({
+                            ...prev,
+                            moduleCount: parseInt(e.target.value),
+                          }))
+                        }
+                        className="flex-1"
+                      />
+                      <span className="text-sm text-muted-foreground w-8 text-center">
+                        {lessonSettings.moduleCount}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

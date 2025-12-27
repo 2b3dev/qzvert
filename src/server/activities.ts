@@ -55,7 +55,7 @@ export const saveQuest = createServerFn({ method: 'POST' })
         raw_content: data.rawContent,
         theme_config: data.themeConfig as unknown as Database['public']['Tables']['activities']['Insert']['theme_config'],
         status: 'draft',
-        type: data.quest.type === 'quiz' ? 'quiz' : 'quest'
+        type: data.quest.type
       })
       .select('id')
       .single()
@@ -101,7 +101,7 @@ export const saveQuest = createServerFn({ method: 'POST' })
       if (questionError) {
         throw new Error(`Failed to save questions: ${questionError.message}`)
       }
-    } else {
+    } else if (data.quest.type === 'quest') {
       // Quest Course: Insert stages with their questions
       for (let stageIndex = 0; stageIndex < data.quest.stages.length; stageIndex++) {
         const stage = data.quest.stages[stageIndex]
@@ -137,6 +137,25 @@ export const saveQuest = createServerFn({ method: 'POST' })
 
         if (questionError) {
           throw new Error(`Failed to save questions: ${questionError.message}`)
+        }
+      }
+    } else if (data.quest.type === 'lesson') {
+      // Lesson: Insert modules as stages with content stored in lesson_summary as JSON
+      for (let moduleIndex = 0; moduleIndex < data.quest.modules.length; moduleIndex++) {
+        const module = data.quest.modules[moduleIndex]
+
+        const { error: stageError } = await supabase
+          .from('stages')
+          .insert({
+            activity_id: activityId,
+            title: module.title,
+            // Store content_blocks as JSON string in lesson_summary
+            lesson_summary: JSON.stringify(module.content_blocks),
+            order_index: moduleIndex
+          })
+
+        if (stageError) {
+          throw new Error(`Failed to save lesson module: ${stageError?.message}`)
         }
       }
     }
@@ -242,44 +261,60 @@ export const getActivityById = createServerFn({ method: 'GET' })
     }
 
     // Transform to GeneratedQuest format for compatibility with existing store
-    // Determine if it's a quiz (single stage with empty lesson) or quest
-    const isSmartQuiz = stages?.length === 1 && !stages[0].lesson_summary
+    let generatedQuest: GeneratedQuest
 
-    const generatedQuest: GeneratedQuest = isSmartQuiz
-      ? {
-          type: 'quiz' as const,
-          title: activity.title,
-          description: activity.description || undefined,
-          thumbnail: activity.thumbnail || undefined,
-          tags: activity.tags || undefined,
-          quizzes: questions.map(q => ({
-            type: 'multiple_choice' as const,
-            question: q.question,
-            options: q.options as string[],
-            correct_answer: q.correct_answer,
-            explanation: q.explanation
-          }))
-        }
-      : {
-          type: 'quest' as const,
-          title: activity.title,
-          description: activity.description || undefined,
-          thumbnail: activity.thumbnail || undefined,
-          tags: activity.tags || undefined,
-          stages: (stages || []).map(stage => ({
-            title: stage.title,
-            lesson: stage.lesson_summary,
-            quizzes: questions
-              .filter(q => q.stage_id === stage.id)
-              .map(q => ({
-                type: 'multiple_choice' as const,
-                question: q.question,
-                options: q.options as string[],
-                correct_answer: q.correct_answer,
-                explanation: q.explanation
-              }))
-          }))
-        }
+    if (activity.type === 'lesson') {
+      // Lesson: parse content_blocks from lesson_summary JSON
+      generatedQuest = {
+        type: 'lesson' as const,
+        title: activity.title,
+        description: activity.description || undefined,
+        thumbnail: activity.thumbnail || undefined,
+        tags: activity.tags || undefined,
+        modules: (stages || []).map(stage => ({
+          title: stage.title,
+          content_blocks: stage.lesson_summary ? JSON.parse(stage.lesson_summary) : []
+        }))
+      }
+    } else if (activity.type === 'quiz' || (stages?.length === 1 && !stages[0].lesson_summary)) {
+      // Smart Quiz
+      generatedQuest = {
+        type: 'quiz' as const,
+        title: activity.title,
+        description: activity.description || undefined,
+        thumbnail: activity.thumbnail || undefined,
+        tags: activity.tags || undefined,
+        quizzes: questions.map(q => ({
+          type: 'multiple_choice' as const,
+          question: q.question,
+          options: q.options as string[],
+          correct_answer: q.correct_answer,
+          explanation: q.explanation
+        }))
+      }
+    } else {
+      // Quest Course
+      generatedQuest = {
+        type: 'quest' as const,
+        title: activity.title,
+        description: activity.description || undefined,
+        thumbnail: activity.thumbnail || undefined,
+        tags: activity.tags || undefined,
+        stages: (stages || []).map(stage => ({
+          title: stage.title,
+          lesson: stage.lesson_summary,
+          quizzes: questions
+            .filter(q => q.stage_id === stage.id)
+            .map(q => ({
+              type: 'multiple_choice' as const,
+              question: q.question,
+              options: q.options as string[],
+              correct_answer: q.correct_answer,
+              explanation: q.explanation
+            }))
+        }))
+      }
+    }
 
     return {
       activity,
@@ -339,43 +374,60 @@ export const getActivityByIdForEdit = createServerFn({ method: 'GET' })
     }
 
     // Transform to GeneratedQuest format
-    const isSmartQuiz = stages?.length === 1 && !stages[0].lesson_summary
+    let generatedQuest: GeneratedQuest
 
-    const generatedQuest: GeneratedQuest = isSmartQuiz
-      ? {
-          type: 'quiz' as const,
-          title: activity.title,
-          description: activity.description || undefined,
-          thumbnail: activity.thumbnail || undefined,
-          tags: activity.tags || undefined,
-          quizzes: questions.map(q => ({
-            type: 'multiple_choice' as const,
-            question: q.question,
-            options: q.options as string[],
-            correct_answer: q.correct_answer,
-            explanation: q.explanation
-          }))
-        }
-      : {
-          type: 'quest' as const,
-          title: activity.title,
-          description: activity.description || undefined,
-          thumbnail: activity.thumbnail || undefined,
-          tags: activity.tags || undefined,
-          stages: (stages || []).map(stage => ({
-            title: stage.title,
-            lesson: stage.lesson_summary,
-            quizzes: questions
-              .filter(q => q.stage_id === stage.id)
-              .map(q => ({
-                type: 'multiple_choice' as const,
-                question: q.question,
-                options: q.options as string[],
-                correct_answer: q.correct_answer,
-                explanation: q.explanation
-              }))
-          }))
-        }
+    if (activity.type === 'lesson') {
+      // Lesson: parse content_blocks from lesson_summary JSON
+      generatedQuest = {
+        type: 'lesson' as const,
+        title: activity.title,
+        description: activity.description || undefined,
+        thumbnail: activity.thumbnail || undefined,
+        tags: activity.tags || undefined,
+        modules: (stages || []).map(stage => ({
+          title: stage.title,
+          content_blocks: stage.lesson_summary ? JSON.parse(stage.lesson_summary) : []
+        }))
+      }
+    } else if (activity.type === 'quiz' || (stages?.length === 1 && !stages[0].lesson_summary)) {
+      // Smart Quiz
+      generatedQuest = {
+        type: 'quiz' as const,
+        title: activity.title,
+        description: activity.description || undefined,
+        thumbnail: activity.thumbnail || undefined,
+        tags: activity.tags || undefined,
+        quizzes: questions.map(q => ({
+          type: 'multiple_choice' as const,
+          question: q.question,
+          options: q.options as string[],
+          correct_answer: q.correct_answer,
+          explanation: q.explanation
+        }))
+      }
+    } else {
+      // Quest Course
+      generatedQuest = {
+        type: 'quest' as const,
+        title: activity.title,
+        description: activity.description || undefined,
+        thumbnail: activity.thumbnail || undefined,
+        tags: activity.tags || undefined,
+        stages: (stages || []).map(stage => ({
+          title: stage.title,
+          lesson: stage.lesson_summary,
+          quizzes: questions
+            .filter(q => q.stage_id === stage.id)
+            .map(q => ({
+              type: 'multiple_choice' as const,
+              question: q.question,
+              options: q.options as string[],
+              correct_answer: q.correct_answer,
+              explanation: q.explanation
+            }))
+        }))
+      }
+    }
 
     return {
       activity,
@@ -401,6 +453,7 @@ export const getUserActivities = createServerFn({ method: 'GET' })
         title,
         status,
         play_count,
+        type,
         stages (
           id,
           title
@@ -532,7 +585,7 @@ export const updateQuest = createServerFn({ method: 'POST' })
       if (questionError) {
         throw new Error(`Failed to save questions: ${questionError.message}`)
       }
-    } else {
+    } else if (data.quest.type === 'quest') {
       // Quest Course: Insert stages with their questions
       for (let stageIndex = 0; stageIndex < data.quest.stages.length; stageIndex++) {
         const stage = data.quest.stages[stageIndex]
@@ -568,6 +621,25 @@ export const updateQuest = createServerFn({ method: 'POST' })
 
         if (questionError) {
           throw new Error(`Failed to save questions: ${questionError.message}`)
+        }
+      }
+    } else if (data.quest.type === 'lesson') {
+      // Lesson: Insert modules as stages with content stored in lesson_summary as JSON
+      for (let moduleIndex = 0; moduleIndex < data.quest.modules.length; moduleIndex++) {
+        const module = data.quest.modules[moduleIndex]
+
+        const { error: stageError } = await supabase
+          .from('stages')
+          .insert({
+            activity_id: data.activityId,
+            title: module.title,
+            // Store content_blocks as JSON string in lesson_summary
+            lesson_summary: JSON.stringify(module.content_blocks),
+            order_index: moduleIndex
+          })
+
+        if (stageError) {
+          throw new Error(`Failed to save lesson module: ${stageError?.message}`)
         }
       }
     }

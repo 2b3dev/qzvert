@@ -16,7 +16,7 @@ export interface Database {
           raw_content: string
           theme_config: ThemeConfig
           play_count: number
-          type: 'quiz' | 'quest' | 'flashcard' | 'roleplay'
+          type: 'quiz' | 'quest' | 'flashcard' | 'roleplay' | 'lesson'
           status: ActivityStatus
           replay_limit: number | null
           available_from: string | null
@@ -34,7 +34,7 @@ export interface Database {
           raw_content: string
           theme_config?: ThemeConfig
           play_count?: number
-          type: 'quiz' | 'quest' | 'flashcard' | 'roleplay'
+          type: 'quiz' | 'quest' | 'flashcard' | 'roleplay' | 'lesson'
           status?: ActivityStatus
           replay_limit?: number | null
           available_from?: string | null
@@ -52,7 +52,7 @@ export interface Database {
           raw_content?: string
           theme_config?: ThemeConfig
           play_count?: number
-          type?: 'quiz' | 'quest' | 'flashcard'
+          type?: 'quiz' | 'quest' | 'flashcard' | 'roleplay' | 'lesson'
           status?: ActivityStatus
           replay_limit?: number | null
           available_from?: string | null
@@ -157,7 +157,7 @@ export interface Activity {
   theme_config: ThemeConfig
   status: ActivityStatus
   play_count: number
-  type: 'quiz' | 'quest' | 'flashcard' | 'roleplay'
+  type: 'quiz' | 'quest' | 'flashcard' | 'roleplay' | 'lesson'
   stages?: Stage[]
   // Replay & Availability settings
   replay_limit: number | null // null = unlimited, 1 = once, n = max n times
@@ -232,8 +232,32 @@ export interface GeneratedQuestCourse {
   }[]
 }
 
-// Union type for both formats
-export type GeneratedQuest = GeneratedSmartQuiz | GeneratedQuestCourse
+// Lesson format (content modules without quizzes)
+export interface LessonContentBlock {
+  type: 'text' | 'image' | 'video' | 'heading' | 'list'
+  content: string
+  metadata?: {
+    url?: string // for image/video
+    level?: number // for heading (1-3)
+    items?: string[] // for list
+  }
+}
+
+export interface GeneratedLesson {
+  title: string
+  description?: string
+  thumbnail?: string
+  type: 'lesson'
+  tags?: string[]
+  age_range?: string
+  modules: {
+    title: string
+    content_blocks: LessonContentBlock[]
+  }[]
+}
+
+// Union type for all formats
+export type GeneratedQuest = GeneratedSmartQuiz | GeneratedQuestCourse | GeneratedLesson
 
 // Type guard helpers
 export function isSmartQuiz(quest: GeneratedQuest): quest is GeneratedSmartQuiz {
@@ -242,6 +266,10 @@ export function isSmartQuiz(quest: GeneratedQuest): quest is GeneratedSmartQuiz 
 
 export function isQuestCourse(quest: GeneratedQuest): quest is GeneratedQuestCourse {
   return quest.type === 'quest'
+}
+
+export function isLesson(quest: GeneratedQuest): quest is GeneratedLesson {
+  return quest.type === 'lesson'
 }
 
 // Profile types
@@ -316,7 +344,7 @@ export interface SavedItemWithActivity extends SavedItem {
     title: string
     description: string | null
     thumbnail: string | null
-    type: 'quiz' | 'quest' | 'flashcard' | 'roleplay'
+    type: 'quiz' | 'quest' | 'flashcard' | 'roleplay' | 'lesson'
     play_count: number
   }
 }

@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   BookOpen,
+  BookOpenCheck,
   Calendar,
   EyeOff,
   Globe,
@@ -31,12 +32,13 @@ export const Route = createFileRoute('/activity/me')({
   component: MyActivitiesPage,
 })
 
-type TabType = 'all' | 'quiz' | 'quest' | 'flashcard'
+type TabType = 'all' | 'quiz' | 'quest' | 'lesson' | 'flashcard'
 
 const tabs: { type: TabType; label: string; icon: React.ElementType }[] = [
   { type: 'all', label: 'All', icon: LayoutGrid },
   { type: 'quiz', label: 'Quiz', icon: GraduationCap },
   { type: 'quest', label: 'Quest', icon: Map },
+  { type: 'lesson', label: 'Lesson', icon: BookOpenCheck },
   { type: 'flashcard', label: 'Flashcard', icon: BookOpen },
 ]
 
@@ -48,6 +50,7 @@ interface ActivityItem {
   title: string
   status: ActivityStatus
   play_count: number
+  type?: 'quiz' | 'quest' | 'flashcard' | 'roleplay' | 'lesson'
   stages: { id: string; title: string }[]
 }
 
@@ -121,9 +124,13 @@ function MyActivitiesPage() {
   // Filter activities based on active tab
   const filteredActivities = activities.filter((activity) => {
     if (activeTab === 'all') return true
-    // For now, all are quizzes/quests - flashcard coming soon
+    // For now, flashcard coming soon
     if (activeTab === 'flashcard') return false
-    // Determine type by number of stages
+    // Use type field if available, otherwise fallback to stages logic
+    if (activity.type) {
+      return activity.type === activeTab
+    }
+    // Legacy fallback: determine type by number of stages
     const isQuest = activity.stages.length > 1
     if (activeTab === 'quest') return isQuest
     if (activeTab === 'quiz') return !isQuest
@@ -239,7 +246,17 @@ function MyActivitiesPage() {
           >
             <AnimatePresence mode="popLayout">
               {filteredActivities.map((activity, index) => {
-                const isQuest = activity.stages.length > 1
+                // Determine activity type: use type field or fallback to stages logic
+                const activityType = activity.type || (activity.stages.length > 1 ? 'quest' : 'quiz')
+                const typeConfig = {
+                  quiz: { icon: GraduationCap, color: 'bg-blue-500/20 text-blue-500', label: 'Quiz' },
+                  quest: { icon: Map, color: 'bg-purple-500/20 text-purple-500', label: 'Quest' },
+                  lesson: { icon: BookOpenCheck, color: 'bg-emerald-500/20 text-emerald-500', label: 'Lesson' },
+                  flashcard: { icon: BookOpen, color: 'bg-amber-500/20 text-amber-500', label: 'Flashcard' },
+                  roleplay: { icon: Users, color: 'bg-pink-500/20 text-pink-500', label: 'Roleplay' },
+                }
+                const config = typeConfig[activityType] || typeConfig.quiz
+                const TypeIcon = config.icon
                 return (
                   <motion.div
                     key={activity.id}
@@ -257,19 +274,13 @@ function MyActivitiesPage() {
                             <div
                               className={cn(
                                 'w-8 h-8 rounded-lg flex items-center justify-center',
-                                isQuest
-                                  ? 'bg-purple-500/20 text-purple-500'
-                                  : 'bg-blue-500/20 text-blue-500',
+                                config.color,
                               )}
                             >
-                              {isQuest ? (
-                                <Map className="w-4 h-4" />
-                              ) : (
-                                <GraduationCap className="w-4 h-4" />
-                              )}
+                              <TypeIcon className="w-4 h-4" />
                             </div>
                             <span className="text-xs font-medium text-muted-foreground uppercase">
-                              {isQuest ? 'Quest' : 'Quiz'}
+                              {config.label}
                             </span>
                           </div>
                           <div

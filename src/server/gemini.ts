@@ -7,7 +7,7 @@ interface GenerateQuestInput {
   content: string
   contentType: 'text' | 'pdf' | 'video_link'
   language: 'th' | 'en'
-  outputType: 'quiz' | 'quest' | 'flashcard' | 'roleplay'
+  outputType: 'quiz' | 'quest' | 'flashcard' | 'roleplay' | 'lesson'
   // Quiz types - can select multiple (multiple_choice, subjective, or both)
   quizTypes?: ('multiple_choice' | 'subjective')[]
   choiceCount?: number
@@ -148,7 +148,7 @@ Rules:
 ${includesMultipleChoice ? `- For multiple choice: "correct_answer" is the 0-based index, exactly ${choiceCount} options` : ''}
 ${includesSubjective ? '- For subjective: provide a comprehensive model_answer' : ''}
 - Generate exactly valid JSON, no markdown formatting`
-    } else {
+    } else if (data.outputType === 'quest') {
       // Quest Course: Stages with lessons and quizzes
       prompt = `You are an educational content transformer. Transform the following content into a gamified learning quest.
 
@@ -194,6 +194,67 @@ Rules:
 ${includesMultipleChoice ? `- For multiple choice: "correct_answer" is the 0-based index, exactly ${choiceCount} options` : ''}
 ${includesSubjective ? '- For subjective: provide a comprehensive model_answer' : ''}
 - Generate exactly valid JSON, no markdown formatting`
+    } else if (data.outputType === 'lesson') {
+      // Lesson: Structured content modules without quizzes
+      const moduleCount = data.stageCount || 3
+      prompt = `You are an educational content creator. Transform the following content into a structured lesson with clear modules.
+
+${languageInstruction}
+${ageRangeInstruction}
+
+Content to transform:
+${data.content}
+
+Create a well-structured lesson with exactly ${moduleCount} modules. Each module should:
+1. Have a clear, descriptive title
+2. Contain multiple content blocks (text, headings, lists)
+3. Be organized logically to build understanding
+
+IMPORTANT: Respond ONLY with valid JSON in this exact format:
+{
+  "title": "Lesson Title",
+  "type": "lesson",
+  "tags": ["tag1", "tag2", "tag3"],
+  "age_range": "estimated age range or provided age range",
+  "modules": [
+    {
+      "title": "Module 1 Title",
+      "content_blocks": [
+        {
+          "type": "heading",
+          "content": "Introduction",
+          "metadata": { "level": 1 }
+        },
+        {
+          "type": "text",
+          "content": "Main explanation text goes here..."
+        },
+        {
+          "type": "list",
+          "content": "Key Points",
+          "metadata": { "items": ["Point 1", "Point 2", "Point 3"] }
+        }
+      ]
+    }
+  ]
+}
+
+Content block types:
+- "heading": Use for section titles (level 1-3)
+- "text": Use for paragraphs and explanations
+- "list": Use for bullet points (include items in metadata)
+
+Rules:
+- CRITICAL: All text content must be in ${data.language === 'th' ? 'Thai (ภาษาไทย)' : 'English'}
+- ${tagsInstruction}
+- Tags should be lowercase and help users find related lessons
+- Create exactly ${moduleCount} modules
+- Each module should focus on one main concept
+- Use varied content blocks to make the lesson engaging
+- Progress from basic to advanced concepts
+- Generate exactly valid JSON, no markdown formatting`
+    } else {
+      throw new Error(`Unsupported output type: ${data.outputType}`)
     }
 
     const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {

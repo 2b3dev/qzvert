@@ -46,7 +46,7 @@ interface ExploreActivity {
   title: string
   description: string | null
   thumbnail: string | null
-  type: 'quiz' | 'quest' | 'flashcard' | 'roleplay'
+  type: 'quiz' | 'quest' | 'flashcard' | 'roleplay' | 'lesson'
   theme_config: unknown
   play_count: number
   stages: Array<{ id: string; title: string; order_index: number }>
@@ -56,7 +56,7 @@ interface ExploreActivity {
   } | null
 }
 
-type ActivityType = 'all' | 'quiz' | 'quest' | 'flashcard' | 'roleplay'
+type ActivityType = 'all' | 'quiz' | 'quest' | 'lesson' | 'flashcard' | 'roleplay'
 type SortOption = 'newest' | 'oldest' | 'popular' | 'alphabetical'
 
 const sortOptions: Array<{
@@ -146,9 +146,13 @@ function ExplorePage() {
     fetchActivities()
   }, [])
 
-  const filteredActivities = activities.filter((activity) =>
-    activity.title.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+  const filteredActivities = activities.filter((activity) => {
+    // Filter by search query
+    const matchesSearch = activity.title.toLowerCase().includes(searchQuery.toLowerCase())
+    // Filter by type
+    const matchesType = selectedType === 'all' || activity.type === selectedType
+    return matchesSearch && matchesType
+  })
 
   const handlePlayActivity = async (activityId: string) => {
     try {
@@ -197,7 +201,7 @@ function ExplorePage() {
           >
             <div className="flex items-center gap-2 flex-wrap">
               {/* Type Filter Buttons */}
-              {(['all', 'quiz', 'quest', 'flashcard', 'roleplay'] as const).map(
+              {(['all', 'quiz', 'quest', 'lesson', 'flashcard', 'roleplay'] as const).map(
                 (type) => (
                   <Button
                     key={type}
