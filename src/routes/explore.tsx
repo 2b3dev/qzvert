@@ -4,15 +4,21 @@ import {
   ArrowDownAZ,
   ArrowRight,
   ArrowUpDown,
+  BookOpen,
+  BrainCircuit,
   Check,
   ChevronDown,
   Clock,
   Compass,
   Flame,
+  Layers,
   Loader2,
+  MessageSquare,
   Search,
+  Sparkles,
   Users,
   X,
+  Zap,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -30,9 +36,8 @@ import { Input } from '../components/ui/input'
 import { ReportModal } from '../components/ui/ReportModal'
 import { SaveToCollectionModal } from '../components/ui/SaveToCollectionModal'
 import { cn } from '../lib/utils'
-import { getActivityById, getPublishedActivities } from '../server/activities'
+import { getPublishedActivities } from '../server/activities'
 import { unsaveActivity } from '../server/saved'
-import { useActivityStore } from '../stores/activity-store'
 import { useAuthStore } from '../stores/auth-store'
 
 export const Route = createFileRoute('/explore')({
@@ -58,6 +63,48 @@ interface ExploreActivity {
 
 type ActivityType = 'all' | 'quiz' | 'quest' | 'lesson' | 'flashcard' | 'roleplay'
 type SortOption = 'newest' | 'oldest' | 'popular' | 'alphabetical'
+
+// Get icon and gradient for each activity type
+const getActivityTypeStyle = (type: ExploreActivity['type']) => {
+  switch (type) {
+    case 'quiz':
+      return {
+        icon: BrainCircuit,
+        gradient: 'from-violet-500 via-purple-500 to-fuchsia-500',
+        bgPattern: 'radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.3), transparent 50%), radial-gradient(circle at 80% 20%, rgba(217, 70, 239, 0.3), transparent 50%)',
+      }
+    case 'quest':
+      return {
+        icon: Compass,
+        gradient: 'from-amber-500 via-orange-500 to-red-500',
+        bgPattern: 'radial-gradient(circle at 30% 70%, rgba(245, 158, 11, 0.3), transparent 50%), radial-gradient(circle at 70% 30%, rgba(239, 68, 68, 0.3), transparent 50%)',
+      }
+    case 'lesson':
+      return {
+        icon: BookOpen,
+        gradient: 'from-emerald-500 via-teal-500 to-cyan-500',
+        bgPattern: 'radial-gradient(circle at 25% 75%, rgba(16, 185, 129, 0.3), transparent 50%), radial-gradient(circle at 75% 25%, rgba(6, 182, 212, 0.3), transparent 50%)',
+      }
+    case 'flashcard':
+      return {
+        icon: Layers,
+        gradient: 'from-blue-500 via-indigo-500 to-violet-500',
+        bgPattern: 'radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.3), transparent 50%), radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.3), transparent 50%)',
+      }
+    case 'roleplay':
+      return {
+        icon: MessageSquare,
+        gradient: 'from-pink-500 via-rose-500 to-red-500',
+        bgPattern: 'radial-gradient(circle at 30% 70%, rgba(236, 72, 153, 0.3), transparent 50%), radial-gradient(circle at 70% 30%, rgba(239, 68, 68, 0.3), transparent 50%)',
+      }
+    default:
+      return {
+        icon: Sparkles,
+        gradient: 'from-primary via-purple-500 to-pink-500',
+        bgPattern: 'radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.3), transparent 50%), radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.3), transparent 50%)',
+      }
+  }
+}
 
 const sortOptions: Array<{
   value: SortOption
@@ -86,9 +133,6 @@ function ExplorePage() {
   const [showSortDropdown, setShowSortDropdown] = useState(false)
   const [activities, setActivities] = useState<Array<ExploreActivity>>([])
   const [loading, setLoading] = useState(true)
-  const [loadingActivityId, setLoadingActivityId] = useState<string | null>(
-    null,
-  )
   const [error, setError] = useState<string | null>(null)
   const [openOptionsId, setOpenOptionsId] = useState<string | null>(null)
   // Track saved activities: { activityId: collectionId }
@@ -102,7 +146,6 @@ function ExplorePage() {
   const sortDropdownRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
-  const { setActivity, setThemeConfig } = useActivityStore()
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -154,21 +197,9 @@ function ExplorePage() {
     return matchesSearch && matchesType
   })
 
-  const handlePlayActivity = async (activityId: string) => {
-    try {
-      setLoadingActivityId(activityId)
-      const { generatedQuest, themeConfig } = await getActivityById({
-        data: { activityId },
-      })
-      setActivity(generatedQuest, undefined, activityId)
-      setThemeConfig(themeConfig)
-      navigate({ to: '/activity/play/$id', params: { id: activityId } })
-    } catch (err) {
-      console.error('Failed to load activity:', err)
-      setError('Failed to load activity. Please try again.')
-    } finally {
-      setLoadingActivityId(null)
-    }
+  const handlePlayActivity = (activityId: string) => {
+    // Navigate directly - the play page will load the activity data
+    navigate({ to: '/activity/play/$id', params: { id: activityId } })
   }
 
   return (
@@ -357,15 +388,54 @@ function ExplorePage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 + index * 0.05 }}
                 >
-                  <Card className="h-full transition-all duration-300 group relative">
-                    {activity.thumbnail && (
+                  <Card className="h-full transition-all duration-300 group relative overflow-hidden">
+                    {activity.thumbnail ? (
                       <div className="relative w-full h-40 overflow-hidden rounded-t-lg">
                         <img
                           src={activity.thumbnail}
                           alt={activity.title}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                       </div>
+                    ) : (
+                      (() => {
+                        const typeStyle = getActivityTypeStyle(activity.type)
+                        const TypeIcon = typeStyle.icon
+                        return (
+                          <div
+                            className="relative w-full h-40 overflow-hidden rounded-t-lg"
+                            style={{ background: typeStyle.bgPattern }}
+                          >
+                            <div className={cn(
+                              "absolute inset-0 bg-gradient-to-br opacity-90",
+                              typeStyle.gradient
+                            )} />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="relative">
+                                {/* Glow effect */}
+                                <div className="absolute inset-0 blur-xl bg-white/30 rounded-full scale-150" />
+                                {/* Icon with animation */}
+                                <motion.div
+                                  initial={{ scale: 0.8, rotate: -5 }}
+                                  animate={{ scale: 1, rotate: 0 }}
+                                  transition={{ duration: 0.3 }}
+                                  className="relative"
+                                >
+                                  <TypeIcon className="w-16 h-16 text-white drop-shadow-lg" strokeWidth={1.5} />
+                                </motion.div>
+                                {/* Sparkle decorations */}
+                                <Zap className="absolute -top-2 -right-3 w-5 h-5 text-white/80 rotate-12" />
+                                <Sparkles className="absolute -bottom-1 -left-4 w-4 h-4 text-white/70" />
+                              </div>
+                            </div>
+                            {/* Subtle pattern overlay */}
+                            <div className="absolute inset-0 opacity-10" style={{
+                              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+                            }} />
+                          </div>
+                        )
+                      })()
                     )}
                     <CardHeader className="p-4 pb-0">
                       <CardTitle className="text-xl transition-colors">
@@ -412,16 +482,9 @@ function ExplorePage() {
                           variant="default"
                           className="flex-1"
                           onClick={() => handlePlayActivity(activity.id)}
-                          disabled={loadingActivityId === activity.id}
                         >
-                          {loadingActivityId === activity.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <>
-                              <ArrowRight className="w-4 h-4" />
-                              Play
-                            </>
-                          )}
+                          <ArrowRight className="w-4 h-4" />
+                          Play
                         </Button>
                         {/* Options Dropdown */}
                         <ActivityOptionsDropdown

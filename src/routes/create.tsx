@@ -231,7 +231,7 @@ function CreatePage() {
 
   return (
     <DefaultLayout>
-      <div className="min-h-screen bg-gradient-to-b from-background via-muted/30 to-background">
+      <div className="min-h-screen bg-linear-to-b from-background via-muted/30 to-background">
         {/* Mobile Header */}
         <div className="md:hidden sticky top-16 z-30 bg-background/80 backdrop-blur-sm border-b border-border px-4 py-3">
           <Button

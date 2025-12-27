@@ -253,11 +253,11 @@ function PricingPage() {
 
   return (
     <DefaultLayout>
-      <div className="min-h-screen bg-gradient-to-b from-background via-muted/50 to-background">
+      <div className="min-h-screen bg-linear-to-b from-background via-muted/50 to-background">
         {/* Hero Section */}
         <section className="relative py-20 px-6 overflow-hidden">
           {/* Background Effects */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
           <div className="absolute top-20 left-1/4 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
           <div className="absolute bottom-20 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
 
@@ -273,7 +273,9 @@ function PricingPage() {
               </div>
 
               <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight">
-                <span className="text-foreground">{t('pricing.hero.title1')}</span>
+                <span className="text-foreground">
+                  {t('pricing.hero.title1')}
+                </span>
                 <br />
                 <span className="bg-linear-to-r from-primary via-pink-500 to-orange-400 bg-clip-text text-transparent">
                   {t('pricing.hero.title2')}
@@ -285,7 +287,10 @@ function PricingPage() {
               </p>
               <p className="text-base text-muted-foreground/80 max-w-2xl mx-auto">
                 {t('pricing.hero.subtitleEnd')}
-                <span className="text-primary font-semibold"> {t('pricing.hero.subtitleHighlight')}</span>
+                <span className="text-primary font-semibold">
+                  {' '}
+                  {t('pricing.hero.subtitleHighlight')}
+                </span>
               </p>
             </motion.div>
           </div>
@@ -323,7 +328,7 @@ function PricingPage() {
 
                     <CardHeader className="relative pb-4">
                       <div
-                        className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${plan.color} flex items-center justify-center mb-4`}
+                        className={`w-14 h-14 rounded-2xl bg-linear-to-br ${plan.color} flex items-center justify-center mb-4`}
                       >
                         <plan.icon className="w-7 h-7 text-white" />
                       </div>
@@ -380,7 +385,7 @@ function PricingPage() {
                                 className="flex items-start gap-3"
                               >
                                 <div
-                                  className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${plan.color}`}
+                                  className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0 bg-linear-to-br ${plan.color}`}
                                 >
                                   <Check className="w-3 h-3 text-white" />
                                 </div>
@@ -396,7 +401,7 @@ function PricingPage() {
                                 </div>
                               </li>
                             )
-                        })}
+                          })}
                       </ul>
                     </CardContent>
 
@@ -460,7 +465,10 @@ function PricingPage() {
               className="text-center mb-12"
             >
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                {t('pricing.comparison.title')}<span className="text-primary">{t('pricing.comparison.titleHighlight')}</span>
+                {t('pricing.comparison.title')}
+                <span className="text-primary">
+                  {t('pricing.comparison.titleHighlight')}
+                </span>
               </h2>
               <p className="text-muted-foreground">
                 {t('pricing.comparison.subtitle')}
@@ -553,7 +561,7 @@ function PricingPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary/20 via-purple-500/20 to-pink-500/20 border border-primary/30 p-8 md:p-12"
+              className="relative overflow-hidden rounded-3xl bg-linear-to-r from-primary/20 via-purple-500/20 to-pink-500/20 border border-primary/30 p-8 md:p-12"
             >
               <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
               <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
@@ -603,7 +611,10 @@ function PricingPage() {
                 {t('pricing.faq.badge')}
               </div>
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                {t('pricing.faq.title')}<span className="text-primary">{t('pricing.faq.titleHighlight')}</span>
+                {t('pricing.faq.title')}
+                <span className="text-primary">
+                  {t('pricing.faq.titleHighlight')}
+                </span>
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 {t('pricing.faq.subtitle')}
@@ -632,10 +643,14 @@ function PricingPage() {
                     {category === 'Technology & Pricing' && (
                       <Zap className="w-5 h-5" />
                     )}
-                    {category === 'General' && t('pricing.faq.categories.general')}
-                    {category === 'For Creators' && t('pricing.faq.categories.forCreators')}
-                    {category === 'For Learners' && t('pricing.faq.categories.forLearners')}
-                    {category === 'Technology & Pricing' && t('pricing.faq.categories.techPricing')}
+                    {category === 'General' &&
+                      t('pricing.faq.categories.general')}
+                    {category === 'For Creators' &&
+                      t('pricing.faq.categories.forCreators')}
+                    {category === 'For Learners' &&
+                      t('pricing.faq.categories.forLearners')}
+                    {category === 'Technology & Pricing' &&
+                      t('pricing.faq.categories.techPricing')}
                   </h3>
 
                   <div className="space-y-3">
@@ -666,7 +681,7 @@ function PricingPage() {
                               <motion.div
                                 animate={{ rotate: isOpen ? 180 : 0 }}
                                 transition={{ duration: 0.2 }}
-                                className="flex-shrink-0"
+                                className="shrink-0"
                               >
                                 <ChevronDown className="w-5 h-5 text-muted-foreground" />
                               </motion.div>
@@ -701,7 +716,9 @@ function PricingPage() {
               className="mt-12 p-6 rounded-2xl bg-linear-to-r from-primary/10 to-cyan-500/10 border border-primary/20 text-center"
             >
               <MessageCircle className="w-10 h-10 text-primary mx-auto mb-4" />
-              <h3 className="text-xl font-bold mb-2">{t('pricing.faq.stillQuestions.title')}</h3>
+              <h3 className="text-xl font-bold mb-2">
+                {t('pricing.faq.stillQuestions.title')}
+              </h3>
               <p className="text-muted-foreground mb-4">
                 {t('pricing.faq.stillQuestions.subtitle')}
               </p>

@@ -1,4 +1,3 @@
-import IconApp from '@/components/icon/icon-app'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import {
@@ -24,6 +23,7 @@ import {
 import { DefaultLayout } from '../components/layouts/DefaultLayout'
 import { Button } from '../components/ui/button'
 import { useTranslation } from '../hooks/useTranslation'
+import IconApp from '@/components/icon/icon-app'
 
 export const Route = createFileRoute('/')({ component: HomePage })
 
@@ -107,11 +107,11 @@ function HomePage() {
 
   return (
     <DefaultLayout>
-      <div className="min-h-screen bg-gradient-to-b from-background via-muted/50 to-background">
+      <div className="min-h-screen bg-linear-to-b from-background via-muted/50 to-background">
         {/* Hero Section */}
         <section className="relative py-24 px-6 overflow-hidden">
           {/* Background Effects */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
           <div className="absolute top-20 left-1/4 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
           <div className="absolute bottom-20 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
 
@@ -143,7 +143,7 @@ function HomePage() {
               <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight">
                 <span className="text-foreground">{t('home.hero.title1')}</span>
                 <br />
-                <span className="bg-gradient-to-r from-primary via-pink-500 to-orange-400 bg-clip-text text-transparent">
+                <span className="bg-linear-to-r from-primary via-pink-500 to-orange-400 bg-clip-text text-transparent">
                   {t('home.hero.title2')}
                 </span>
               </h1>
@@ -159,7 +159,7 @@ function HomePage() {
               <div className="flex flex-col sm:flex-row justify-center gap-4 mb-6">
                 <Button
                   size="lg"
-                  className="text-lg px-8 py-6 bg-gradient-to-r from-primary to-cyan-500 hover:from-primary/90 hover:to-cyan-500/90"
+                  className="text-lg px-8 py-6 bg-linear-to-r from-primary to-cyan-500 hover:from-primary/90 hover:to-cyan-500/90"
                   asChild
                 >
                   <Link to="/explore">
@@ -169,7 +169,7 @@ function HomePage() {
                 </Button>
                 <Button
                   size="lg"
-                  className="text-lg px-8 py-6 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-500/90 hover:to-pink-500/90"
+                  className="text-lg px-8 py-6 bg-linear-to-r from-purple-500 to-pink-500 hover:from-purple-500/90 hover:to-pink-500/90"
                   asChild
                 >
                   <Link to="/create">
@@ -196,7 +196,10 @@ function HomePage() {
               className="text-center mb-12"
             >
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                {t('home.audience.title')}<span className="text-primary">{t('home.audience.titleHighlight')}</span>
+                {t('home.audience.title')}
+                <span className="text-primary">
+                  {t('home.audience.titleHighlight')}
+                </span>
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 {t('home.audience.subtitle')}
@@ -209,11 +212,11 @@ function HomePage() {
                 initial={{ opacity: 0, x: -30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                className="relative p-8 rounded-3xl bg-gradient-to-br from-primary/10 to-cyan-500/10 border border-primary/20 overflow-hidden"
+                className="relative p-8 rounded-3xl bg-linear-to-br from-primary/10 to-cyan-500/10 border border-primary/20 overflow-hidden"
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
                 <div className="relative">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-cyan-500 flex items-center justify-center mb-6">
+                  <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-primary to-cyan-500 flex items-center justify-center mb-6">
                     <GraduationCap className="w-7 h-7 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold mb-3 text-primary">
@@ -243,7 +246,7 @@ function HomePage() {
                     </li>
                   </ul>
                   <Button
-                    className="bg-gradient-to-r from-primary to-cyan-500"
+                    className="bg-linear-to-r from-primary to-cyan-500"
                     asChild
                   >
                     <Link to="/explore">
@@ -259,11 +262,11 @@ function HomePage() {
                 initial={{ opacity: 0, x: 30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                className="relative p-8 rounded-3xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-pink-500/20 overflow-hidden"
+                className="relative p-8 rounded-3xl bg-linear-to-br from-purple-500/10 to-pink-500/10 border border-pink-500/20 overflow-hidden"
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full blur-3xl" />
                 <div className="relative">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-6">
+                  <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-6">
                     <Briefcase className="w-7 h-7 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold mb-3 text-pink-400">
@@ -293,7 +296,7 @@ function HomePage() {
                     </li>
                   </ul>
                   <Button
-                    className="bg-gradient-to-r from-purple-500 to-pink-500"
+                    className="bg-linear-to-r from-purple-500 to-pink-500"
                     asChild
                   >
                     <Link to="/create">
@@ -369,7 +372,9 @@ function HomePage() {
               </h2>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
                 {t('home.solution.subtitle')}{' '}
-                <span className="text-primary font-semibold">{t('home.solution.subtitleHighlight')}</span>{' '}
+                <span className="text-primary font-semibold">
+                  {t('home.solution.subtitleHighlight')}
+                </span>{' '}
                 {t('home.solution.subtitleEnd')}
               </p>
             </motion.div>
@@ -382,7 +387,7 @@ function HomePage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
-                  className="p-6 rounded-2xl bg-gradient-to-br from-card to-primary/5 border border-primary/20"
+                  className="p-6 rounded-2xl bg-linear-to-br from-card to-primary/5 border border-primary/20"
                 >
                   <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center mb-4">
                     <solution.icon className="w-6 h-6 text-primary" />
@@ -429,12 +434,12 @@ function HomePage() {
                 >
                   {/* Gradient Background */}
                   <div
-                    className={`absolute inset-0 bg-gradient-to-br ${type.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}
+                    className={`absolute inset-0 bg-linear-to-br ${type.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}
                   />
 
                   {/* Icon */}
                   <div
-                    className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${type.color} flex items-center justify-center mb-6`}
+                    className={`w-16 h-16 rounded-2xl bg-linear-to-br ${type.color} flex items-center justify-center mb-6`}
                   >
                     <type.icon className="w-8 h-8 text-white" />
                   </div>
@@ -459,7 +464,7 @@ function HomePage() {
               viewport={{ once: true }}
               className="text-center mb-12"
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-pink-400 text-sm font-medium mb-4">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-linear-to-r from-purple-500/20 to-pink-500/20 text-pink-400 text-sm font-medium mb-4">
                 <Target className="w-4 h-4" />
                 {t('home.creator.badge')}
               </div>
@@ -481,7 +486,7 @@ function HomePage() {
                   transition={{ delay: index * 0.1 }}
                   className="p-6 rounded-2xl bg-card border border-border text-center"
                 >
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center mx-auto mb-4">
+                  <div className="w-14 h-14 rounded-full bg-linear-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center mx-auto mb-4">
                     <benefit.icon className="w-7 h-7 text-pink-400" />
                   </div>
                   <h3 className="text-lg font-bold mb-2">{benefit.title}</h3>
@@ -493,7 +498,7 @@ function HomePage() {
         </section>
 
         {/* Final CTA Section */}
-        <section className="py-20 px-6 bg-gradient-to-b from-muted/30 to-background">
+        <section className="py-20 px-6 bg-linear-to-b from-muted/30 to-background">
           <div className="max-w-4xl mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -504,7 +509,7 @@ function HomePage() {
                 <div className="text-foreground pb-2">
                   {t('home.cta.title1')}
                 </div>
-                <div className="bg-gradient-to-r from-primary via-pink-500 to-orange-400 bg-clip-text text-transparent py-2">
+                <div className="bg-linear-to-r from-primary via-pink-500 to-orange-400 bg-clip-text text-transparent py-2">
                   {t('home.cta.title2')}
                 </div>
               </h2>
@@ -515,7 +520,7 @@ function HomePage() {
               <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <Button
                   size="lg"
-                  className="text-lg px-8 py-6 bg-gradient-to-r from-primary to-cyan-500"
+                  className="text-lg px-8 py-6 bg-linear-to-r from-primary to-cyan-500"
                   asChild
                 >
                   <Link to="/explore">
@@ -525,7 +530,7 @@ function HomePage() {
                 </Button>
                 <Button
                   size="lg"
-                  className="text-lg px-8 py-6 bg-gradient-to-r from-purple-500 to-pink-500"
+                  className="text-lg px-8 py-6 bg-linear-to-r from-purple-500 to-pink-500"
                   asChild
                 >
                   <Link to="/create">
@@ -537,7 +542,6 @@ function HomePage() {
             </motion.div>
           </div>
         </section>
-
       </div>
     </DefaultLayout>
   )

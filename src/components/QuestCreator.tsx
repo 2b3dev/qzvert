@@ -232,14 +232,14 @@ export function QuestCreator() {
         transition={{ duration: 0.5 }}
         className="w-full max-w-3xl mx-auto"
       >
-        <Card className="border-primary/20 bg-gradient-to-br from-card via-card/80 to-card">
+        <Card className="border-primary/20 bg-linear-to-br from-card via-card/80 to-card">
           <CardHeader className="text-center pb-2">
             <div className="flex justify-center mb-4">
               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
                 <Lock className="w-8 h-8 text-primary" />
               </div>
             </div>
-            <CardTitle className="text-3xl bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">
+            <CardTitle className="text-3xl bg-linear-to-r from-primary to-pink-500 bg-clip-text text-transparent">
               เข้าสู่ระบบเพื่อสร้างเควส
             </CardTitle>
             <CardDescription className="text-muted-foreground text-lg">
@@ -430,7 +430,7 @@ export function QuestCreator() {
       transition={{ duration: 0.5 }}
       className="w-full max-w-3xl mx-auto"
     >
-      <Card className="border-primary/20 bg-gradient-to-br from-card via-card/80 to-card">
+      <Card className="border-primary/20 bg-linear-to-br from-card via-card/80 to-card">
         <CardHeader className="text-center pb-2">
           <div className="flex items-center justify-center">
             <div className="flex justify-center mr-4">
@@ -445,7 +445,7 @@ export function QuestCreator() {
                 <IconApp className="w-8 h-8 text-primary" />
               </motion.div>
             </div>
-            <CardTitle className="text-3xl bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">
+            <CardTitle className="text-3xl bg-linear-to-r from-primary to-pink-500 bg-clip-text text-transparent">
               Create Your{' '}
               {selectedOutput === 'quiz'
                 ? 'Quiz'

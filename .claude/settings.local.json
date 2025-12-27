@@ -25,7 +25,8 @@
       "Bash(find:*)",
       "Bash(pkill:*)",
       "Bash(pnpm dev)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(echo:*)"
     ]
   }
 }
