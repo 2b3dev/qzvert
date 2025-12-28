@@ -1270,123 +1270,255 @@ function GuruPage() {
                     </div>
                   )}
 
-                  {/* Select Loud Mode Box */}
-                  <div className="p-4 rounded-xl border border-input bg-muted/30">
-                    <label className="text-xs font-medium text-muted-foreground mb-3 block">
-                      {t('guru.selectModeLabel')}
-                    </label>
+                  {/* Loud Settings Box */}
+                  <div className={cn(
+                    "p-4 rounded-xl border border-input bg-muted/30 transition-opacity",
+                    isPlaying && "opacity-50 pointer-events-none"
+                  )}>
+                    {/* Section Header */}
+                    <div className="flex items-center gap-2 mb-4">
+                      <Volume2 className="w-4 h-4 text-primary" />
+                      <span className="font-medium text-sm">{uiLanguage === 'th' ? 'ตั้งค่าเสียง Guru' : 'Guru Voice Settings'}</span>
+                    </div>
 
-                    {/* Mode Buttons */}
-                    <div className="grid grid-cols-3 gap-2 p-1 rounded-lg bg-background border border-input">
-                      {/* Just Listen Button */}
-                      <button
-                        onClick={() => handleModeSelect('listen')}
-                        disabled={isProcessing}
-                        className={cn(
-                          'flex items-center justify-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium transition-all',
-                          selectedMode === 'listen'
-                            ? 'bg-primary text-primary-foreground shadow-md'
-                            : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground',
-                          isProcessing && 'opacity-50 cursor-not-allowed'
-                        )}
-                      >
-                        <Volume2 className="w-4 h-4" />
-                        {t('guru.listen')}
-                      </button>
-                      {/* Summarize Button */}
-                      <button
-                        onClick={() => handleModeSelect('summarize')}
-                        disabled={isProcessing}
-                        className={cn(
-                          'flex items-center justify-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium transition-all',
-                          selectedMode === 'summarize'
-                            ? 'bg-primary text-primary-foreground shadow-md'
-                            : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground',
-                          isProcessing && 'opacity-50 cursor-not-allowed'
-                        )}
-                      >
-                        <FileText className="w-4 h-4" />
-                        {t('guru.summarize')}
-                      </button>
-                      {/* Craft Button */}
-                      <button
-                        onClick={() => handleModeSelect('craft')}
-                        disabled={isProcessing}
-                        className={cn(
-                          'flex items-center justify-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium transition-all',
-                          selectedMode === 'craft'
-                            ? 'bg-primary text-primary-foreground shadow-md'
-                            : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground',
-                          isProcessing && 'opacity-50 cursor-not-allowed'
-                        )}
-                      >
-                        <Wand2 className="w-4 h-4" />
-                        {t('guru.craft')}
-                      </button>
+                    {/* Select Loud Mode */}
+                    <div className="mb-4">
+                      <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                        {t('guru.selectModeLabel')}
+                      </label>
+                      <div className="grid grid-cols-3 gap-2 p-1 rounded-lg bg-background border border-input">
+                        {/* Just Listen Button */}
+                        <button
+                          onClick={() => handleModeSelect('listen')}
+                          disabled={isProcessing || isPlaying}
+                          className={cn(
+                            'flex items-center justify-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium transition-all',
+                            selectedMode === 'listen'
+                              ? 'bg-primary text-primary-foreground shadow-md'
+                              : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground',
+                            (isProcessing || isPlaying) && 'opacity-50 cursor-not-allowed'
+                          )}
+                        >
+                          <Volume2 className="w-4 h-4" />
+                          {t('guru.listen')}
+                        </button>
+                        {/* Summarize Button */}
+                        <button
+                          onClick={() => handleModeSelect('summarize')}
+                          disabled={isProcessing || isPlaying}
+                          className={cn(
+                            'flex items-center justify-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium transition-all',
+                            selectedMode === 'summarize'
+                              ? 'bg-primary text-primary-foreground shadow-md'
+                              : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground',
+                            (isProcessing || isPlaying) && 'opacity-50 cursor-not-allowed'
+                          )}
+                        >
+                          <FileText className="w-4 h-4" />
+                          {t('guru.summarize')}
+                        </button>
+                        {/* Craft Button */}
+                        <button
+                          onClick={() => handleModeSelect('craft')}
+                          disabled={isProcessing || isPlaying}
+                          className={cn(
+                            'flex items-center justify-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium transition-all',
+                            selectedMode === 'craft'
+                              ? 'bg-primary text-primary-foreground shadow-md'
+                              : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground',
+                            (isProcessing || isPlaying) && 'opacity-50 cursor-not-allowed'
+                          )}
+                        >
+                          <Wand2 className="w-4 h-4" />
+                          {t('guru.craft')}
+                        </button>
+                      </div>
                     </div>
 
                     {/* Mode Description & Action */}
-                    <div className="mt-4">
-                      {selectedMode === 'listen' && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="p-3 rounded-lg bg-primary/5 border border-primary/20"
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className="p-1.5 rounded-md bg-emerald-500/20">
-                              <Volume2 className="w-4 h-4 text-emerald-500" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p
-                                className="text-sm text-muted-foreground [&_strong]:text-emerald-600 dark:[&_strong]:text-emerald-400 [&_strong]:font-semibold"
-                                dangerouslySetInnerHTML={{ __html: t('guru.listenFreeDesc') }}
-                              />
-                            </div>
+                    {selectedMode === 'listen' && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-3 rounded-lg bg-primary/5 border border-primary/20 mb-4"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="p-1.5 rounded-md bg-emerald-500/20">
+                            <Volume2 className="w-4 h-4 text-emerald-500" />
                           </div>
-                        </motion.div>
-                      )}
+                          <div className="flex-1 min-w-0">
+                            <p
+                              className="text-sm text-muted-foreground [&_strong]:text-emerald-600 dark:[&_strong]:text-emerald-400 [&_strong]:font-semibold"
+                              dangerouslySetInnerHTML={{ __html: t('guru.listenFreeDesc') }}
+                            />
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
 
-                      {(selectedMode === 'summarize' || selectedMode === 'craft') && !aiResult && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="p-3 rounded-lg bg-primary/5 border border-primary/20"
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className="p-1.5 rounded-md bg-primary/20">
-                              {selectedMode === 'summarize' ? (
-                                <FileText className="w-4 h-4 text-primary" />
-                              ) : (
-                                <Wand2 className="w-4 h-4 text-primary" />
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm text-muted-foreground mb-3">
-                                {selectedMode === 'summarize' ? t('guru.summarizeConfirmDesc') : t('guru.craftConfirmDesc')}
-                              </p>
-                              <div className="flex flex-wrap items-center gap-2">
-                                <Button
-                                  onClick={handleConfirmGenerate}
-                                  disabled={isProcessing || !originalContent.trim()}
-                                  size="sm"
-                                  className="gap-2"
-                                >
-                                  {isProcessing ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                  ) : (
-                                    <Sparkles className="w-4 h-4" />
-                                  )}
-                                  {t('guru.confirmGenerate')}
-                                </Button>
-                                <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                                  ✨ {t('guru.confirmCredit')}
-                                </span>
-                              </div>
+                    {(selectedMode === 'summarize' || selectedMode === 'craft') && !aiResult && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-3 rounded-lg bg-primary/5 border border-primary/20 mb-4"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="p-1.5 rounded-md bg-primary/20">
+                            {selectedMode === 'summarize' ? (
+                              <FileText className="w-4 h-4 text-primary" />
+                            ) : (
+                              <Wand2 className="w-4 h-4 text-primary" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-muted-foreground mb-3">
+                              {selectedMode === 'summarize' ? t('guru.summarizeConfirmDesc') : t('guru.craftConfirmDesc')}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Button
+                                onClick={handleConfirmGenerate}
+                                disabled={isProcessing || !originalContent.trim()}
+                                size="sm"
+                                className="gap-2"
+                              >
+                                {isProcessing ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Sparkles className="w-4 h-4" />
+                                )}
+                                {t('guru.confirmGenerate')}
+                              </Button>
+                              <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                                ✨ {t('guru.confirmCredit')}
+                              </span>
                             </div>
                           </div>
-                        </motion.div>
-                      )}
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {/* Voice Controls Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                      {/* Language Dropdown */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-muted-foreground">
+                          {t('tools.tts.languageLabel')}
+                        </label>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild disabled={isPlaying}>
+                            <button
+                              className={cn(
+                                "w-full h-10 px-3 rounded-lg border border-input bg-background flex items-center justify-between text-sm font-medium transition-colors",
+                                isPlaying ? "cursor-not-allowed opacity-50" : "hover:bg-accent/50"
+                              )}
+                              disabled={isPlaying}
+                            >
+                              <span className="flex items-center gap-2">
+                                <span>{selectedLanguageDisplay.flag}</span>
+                                {selectedLanguageDisplay.name}
+                              </span>
+                              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="w-48">
+                            {availableLanguages.map((lang) => (
+                              <DropdownMenuItem
+                                key={lang.code}
+                                onClick={() => handleLanguageChange(lang.code)}
+                                className={cn(
+                                  'flex items-center gap-2 cursor-pointer',
+                                  selectedTargetLanguage === lang.code && 'bg-accent'
+                                )}
+                              >
+                                <span>{lang.flag}</span>
+                                <span>{lang.name}</span>
+                                {selectedTargetLanguage === lang.code && (
+                                  <Check className="w-4 h-4 ml-auto text-primary" />
+                                )}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+
+                      {/* Speed Dropdown */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-muted-foreground">
+                          {t('tools.tts.speedLabel')}
+                        </label>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild disabled={isPlaying}>
+                            <button
+                              className={cn(
+                                "w-full h-10 px-3 rounded-lg border border-input bg-background flex items-center justify-between text-sm font-medium transition-colors",
+                                isPlaying ? "cursor-not-allowed opacity-50" : "hover:bg-accent/50"
+                              )}
+                              disabled={isPlaying}
+                            >
+                              <span className="flex items-center gap-2">
+                                <span>⚡</span>
+                                {rateOptions.find(r => r.value === rate)?.label || '1x'}
+                              </span>
+                              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="w-48">
+                            {rateOptions.map((option) => (
+                              <DropdownMenuItem
+                                key={option.value}
+                                onClick={() => setRate(option.value)}
+                                className={cn(
+                                  'flex items-center gap-2 cursor-pointer',
+                                  rate === option.value && 'bg-accent'
+                                )}
+                              >
+                                <span>{option.label}</span>
+                                {rate === option.value && (
+                                  <Check className="w-4 h-4 ml-auto text-primary" />
+                                )}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+
+                      {/* Female Voice Button */}
+                      <button
+                        onClick={() => handleGenderSelect('female')}
+                        disabled={!femaleVoice || isPlaying}
+                        className={cn(
+                          'h-10 sm:mt-6 flex items-center justify-center gap-2 rounded-lg text-sm font-medium transition-all',
+                          selectedGender === 'female'
+                            ? 'bg-pink-500 text-white shadow-md shadow-pink-500/25'
+                            : 'bg-background border border-input hover:bg-accent/50 text-foreground',
+                          (!femaleVoice || isPlaying) && 'opacity-50 cursor-not-allowed'
+                        )}
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="8" r="5" />
+                          <path d="M12 13v8M9 21h6" />
+                        </svg>
+                        {uiLanguage === 'th' ? 'หญิง' : 'Female'}
+                      </button>
+
+                      {/* Male Voice Button */}
+                      <button
+                        onClick={() => handleGenderSelect('male')}
+                        disabled={!maleVoice || isPlaying}
+                        className={cn(
+                          'h-10 sm:mt-6 flex items-center justify-center gap-2 rounded-lg text-sm font-medium transition-all',
+                          selectedGender === 'male'
+                            ? 'bg-blue-500 text-white shadow-md shadow-blue-500/25'
+                            : 'bg-background border border-input hover:bg-accent/50 text-foreground',
+                          (!maleVoice || isPlaying) && 'opacity-50 cursor-not-allowed'
+                        )}
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="10" cy="14" r="5" />
+                          <path d="M19 5l-5.4 5.4M19 5h-5M19 5v5" />
+                        </svg>
+                        {uiLanguage === 'th' ? 'ชาย' : 'Male'}
+                      </button>
                     </div>
                   </div>
 
@@ -1455,120 +1587,6 @@ function GuruPage() {
                       </div>
                     </motion.div>
                   )}
-
-                  {/* Voice Controls Grid */}
-                  <div className="p-4 rounded-xl border border-input bg-muted/30">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                      {/* Language Dropdown */}
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-muted-foreground">
-                          {t('tools.tts.languageLabel')}
-                        </label>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="w-full h-10 px-3 rounded-lg border border-input bg-background hover:bg-accent/50 flex items-center justify-between text-sm font-medium transition-colors">
-                              <span className="flex items-center gap-2">
-                                <span>{selectedLanguageDisplay.flag}</span>
-                                {selectedLanguageDisplay.name}
-                              </span>
-                              <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" className="w-48">
-                            {availableLanguages.map((lang) => (
-                              <DropdownMenuItem
-                                key={lang.code}
-                                onClick={() => handleLanguageChange(lang.code)}
-                                className={cn(
-                                  'flex items-center gap-2 cursor-pointer',
-                                  selectedTargetLanguage === lang.code && 'bg-accent'
-                                )}
-                              >
-                                <span>{lang.flag}</span>
-                                <span>{lang.name}</span>
-                                {selectedTargetLanguage === lang.code && (
-                                  <Check className="w-4 h-4 ml-auto text-primary" />
-                                )}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-
-                      {/* Speed Dropdown */}
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-muted-foreground">
-                          {t('tools.tts.speedLabel')}
-                        </label>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="w-full h-10 px-3 rounded-lg border border-input bg-background hover:bg-accent/50 flex items-center justify-between text-sm font-medium transition-colors">
-                              <span className="flex items-center gap-2">
-                                <span>⚡</span>
-                                {rateOptions.find(r => r.value === rate)?.label || '1x'}
-                              </span>
-                              <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" className="w-48">
-                            {rateOptions.map((option) => (
-                              <DropdownMenuItem
-                                key={option.value}
-                                onClick={() => setRate(option.value)}
-                                className={cn(
-                                  'flex items-center gap-2 cursor-pointer',
-                                  rate === option.value && 'bg-accent'
-                                )}
-                              >
-                                <span>{option.label}</span>
-                                {rate === option.value && (
-                                  <Check className="w-4 h-4 ml-auto text-primary" />
-                                )}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-
-                      {/* Female Voice Button */}
-                      <button
-                        onClick={() => handleGenderSelect('female')}
-                        disabled={!femaleVoice}
-                        className={cn(
-                          'h-10 sm:mt-6 flex items-center justify-center gap-2 rounded-lg text-sm font-medium transition-all',
-                          selectedGender === 'female'
-                            ? 'bg-pink-500 text-white shadow-md shadow-pink-500/25'
-                            : 'bg-background border border-input hover:bg-accent/50 text-foreground',
-                          !femaleVoice && 'opacity-50 cursor-not-allowed'
-                        )}
-                      >
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <circle cx="12" cy="8" r="5" />
-                          <path d="M12 13v8M9 21h6" />
-                        </svg>
-                        {uiLanguage === 'th' ? 'หญิง' : 'Female'}
-                      </button>
-
-                      {/* Male Voice Button */}
-                      <button
-                        onClick={() => handleGenderSelect('male')}
-                        disabled={!maleVoice}
-                        className={cn(
-                          'h-10 sm:mt-6 flex items-center justify-center gap-2 rounded-lg text-sm font-medium transition-all',
-                          selectedGender === 'male'
-                            ? 'bg-blue-500 text-white shadow-md shadow-blue-500/25'
-                            : 'bg-background border border-input hover:bg-accent/50 text-foreground',
-                          !maleVoice && 'opacity-50 cursor-not-allowed'
-                        )}
-                      >
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <circle cx="10" cy="14" r="5" />
-                          <path d="M19 5l-5.4 5.4M19 5h-5M19 5v5" />
-                        </svg>
-                        {uiLanguage === 'th' ? 'ชาย' : 'Male'}
-                      </button>
-                    </div>
-                  </div>
 
                   {/* Play Button & History */}
                   <div className="flex flex-wrap items-center justify-between gap-2">
