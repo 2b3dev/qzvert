@@ -1206,3 +1206,116 @@ export const getActivityResults = createServerFn({ method: 'GET' })
       hasMore: offset + results.length < (count || 0)
     }
   })
+
+// Get suggested activities based on content/keywords
+interface SuggestedActivity {
+  id: string
+  title: string
+  description: string | null
+  thumbnail: string | null
+  type: 'quiz' | 'quest' | 'flashcard' | 'roleplay' | 'lesson'
+  play_count: number
+  tags: string[] | null
+}
+
+export const getSuggestedActivities = createServerFn({ method: 'POST' })
+  .inputValidator((data: { content: string; limit?: number }) => data)
+  .handler(async ({ data }): Promise<SuggestedActivity[]> => {
+    const supabase = getSupabaseFromCookies()
+    const limit = data.limit || 5
+
+    // Extract keywords from content (simple approach: take significant words)
+    const stopWords = new Set([
+      'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+      'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+      'should', 'may', 'might', 'must', 'shall', 'can', 'need', 'dare',
+      'to', 'of', 'in', 'for', 'on', 'with', 'at', 'by', 'from', 'as',
+      'into', 'through', 'during', 'before', 'after', 'above', 'below',
+      'and', 'or', 'but', 'if', 'then', 'else', 'when', 'up', 'down',
+      'out', 'off', 'over', 'under', 'again', 'further', 'once',
+      'that', 'this', 'these', 'those', 'what', 'which', 'who', 'whom',
+      'he', 'she', 'it', 'they', 'we', 'you', 'i', 'me', 'him', 'her',
+      'ที่', 'และ', 'ใน', 'ของ', 'เป็น', 'ได้', 'มี', 'จะ', 'ให้', 'กับ',
+      'ไม่', 'ว่า', 'นี้', 'ก็', 'แต่', 'หรือ', 'จาก', 'โดย', 'เมื่อ', 'ถ้า'
+    ])
+
+    // Extract significant words
+    const words = data.content
+      .toLowerCase()
+      .replace(/[^\w\sก-ฮะ-ู]/g, ' ')
+      .split(/\s+/)
+      .filter(word => word.length > 2 && !stopWords.has(word))
+
+    // Get word frequency
+    const wordFreq: Record<string, number> = {}
+    words.forEach(word => {
+      wordFreq[word] = (wordFreq[word] || 0) + 1
+    })
+
+    // Get top keywords
+    const keywords = Object.entries(wordFreq)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([word]) => word)
+
+    if (keywords.length === 0) {
+      // Fallback: return most popular activities
+      const { data: popularActivities } = await supabase
+        .from('activities')
+        .select('id, title, description, thumbnail, type, play_count, tags')
+        .eq('status', 'public')
+        .order('play_count', { ascending: false })
+        .limit(limit)
+
+      return (popularActivities || []) as SuggestedActivity[]
+    }
+
+    // Try to find activities with matching keywords in title or tags
+    // Build search query for title matching
+    const searchPattern = keywords.slice(0, 5).join(' | ')
+
+    // First, try full-text search on title
+    const { data: searchResults } = await supabase
+      .from('activities')
+      .select('id, title, description, thumbnail, type, play_count, tags')
+      .eq('status', 'public')
+      .or(`title.ilike.%${keywords[0]}%,title.ilike.%${keywords[1] || keywords[0]}%`)
+      .order('play_count', { ascending: false })
+      .limit(limit)
+
+    if (searchResults && searchResults.length >= limit) {
+      return searchResults as SuggestedActivity[]
+    }
+
+    // If not enough results, also check for tag overlap
+    const { data: tagResults } = await supabase
+      .from('activities')
+      .select('id, title, description, thumbnail, type, play_count, tags')
+      .eq('status', 'public')
+      .overlaps('tags', keywords.slice(0, 5))
+      .order('play_count', { ascending: false })
+      .limit(limit)
+
+    // Combine and dedupe results
+    const combined = [...(searchResults || []), ...(tagResults || [])]
+    const seen = new Set<string>()
+    const unique = combined.filter(activity => {
+      if (seen.has(activity.id)) return false
+      seen.add(activity.id)
+      return true
+    }).slice(0, limit)
+
+    if (unique.length > 0) {
+      return unique as SuggestedActivity[]
+    }
+
+    // Final fallback: return popular activities
+    const { data: popularActivities } = await supabase
+      .from('activities')
+      .select('id, title, description, thumbnail, type, play_count, tags')
+      .eq('status', 'public')
+      .order('play_count', { ascending: false })
+      .limit(limit)
+
+    return (popularActivities || []) as SuggestedActivity[]
+  })

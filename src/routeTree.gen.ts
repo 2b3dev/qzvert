@@ -14,13 +14,13 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as GuruToLoudRouteImport } from './routes/guru-to-loud'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
-import { Route as ToolsTextToSpeechRouteImport } from './routes/tools/text-to-speech'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminReportsRouteImport } from './routes/admin/reports'
 import { Route as ActivityResultsRouteImport } from './routes/activity/results'
@@ -55,6 +55,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GuruToLoudRoute = GuruToLoudRouteImport.update({
+  id: '/guru-to-loud',
+  path: '/guru-to-loud',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExploreRoute = ExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
@@ -83,11 +88,6 @@ const IndexRoute = IndexRouteImport.update({
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ToolsTextToSpeechRoute = ToolsTextToSpeechRouteImport.update({
-  id: '/tools/text-to-speech',
-  path: '/tools/text-to-speech',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
@@ -137,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/create': typeof CreateRoute
   '/explore': typeof ExploreRoute
+  '/guru-to-loud': typeof GuruToLoudRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -146,7 +147,6 @@ export interface FileRoutesByFullPath {
   '/activity/results': typeof ActivityResultsRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/users': typeof AdminUsersRoute
-  '/tools/text-to-speech': typeof ToolsTextToSpeechRoute
   '/admin': typeof AdminIndexRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
   '/activity/upload/lesson/$id': typeof ActivityUploadLessonIdRoute
@@ -159,6 +159,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/create': typeof CreateRoute
   '/explore': typeof ExploreRoute
+  '/guru-to-loud': typeof GuruToLoudRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -168,7 +169,6 @@ export interface FileRoutesByTo {
   '/activity/results': typeof ActivityResultsRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/users': typeof AdminUsersRoute
-  '/tools/text-to-speech': typeof ToolsTextToSpeechRoute
   '/admin': typeof AdminIndexRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
   '/activity/upload/lesson/$id': typeof ActivityUploadLessonIdRoute
@@ -182,6 +182,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/create': typeof CreateRoute
   '/explore': typeof ExploreRoute
+  '/guru-to-loud': typeof GuruToLoudRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -191,7 +192,6 @@ export interface FileRoutesById {
   '/activity/results': typeof ActivityResultsRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/users': typeof AdminUsersRoute
-  '/tools/text-to-speech': typeof ToolsTextToSpeechRoute
   '/admin/': typeof AdminIndexRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
   '/activity/upload/lesson/$id': typeof ActivityUploadLessonIdRoute
@@ -206,6 +206,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/create'
     | '/explore'
+    | '/guru-to-loud'
     | '/login'
     | '/pricing'
     | '/privacy'
@@ -215,7 +216,6 @@ export interface FileRouteTypes {
     | '/activity/results'
     | '/admin/reports'
     | '/admin/users'
-    | '/tools/text-to-speech'
     | '/admin'
     | '/activity/play/$id'
     | '/activity/upload/lesson/$id'
@@ -228,6 +228,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/create'
     | '/explore'
+    | '/guru-to-loud'
     | '/login'
     | '/pricing'
     | '/privacy'
@@ -237,7 +238,6 @@ export interface FileRouteTypes {
     | '/activity/results'
     | '/admin/reports'
     | '/admin/users'
-    | '/tools/text-to-speech'
     | '/admin'
     | '/activity/play/$id'
     | '/activity/upload/lesson/$id'
@@ -250,6 +250,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/create'
     | '/explore'
+    | '/guru-to-loud'
     | '/login'
     | '/pricing'
     | '/privacy'
@@ -259,7 +260,6 @@ export interface FileRouteTypes {
     | '/activity/results'
     | '/admin/reports'
     | '/admin/users'
-    | '/tools/text-to-speech'
     | '/admin/'
     | '/activity/play/$id'
     | '/activity/upload/lesson/$id'
@@ -273,6 +273,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   CreateRoute: typeof CreateRoute
   ExploreRoute: typeof ExploreRoute
+  GuruToLoudRoute: typeof GuruToLoudRoute
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -282,7 +283,6 @@ export interface RootRouteChildren {
   ActivityResultsRoute: typeof ActivityResultsRoute
   AdminReportsRoute: typeof AdminReportsRoute
   AdminUsersRoute: typeof AdminUsersRoute
-  ToolsTextToSpeechRoute: typeof ToolsTextToSpeechRoute
   AdminIndexRoute: typeof AdminIndexRoute
   ActivityPlayIdRoute: typeof ActivityPlayIdRoute
   ActivityUploadLessonIdRoute: typeof ActivityUploadLessonIdRoute
@@ -327,6 +327,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/guru-to-loud': {
+      id: '/guru-to-loud'
+      path: '/guru-to-loud'
+      fullPath: '/guru-to-loud'
+      preLoaderRoute: typeof GuruToLoudRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/explore': {
       id: '/explore'
       path: '/explore'
@@ -367,13 +374,6 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tools/text-to-speech': {
-      id: '/tools/text-to-speech'
-      path: '/tools/text-to-speech'
-      fullPath: '/tools/text-to-speech'
-      preLoaderRoute: typeof ToolsTextToSpeechRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/users': {
@@ -441,6 +441,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   CreateRoute: CreateRoute,
   ExploreRoute: ExploreRoute,
+  GuruToLoudRoute: GuruToLoudRoute,
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
@@ -450,7 +451,6 @@ const rootRouteChildren: RootRouteChildren = {
   ActivityResultsRoute: ActivityResultsRoute,
   AdminReportsRoute: AdminReportsRoute,
   AdminUsersRoute: AdminUsersRoute,
-  ToolsTextToSpeechRoute: ToolsTextToSpeechRoute,
   AdminIndexRoute: AdminIndexRoute,
   ActivityPlayIdRoute: ActivityPlayIdRoute,
   ActivityUploadLessonIdRoute: ActivityUploadLessonIdRoute,

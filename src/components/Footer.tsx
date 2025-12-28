@@ -16,7 +16,7 @@ export default function Footer() {
   ]
 
   const toolsLinks = [
-    { to: '/tools/text-to-speech', label: t('footer.textToSpeech') },
+    { to: '/guru-to-loud', label: t('footer.guruToLoud') },
   ]
 
   const companyLinks = [
