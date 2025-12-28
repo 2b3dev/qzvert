@@ -15,6 +15,10 @@ export default function Footer() {
     { to: '/pricing', label: t('nav.pricing') },
   ]
 
+  const toolsLinks = [
+    { to: '/tools/text-to-speech', label: t('footer.textToSpeech') },
+  ]
+
   const companyLinks = [
     { to: '/about', label: t('footer.aboutUs') },
     { to: '/contact', label: t('nav.contact') },
@@ -30,7 +34,7 @@ export default function Footer() {
   return (
     <footer className="bg-muted/30 border-t border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
           {/* Brand */}
           <div className="md:col-span-1">
             <Link to="/" className="flex items-center gap-2 group mb-4">
@@ -67,6 +71,23 @@ export default function Footer() {
                   <Link
                     to={to}
                     hash={hash}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Tools Links */}
+          <div>
+            <h3 className="font-semibold text-foreground mb-4">{t('footer.tools')}</h3>
+            <ul className="space-y-3">
+              {toolsLinks.map(({ to, label }) => (
+                <li key={label}>
+                  <Link
+                    to={to}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {label}

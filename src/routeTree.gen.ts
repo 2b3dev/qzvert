@@ -20,6 +20,7 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as ToolsTextToSpeechRouteImport } from './routes/tools/text-to-speech'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminReportsRouteImport } from './routes/admin/reports'
 import { Route as ActivityResultsRouteImport } from './routes/activity/results'
@@ -84,6 +85,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ToolsTextToSpeechRoute = ToolsTextToSpeechRouteImport.update({
+  id: '/tools/text-to-speech',
+  path: '/tools/text-to-speech',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/admin/users',
   path: '/admin/users',
@@ -140,6 +146,7 @@ export interface FileRoutesByFullPath {
   '/activity/results': typeof ActivityResultsRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/tools/text-to-speech': typeof ToolsTextToSpeechRoute
   '/admin': typeof AdminIndexRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
   '/activity/upload/lesson/$id': typeof ActivityUploadLessonIdRoute
@@ -161,6 +168,7 @@ export interface FileRoutesByTo {
   '/activity/results': typeof ActivityResultsRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/tools/text-to-speech': typeof ToolsTextToSpeechRoute
   '/admin': typeof AdminIndexRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
   '/activity/upload/lesson/$id': typeof ActivityUploadLessonIdRoute
@@ -183,6 +191,7 @@ export interface FileRoutesById {
   '/activity/results': typeof ActivityResultsRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/tools/text-to-speech': typeof ToolsTextToSpeechRoute
   '/admin/': typeof AdminIndexRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
   '/activity/upload/lesson/$id': typeof ActivityUploadLessonIdRoute
@@ -206,6 +215,7 @@ export interface FileRouteTypes {
     | '/activity/results'
     | '/admin/reports'
     | '/admin/users'
+    | '/tools/text-to-speech'
     | '/admin'
     | '/activity/play/$id'
     | '/activity/upload/lesson/$id'
@@ -227,6 +237,7 @@ export interface FileRouteTypes {
     | '/activity/results'
     | '/admin/reports'
     | '/admin/users'
+    | '/tools/text-to-speech'
     | '/admin'
     | '/activity/play/$id'
     | '/activity/upload/lesson/$id'
@@ -248,6 +259,7 @@ export interface FileRouteTypes {
     | '/activity/results'
     | '/admin/reports'
     | '/admin/users'
+    | '/tools/text-to-speech'
     | '/admin/'
     | '/activity/play/$id'
     | '/activity/upload/lesson/$id'
@@ -270,6 +282,7 @@ export interface RootRouteChildren {
   ActivityResultsRoute: typeof ActivityResultsRoute
   AdminReportsRoute: typeof AdminReportsRoute
   AdminUsersRoute: typeof AdminUsersRoute
+  ToolsTextToSpeechRoute: typeof ToolsTextToSpeechRoute
   AdminIndexRoute: typeof AdminIndexRoute
   ActivityPlayIdRoute: typeof ActivityPlayIdRoute
   ActivityUploadLessonIdRoute: typeof ActivityUploadLessonIdRoute
@@ -356,6 +369,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tools/text-to-speech': {
+      id: '/tools/text-to-speech'
+      path: '/tools/text-to-speech'
+      fullPath: '/tools/text-to-speech'
+      preLoaderRoute: typeof ToolsTextToSpeechRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/users': {
       id: '/admin/users'
       path: '/admin/users'
@@ -430,6 +450,7 @@ const rootRouteChildren: RootRouteChildren = {
   ActivityResultsRoute: ActivityResultsRoute,
   AdminReportsRoute: AdminReportsRoute,
   AdminUsersRoute: AdminUsersRoute,
+  ToolsTextToSpeechRoute: ToolsTextToSpeechRoute,
   AdminIndexRoute: AdminIndexRoute,
   ActivityPlayIdRoute: ActivityPlayIdRoute,
   ActivityUploadLessonIdRoute: ActivityUploadLessonIdRoute,

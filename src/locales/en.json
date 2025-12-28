@@ -55,6 +55,8 @@
   "footer": {
     "tagline": "Transform any content into gamified learning quests with AI.",
     "product": "Product",
+    "tools": "Free Tools",
+    "textToSpeech": "Text to Speech",
     "company": "Company",
     "aboutUs": "About Us",
     "privacyPolicy": "Privacy Policy",
@@ -722,6 +724,43 @@
     "consent": {
       "text1": "By signing up for QzVert, you consent to us collecting and using data according to this policy.",
       "text2": "You can withdraw consent anytime by contacting us."
+    }
+  },
+  "tools": {
+    "tts": {
+      "badge": "Free Tool",
+      "title1": "Text to",
+      "title2": "Speech",
+      "subtitle": "Convert any text to natural speech using your browser. Free, no login required.",
+      "inputLabel": "Enter Your Text",
+      "placeholder": "Paste or type the text you want to listen to here...",
+      "characters": "characters",
+      "languageLabel": "Language",
+      "voiceLabel": "Voice",
+      "speedLabel": "Speed",
+      "play": "Play",
+      "pause": "Pause",
+      "resume": "Resume",
+      "stop": "Stop",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "clear": "Clear",
+      "playing": "Playing...",
+      "paused": "Paused",
+      "features": {
+        "free": {
+          "title": "100% Free",
+          "description": "No login, no limits. Uses your browser's built-in speech engine."
+        },
+        "multilang": {
+          "title": "Multi-Language",
+          "description": "Supports Thai, English, and many other languages."
+        },
+        "speed": {
+          "title": "Adjustable Speed",
+          "description": "Control playback speed from 0.5x to 2x."
+        }
+      }
     }
   }
 }
