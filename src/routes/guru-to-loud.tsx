@@ -5,15 +5,11 @@ import Markdown from 'react-markdown'
 import {
   Volume2,
   Play,
-  Pause,
-  Square,
   Languages,
   GraduationCap,
   Sparkles,
-  Copy,
   Check,
   RotateCcw,
-  ChevronDown,
   FileText,
   Wand2,
   Loader2,
@@ -39,23 +35,14 @@ import {
 } from '../components/ui/dropdown-menu'
 import { useTranslation } from '../hooks/useTranslation'
 import { cn } from '../lib/utils'
-import { summarizeContent, craftContent, translateContent } from '../server/guru'
+import { craftContent, summarizeContent, translateContent } from '../server/guru'
 import { getSuggestedActivities } from '../server/activities'
+import { TextToLoud } from '../components/TextToLoud'
+import type { LanguageOption, TextToLoudRef } from '../components/TextToLoud'
 
 export const Route = createFileRoute('/guru-to-loud')({
   component: GuruPage,
 })
-
-interface VoiceOption {
-  voice: SpeechSynthesisVoice
-  label: string
-}
-
-interface LanguageOption {
-  code: string
-  name: string
-  flag: string
-}
 
 interface SuggestedActivity {
   id: string
@@ -258,31 +245,35 @@ function GuruPage() {
   // Display mode - show markdown reader view
   const [isReaderMode, setIsReaderMode] = useState(false)
 
-  // TTS states
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [isPaused, setIsPaused] = useState(false)
-  const [voices, setVoices] = useState<VoiceOption[]>([])
-  const [selectedVoice, setSelectedVoice] = useState<string>('')
-  const [selectedGender, setSelectedGender] = useState<'male' | 'female'>(() => savedState?.selectedGender || 'female')
-  const [originalDetectedLanguage, setOriginalDetectedLanguage] = useState<string>(() => savedState?.originalDetectedLanguage || 'en')
+  // TTS states - controlled by TextToLoud component
   const [selectedTargetLanguage, setSelectedTargetLanguage] = useState<string>(() => savedState?.selectedTargetLanguage || 'en')
-  const [availableLanguages, setAvailableLanguages] = useState<LanguageOption[]>([])
-  const [maleVoice, setMaleVoice] = useState<string | null>(null)
-  const [femaleVoice, setFemaleVoice] = useState<string | null>(null)
+  const [originalDetectedLanguage, setOriginalDetectedLanguage] = useState<string>(() => savedState?.originalDetectedLanguage || 'en')
+  const [selectedGender, setSelectedGender] = useState<'male' | 'female'>(() => savedState?.selectedGender || 'female')
   const [rate, setRate] = useState(() => savedState?.rate || 1)
-  const [copied, setCopied] = useState(false)
+  const [availableLanguages, setAvailableLanguages] = useState<LanguageOption[]>(SUPPORTED_LANGUAGES)
   const [charCount, setCharCount] = useState(() => savedState?.originalContent?.length || 0)
   const [highlightIndex, setHighlightIndex] = useState<number>(() => savedState?.highlightIndex || 0)
 
   // Refs
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
+  const textToLoudRef = useRef<TextToLoudRef>(null)
   const detectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const pauseTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const suggestTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const charIndexRef = useRef<number>(savedState?.charIndex || 0)
-  const highlightRef = useRef<HTMLSpanElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const timeoutRefs = useRef<Set<NodeJS.Timeout>>(new Set())
+
+  // Safe timeout helper - tracks timeouts for cleanup
+  const safeSetTimeout = useCallback((fn: () => void, ms: number) => {
+    const id = setTimeout(() => {
+      timeoutRefs.current.delete(id)
+      fn()
+    }, ms)
+    timeoutRefs.current.add(id)
+    return id
+  }, [])
+
+  // Get playing state from ref
+  const isPlaying = textToLoudRef.current?.isPlaying ?? false
 
   // Debounced save to localStorage
   const debouncedSave = useCallback(() => {
@@ -324,6 +315,33 @@ function GuruPage() {
       setIsHistoryLoading(false)
     }, 300)
     return () => clearTimeout(timer)
+  }, [])
+
+  // Filter available languages based on system voices
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = speechSynthesis.getVoices()
+      const availableLangCodes = new Set(voices.map(v => v.lang.split('-')[0].toLowerCase()))
+      const availableLangs = SUPPORTED_LANGUAGES.filter(lang => availableLangCodes.has(lang.code))
+      if (availableLangs.length > 0) {
+        setAvailableLanguages(availableLangs)
+      }
+    }
+
+    loadVoices()
+    speechSynthesis.onvoiceschanged = loadVoices
+
+    return () => {
+      // Cleanup speech synthesis event
+      speechSynthesis.onvoiceschanged = null
+      // Cleanup all timeouts
+      if (detectTimeoutRef.current) clearTimeout(detectTimeoutRef.current)
+      if (suggestTimeoutRef.current) clearTimeout(suggestTimeoutRef.current)
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+      // Clear all tracked timeouts
+      timeoutRefs.current.forEach((id) => clearTimeout(id))
+      timeoutRefs.current.clear()
+    }
   }, [])
 
   // Save immediately on page unload (safety net)
@@ -403,6 +421,9 @@ function GuruPage() {
 
   // Load content from history item
   const handleLoadHistory = useCallback((item: HistoryItem) => {
+    // Stop any current playback first
+    textToLoudRef.current?.stop()
+
     setOriginalContent(item.originalContent)
     setDisplayContent(item.displayContent)
     setContentMode(item.contentMode)
@@ -472,96 +493,6 @@ function GuruPage() {
     return 'en'
   }, [uiLanguage])
 
-  // Find best male/female voices for a specific language
-  const findVoicesForLanguage = useCallback((availableVoices: SpeechSynthesisVoice[], langCode: string) => {
-    const femalePatterns = ['female', 'woman', 'zira', 'hazel', 'susan', 'samantha', 'karen', 'victoria', 'kanya', 'onuma', 'google.*female', 'ava', 'joanna', 'salli', 'kimberly', 'ivy', 'emma', 'amy', 'nicole', 'rachel']
-    const malePatterns = ['male', 'man', 'david', 'mark', 'james', 'daniel', 'george', 'prem', 'google.*male', 'matthew', 'joey', 'justin', 'kevin', 'brian', 'russell', 'geraint']
-
-    const langVoices = availableVoices.filter(v => v.lang.toLowerCase().startsWith(langCode.toLowerCase()))
-    const fallbackVoices = availableVoices.filter(v => v.lang.toLowerCase().startsWith('en'))
-    const voicesToSearch = langVoices.length > 0 ? langVoices : fallbackVoices
-
-    let foundFemaleVoice = voicesToSearch.find(v =>
-      femalePatterns.some(p => v.name.toLowerCase().includes(p))
-    )
-    if (!foundFemaleVoice && voicesToSearch.length > 0) {
-      foundFemaleVoice = voicesToSearch[0]
-    }
-
-    let foundMaleVoice = voicesToSearch.find(v =>
-      malePatterns.some(p => v.name.toLowerCase().includes(p))
-    )
-    if (!foundMaleVoice && voicesToSearch.length > 1) {
-      foundMaleVoice = voicesToSearch[1]
-    } else if (!foundMaleVoice) {
-      foundMaleVoice = voicesToSearch[0]
-    }
-
-    return { femaleVoice: foundFemaleVoice, maleVoice: foundMaleVoice }
-  }, [])
-
-  // Update voices when language changes
-  const updateVoicesForLanguage = useCallback((langCode: string, allVoices: SpeechSynthesisVoice[], forceUpdate = false) => {
-    const { femaleVoice: fVoice, maleVoice: mVoice } = findVoicesForLanguage(allVoices, langCode)
-
-    setFemaleVoice(fVoice?.name || null)
-    setMaleVoice(mVoice?.name || null)
-
-    // Only update selectedVoice if:
-    // 1. forceUpdate is true (language changed by user)
-    // 2. Current selectedVoice is not valid for this language
-    const currentVoiceValid = allVoices.some(v =>
-      v.name === selectedVoice && v.lang.toLowerCase().startsWith(langCode.toLowerCase())
-    )
-
-    if (forceUpdate || !selectedVoice || !currentVoiceValid) {
-      if (selectedGender === 'female' && fVoice) {
-        setSelectedVoice(fVoice.name)
-      } else if (selectedGender === 'male' && mVoice) {
-        setSelectedVoice(mVoice.name)
-      } else if (fVoice) {
-        setSelectedVoice(fVoice.name)
-      } else if (mVoice) {
-        setSelectedVoice(mVoice.name)
-      }
-    }
-  }, [findVoicesForLanguage, selectedGender, selectedVoice])
-
-  // Load available voices
-  useEffect(() => {
-    const loadVoices = () => {
-      const availableVoices = speechSynthesis.getVoices()
-      const voiceOptions: VoiceOption[] = availableVoices.map((voice) => ({
-        voice,
-        label: `${voice.name} (${voice.lang})`,
-      }))
-      setVoices(voiceOptions)
-
-      const availableLangCodes = new Set(availableVoices.map(v => v.lang.split('-')[0].toLowerCase()))
-      const availableLangs = SUPPORTED_LANGUAGES.filter(lang => availableLangCodes.has(lang.code))
-      setAvailableLanguages(availableLangs)
-
-      updateVoicesForLanguage(selectedTargetLanguage, availableVoices)
-    }
-
-    loadVoices()
-    speechSynthesis.onvoiceschanged = loadVoices
-
-    return () => {
-      speechSynthesis.cancel()
-      if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current)
-      if (detectTimeoutRef.current) clearTimeout(detectTimeoutRef.current)
-      if (suggestTimeoutRef.current) clearTimeout(suggestTimeoutRef.current)
-    }
-  }, [])
-
-  // Update voices when selected target language changes
-  useEffect(() => {
-    if (voices.length > 0) {
-      updateVoicesForLanguage(selectedTargetLanguage, voices.map(v => v.voice))
-    }
-  }, [selectedTargetLanguage, updateVoicesForLanguage])
-
   // Fetch suggested activities
   const fetchSuggestions = useCallback(async (content: string) => {
     if (!content.trim() || content.length < 20) {
@@ -618,33 +549,29 @@ function GuruPage() {
   // Handle language selection (dropdown)
   const handleLanguageChange = (langCode: string) => {
     setSelectedTargetLanguage(langCode)
-    if (voices.length > 0) {
-      // Force update voice when user changes language
-      updateVoicesForLanguage(langCode, voices.map(v => v.voice), true)
-    }
   }
 
   // Handle gender selection
-  const handleGenderSelect = (gender: 'male' | 'female') => {
+  const handleGenderChange = (gender: 'male' | 'female') => {
     setSelectedGender(gender)
-    if (gender === 'female' && femaleVoice) {
-      setSelectedVoice(femaleVoice)
-    } else if (gender === 'male' && maleVoice) {
-      setSelectedVoice(maleVoice)
-    }
+  }
+
+  // Handle rate change
+  const handleRateChange = (newRate: number) => {
+    setRate(newRate)
   }
 
   // Mode selection handlers
-  const handleModeSelect = (mode: 'listen' | 'summarize' | 'craft') => {
+  const handleModeSelect = useCallback((mode: 'listen' | 'summarize' | 'craft') => {
     setSelectedMode(mode)
     // Clear AI result when switching modes
     if (mode === 'listen') {
       setAiResult('')
       setAiResultKeyPoints([])
     }
-  }
+  }, [])
 
-  const handleConfirmGenerate = async () => {
+  const handleConfirmGenerate = useCallback(async () => {
     if (selectedMode === 'listen' || !originalContent.trim()) return
 
     setIsProcessing(true)
@@ -677,7 +604,7 @@ function GuruPage() {
       setIsProcessing(false)
       setProcessingAction('')
     }
-  }
+  }, [selectedMode, originalContent, originalDetectedLanguage, t])
 
   const handleUseAiResult = () => {
     if (!aiResult) return
@@ -719,9 +646,9 @@ function GuruPage() {
 
       // Auto play after translation
       setIsReaderMode(true)
-      setTimeout(() => {
+      safeSetTimeout(() => {
         charIndexRef.current = 0
-        playFromText(result.translated, 0)
+        textToLoudRef.current?.play()
       }, 100)
     } catch (error) {
       console.error('Translate error:', error)
@@ -732,18 +659,17 @@ function GuruPage() {
     }
   }
 
-  const handlePlayOriginal = () => {
+  const handlePlayOriginal = useCallback(() => {
     setShowTranslateModal(false)
     // Reset to original detected language for TTS
-    updateVoicesForLanguage(originalDetectedLanguage, voices.map(v => v.voice))
     setSelectedTargetLanguage(originalDetectedLanguage)
 
     setIsReaderMode(true)
-    setTimeout(() => {
+    safeSetTimeout(() => {
       charIndexRef.current = 0
-      playFromText(displayContent, 0)
+      textToLoudRef.current?.play()
     }, 100)
-  }
+  }, [originalDetectedLanguage, safeSetTimeout])
 
   const handleBackToOriginal = () => {
     setDisplayContent(originalContent)
@@ -751,91 +677,8 @@ function GuruPage() {
     setKeyPoints([])
   }
 
-  // TTS functions
-  const playFromText = useCallback((textToPlay: string, startIndex: number = 0) => {
-    speechSynthesis.cancel()
-
-    const utterance = new SpeechSynthesisUtterance(textToPlay)
-    utteranceRef.current = utterance
-    charIndexRef.current = startIndex
-
-    const voice = voices.find((v) => v.voice.name === selectedVoice)?.voice
-    if (voice) {
-      utterance.voice = voice
-      utterance.lang = voice.lang
-    }
-
-    utterance.rate = rate
-
-    utterance.onboundary = (event) => {
-      if (event.name === 'word') {
-        const absoluteIndex = startIndex + event.charIndex
-        charIndexRef.current = absoluteIndex
-        setHighlightIndex(absoluteIndex)
-      }
-    }
-
-    utterance.onstart = () => {
-      setIsPlaying(true)
-      setIsPaused(false)
-      setHighlightIndex(startIndex)
-    }
-
-    utterance.onend = () => {
-      setIsPlaying(false)
-      setIsPaused(false)
-      charIndexRef.current = 0
-      setHighlightIndex(0)
-    }
-
-    utterance.onerror = (event) => {
-      if (event.error !== 'interrupted') {
-        // Reset playback state but keep position for resume
-        speechSynthesis.cancel()
-        setIsPlaying(false)
-        setIsPaused(false)
-        // Don't reset charIndexRef - keep position so user can resume from here
-        console.warn('TTS error:', event.error)
-      }
-    }
-
-    // Cancel any existing speech before starting new one
-    speechSynthesis.cancel()
-    setTimeout(() => {
-      speechSynthesis.speak(utterance)
-    }, 50)
-  }, [voices, selectedVoice, rate])
-
-  const handlePlay = () => {
-    if (isPaused) {
-      if (pauseTimeoutRef.current) {
-        clearTimeout(pauseTimeoutRef.current)
-        pauseTimeoutRef.current = null
-      }
-
-      speechSynthesis.resume()
-
-      setTimeout(() => {
-        if (speechSynthesis.paused || !speechSynthesis.speaking) {
-          // Resume failed, restart from current position or beginning
-          const remainingText = displayContent.slice(charIndexRef.current)
-          if (remainingText.trim()) {
-            playFromText(remainingText, charIndexRef.current)
-          } else {
-            // If no remaining text, restart from beginning
-            charIndexRef.current = 0
-            playFromText(displayContent, 0)
-          }
-        }
-      }, 150)
-
-      setIsPaused(false)
-      setIsPlaying(true)
-      return
-    }
-
-    if (!displayContent.trim()) return
-
+  // TTS callbacks
+  const handlePlay = useCallback(() => {
     // Check if selected language differs from detected language
     // and content hasn't been translated yet
     if (selectedTargetLanguage !== originalDetectedLanguage && contentMode !== 'translated') {
@@ -846,62 +689,24 @@ function GuruPage() {
     // Enter reader mode
     setIsReaderMode(true)
 
-    // If already in reader mode with a saved position, resume from there
-    if (charIndexRef.current > 0 && charIndexRef.current < displayContent.length) {
-      const remainingText = displayContent.slice(charIndexRef.current)
-      if (remainingText.trim()) {
-        playFromText(remainingText, charIndexRef.current)
-        return
-      }
-    }
-
-    // Otherwise start from beginning
-    charIndexRef.current = 0
-    setHighlightIndex(0)
-    playFromText(displayContent, 0)
-
     // Save to history when starting new playback
     saveToHistory()
-  }
+  }, [selectedTargetLanguage, originalDetectedLanguage, contentMode, saveToHistory])
 
-  const handlePause = () => {
-    speechSynthesis.pause()
-    setIsPaused(true)
-    setIsPlaying(false)
-
+  const handlePause = useCallback(() => {
     // Save position immediately when pausing
     debouncedSave()
+  }, [debouncedSave])
 
-    if (pauseTimeoutRef.current) {
-      clearTimeout(pauseTimeoutRef.current)
-    }
-    // Auto reset playback state after 30 seconds, but keep position
-    pauseTimeoutRef.current = setTimeout(() => {
-      speechSynthesis.cancel()
-      setIsPaused(false)
-      setIsPlaying(false)
-      // Don't reset charIndexRef - keep position so user can resume from here
-    }, 30000)
-  }
-
-  const handleStop = () => {
-    if (pauseTimeoutRef.current) {
-      clearTimeout(pauseTimeoutRef.current)
-      pauseTimeoutRef.current = null
-    }
-    speechSynthesis.cancel()
-    setIsPlaying(false)
-    setIsPaused(false)
+  const handleStop = useCallback(() => {
     charIndexRef.current = 0
     setHighlightIndex(0)
-  }
+  }, [])
 
-  const handleCopy = async () => {
-    if (!displayContent) return
-    await navigator.clipboard.writeText(displayContent)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
+  const handleHighlightChange = useCallback((index: number) => {
+    charIndexRef.current = index
+    setHighlightIndex(index)
+  }, [])
 
   const handleClear = () => {
     setOriginalContent('')
@@ -912,7 +717,7 @@ function GuruPage() {
     setSuggestedActivities([])
     setHighlightIndex(0)
     charIndexRef.current = 0
-    handleStop()
+    textToLoudRef.current?.stop()
     // Clear localStorage
     try {
       localStorage.removeItem(STORAGE_KEY)
@@ -939,7 +744,7 @@ function GuruPage() {
     charIndexRef.current = 0
     currentHistoryIdRef.current = null
     setIsReaderMode(false)
-    handleStop()
+    textToLoudRef.current?.stop()
 
     // Clear localStorage for current state
     try {
@@ -951,42 +756,129 @@ function GuruPage() {
     toast.success(uiLanguage === 'th' ? 'เริ่มใหม่เรียบร้อย' : 'Ready for new content')
   }, [originalContent, saveToHistory, uiLanguage])
 
-  const rateOptions = [
-    { value: 0.5, label: '0.5x' },
-    { value: 0.75, label: '0.75x' },
-    { value: 1, label: '1x' },
-    { value: 1.25, label: '1.25x' },
-    { value: 1.5, label: '1.5x' },
-    { value: 2, label: '2x' },
-  ]
-
   // Language for display badge (detected language)
   const detectedLanguageDisplay = SUPPORTED_LANGUAGES.find(l => l.code === originalDetectedLanguage) || SUPPORTED_LANGUAGES[1]
-  // Language for dropdown selection
-  const selectedLanguageDisplay = SUPPORTED_LANGUAGES.find(l => l.code === selectedTargetLanguage) || SUPPORTED_LANGUAGES[1]
 
-  // Auto-scroll to highlighted word
-  useEffect(() => {
-    if (highlightRef.current && containerRef.current && (isPlaying || isPaused)) {
-      const container = containerRef.current
-      const highlight = highlightRef.current
+  // Render mode selector content (to be passed to TextToLoud) - memoized to prevent unnecessary re-renders
+  const renderModeSelector = useMemo(() => (
+    <>
+      {/* Select Loud Mode */}
+      <div className="mb-4">
+        <label className="text-xs font-medium text-muted-foreground mb-2 block">
+          {t('guru.selectModeLabel')}
+        </label>
+        <div className="grid grid-cols-3 gap-2 p-1 rounded-lg bg-background border border-input">
+          {/* Just Listen Button */}
+          <button
+            onClick={() => handleModeSelect('listen')}
+            disabled={isProcessing || isPlaying}
+            className={cn(
+              'flex items-center justify-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium transition-all',
+              selectedMode === 'listen'
+                ? 'bg-primary text-primary-foreground shadow-md'
+                : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground',
+              (isProcessing || isPlaying) && 'opacity-50 cursor-not-allowed'
+            )}
+          >
+            <Volume2 className="w-4 h-4" />
+            {t('guru.listen')}
+          </button>
+          {/* Summarize Button */}
+          <button
+            onClick={() => handleModeSelect('summarize')}
+            disabled={isProcessing || isPlaying}
+            className={cn(
+              'flex items-center justify-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium transition-all',
+              selectedMode === 'summarize'
+                ? 'bg-primary text-primary-foreground shadow-md'
+                : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground',
+              (isProcessing || isPlaying) && 'opacity-50 cursor-not-allowed'
+            )}
+          >
+            <FileText className="w-4 h-4" />
+            {t('guru.summarize')}
+          </button>
+          {/* Craft Button */}
+          <button
+            onClick={() => handleModeSelect('craft')}
+            disabled={isProcessing || isPlaying}
+            className={cn(
+              'flex items-center justify-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium transition-all',
+              selectedMode === 'craft'
+                ? 'bg-primary text-primary-foreground shadow-md'
+                : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground',
+              (isProcessing || isPlaying) && 'opacity-50 cursor-not-allowed'
+            )}
+          >
+            <Wand2 className="w-4 h-4" />
+            {t('guru.craft')}
+          </button>
+        </div>
+      </div>
 
-      const highlightTop = highlight.offsetTop
-      const highlightHeight = highlight.offsetHeight
-      const containerHeight = container.clientHeight
-      const scrollTop = container.scrollTop
+      {/* Mode Description & Action */}
+      {selectedMode === 'listen' && (
+        <motion.div
+          initial={{ opacity: 0, y: -5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-3 rounded-lg bg-primary/5 border border-primary/20 mb-4"
+        >
+          <div className="flex items-start gap-3">
+            <div className="p-1.5 rounded-md bg-emerald-500/20">
+              <Volume2 className="w-4 h-4 text-emerald-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p
+                className="text-sm text-muted-foreground [&_strong]:text-emerald-600 dark:[&_strong]:text-emerald-400 [&_strong]:font-semibold"
+                dangerouslySetInnerHTML={{ __html: t('guru.listenFreeDesc') }}
+              />
+            </div>
+          </div>
+        </motion.div>
+      )}
 
-      const visibleTop = scrollTop
-      const visibleBottom = scrollTop + containerHeight
-
-      if (highlightTop < visibleTop || highlightTop + highlightHeight > visibleBottom) {
-        container.scrollTo({
-          top: highlightTop - containerHeight / 2 + highlightHeight / 2,
-          behavior: 'smooth'
-        })
-      }
-    }
-  }, [highlightIndex, isPlaying, isPaused])
+      {(selectedMode === 'summarize' || selectedMode === 'craft') && !aiResult && (
+        <motion.div
+          initial={{ opacity: 0, y: -5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-3 rounded-lg bg-primary/5 border border-primary/20 mb-4"
+        >
+          <div className="flex items-start gap-3">
+            <div className="p-1.5 rounded-md bg-primary/20">
+              {selectedMode === 'summarize' ? (
+                <FileText className="w-4 h-4 text-primary" />
+              ) : (
+                <Wand2 className="w-4 h-4 text-primary" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-muted-foreground mb-3">
+                {selectedMode === 'summarize' ? t('guru.summarizeConfirmDesc') : t('guru.craftConfirmDesc')}
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  onClick={handleConfirmGenerate}
+                  disabled={isProcessing || !originalContent.trim()}
+                  size="sm"
+                  className="gap-2"
+                >
+                  {isProcessing ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-4 h-4" />
+                  )}
+                  {t('guru.confirmGenerate')}
+                </Button>
+                <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                  ✨ {t('guru.confirmCredit')}
+                </span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </>
+  ), [t, selectedMode, isProcessing, isPlaying, aiResult, originalContent, handleConfirmGenerate, handleModeSelect])
 
   // Show loading screen while history is loading
   if (isHistoryLoading) {
@@ -1035,7 +927,9 @@ function GuruPage() {
                         <History className="w-4 h-4 text-primary" />
                         <span className="font-medium text-sm flex items-center gap-1">
                           {uiLanguage === 'th' ? 'ประวัติ Loud' : 'Loud History'}
-                          <Monitor className="w-3 h-3 opacity-50 relative top-1" title={uiLanguage === 'th' ? 'เก็บบนเครื่องนี้' : 'Stored on this device'} />
+                          <span title={uiLanguage === 'th' ? 'เก็บบนเครื่องนี้' : 'Stored on this device'}>
+                            <Monitor className="w-3 h-3 opacity-50 relative top-1" />
+                          </span>
                         </span>
                       </div>
                       {history.length > 0 && (
@@ -1156,68 +1050,8 @@ function GuruPage() {
                   {/* Text Input / Reader Mode / Highlighted Display */}
                   <div className="relative">
                     {isReaderMode ? (
-                      // Reader mode - markdown display with close button
-                      <div className="relative">
-                        <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
-                          <button
-                            onClick={handleCopy}
-                            className="p-1.5 rounded-lg bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                            title={t('tools.tts.copy')}
-                          >
-                            {copied ? (
-                              <Check className="w-4 h-4 text-green-500" />
-                            ) : (
-                              <Copy className="w-4 h-4" />
-                            )}
-                          </button>
-                          <button
-                            onClick={() => {
-                              // Stop playback but keep position when closing reader
-                              speechSynthesis.cancel()
-                              setIsPlaying(false)
-                              setIsPaused(false)
-                              setIsReaderMode(false)
-                              // Don't reset charIndexRef and highlightIndex - keep position
-                            }}
-                            className="p-1.5 rounded-lg bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                            aria-label="Close reader"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                        <div
-                          ref={containerRef}
-                          className="min-h-[200px] max-h-[400px] overflow-auto p-4 pr-10 rounded-xl border border-primary/30 bg-linear-to-br from-primary/5 to-emerald-500/5"
-                        >
-                          {(isPlaying || isPaused || highlightIndex > 0) ? (
-                            // Show highlighted text when playing or has saved position
-                            <div className="prose prose-sm dark:prose-invert max-w-none">
-                              <span className="text-muted-foreground">{displayContent.slice(0, highlightIndex)}</span>
-                              <span
-                                ref={highlightRef}
-                                className="bg-primary text-primary-foreground px-0.5 rounded"
-                              >
-                                {displayContent.slice(highlightIndex, displayContent.indexOf(' ', highlightIndex) === -1 ? displayContent.length : displayContent.indexOf(' ', highlightIndex))}
-                              </span>
-                              <span className="text-foreground">{displayContent.slice(displayContent.indexOf(' ', highlightIndex) === -1 ? displayContent.length : displayContent.indexOf(' ', highlightIndex))}</span>
-                            </div>
-                          ) : (
-                            // Show markdown when not playing and no saved position
-                            <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground prose-li:text-foreground prose-strong:text-foreground">
-                              <Markdown>{displayContent}</Markdown>
-                            </div>
-                          )}
-                        </div>
-                        {/* Info bar */}
-                        <div className="flex items-center justify-end gap-2 mt-2 px-1">
-                          <span className="text-xs bg-muted px-2 py-1 rounded-full">
-                            {detectedLanguageDisplay.flag} {detectedLanguageDisplay.name}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {displayContent.length} {t('tools.tts.characters')}
-                          </span>
-                        </div>
-                      </div>
+                      // Reader mode - use TextToLoud's reader
+                      null // TextToLoud will render the reader mode
                     ) : (
                       // Normal textarea mode
                       <div>
@@ -1253,7 +1087,7 @@ function GuruPage() {
                   </div>
 
                   {/* Key Points (after craft) */}
-                  {keyPoints.length > 0 && (
+                  {keyPoints.length > 0 && !isReaderMode && (
                     <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
                       <h4 className="font-semibold text-emerald-600 dark:text-emerald-400 mb-2 flex items-center gap-2">
                         <Sparkles className="w-4 h-4" />
@@ -1270,257 +1104,46 @@ function GuruPage() {
                     </div>
                   )}
 
-                  {/* Loud Settings Box */}
-                  <div className={cn(
-                    "p-4 rounded-xl border border-input bg-muted/30 transition-opacity",
-                    isPlaying && "opacity-50 pointer-events-none"
-                  )}>
-                    {/* Section Header */}
-                    <div className="flex items-center gap-2 mb-4">
-                      <Volume2 className="w-4 h-4 text-primary" />
-                      <span className="font-medium text-sm">{uiLanguage === 'th' ? 'ตั้งค่าเสียง Guru' : 'Guru Voice Settings'}</span>
-                    </div>
-
-                    {/* Select Loud Mode */}
-                    <div className="mb-4">
-                      <label className="text-xs font-medium text-muted-foreground mb-2 block">
-                        {t('guru.selectModeLabel')}
-                      </label>
-                      <div className="grid grid-cols-3 gap-2 p-1 rounded-lg bg-background border border-input">
-                        {/* Just Listen Button */}
-                        <button
-                          onClick={() => handleModeSelect('listen')}
-                          disabled={isProcessing || isPlaying}
-                          className={cn(
-                            'flex items-center justify-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium transition-all',
-                            selectedMode === 'listen'
-                              ? 'bg-primary text-primary-foreground shadow-md'
-                              : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground',
-                            (isProcessing || isPlaying) && 'opacity-50 cursor-not-allowed'
-                          )}
-                        >
-                          <Volume2 className="w-4 h-4" />
-                          {t('guru.listen')}
-                        </button>
-                        {/* Summarize Button */}
-                        <button
-                          onClick={() => handleModeSelect('summarize')}
-                          disabled={isProcessing || isPlaying}
-                          className={cn(
-                            'flex items-center justify-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium transition-all',
-                            selectedMode === 'summarize'
-                              ? 'bg-primary text-primary-foreground shadow-md'
-                              : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground',
-                            (isProcessing || isPlaying) && 'opacity-50 cursor-not-allowed'
-                          )}
-                        >
-                          <FileText className="w-4 h-4" />
-                          {t('guru.summarize')}
-                        </button>
-                        {/* Craft Button */}
-                        <button
-                          onClick={() => handleModeSelect('craft')}
-                          disabled={isProcessing || isPlaying}
-                          className={cn(
-                            'flex items-center justify-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium transition-all',
-                            selectedMode === 'craft'
-                              ? 'bg-primary text-primary-foreground shadow-md'
-                              : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground',
-                            (isProcessing || isPlaying) && 'opacity-50 cursor-not-allowed'
-                          )}
-                        >
-                          <Wand2 className="w-4 h-4" />
-                          {t('guru.craft')}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Mode Description & Action */}
-                    {selectedMode === 'listen' && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="p-3 rounded-lg bg-primary/5 border border-primary/20 mb-4"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="p-1.5 rounded-md bg-emerald-500/20">
-                            <Volume2 className="w-4 h-4 text-emerald-500" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p
-                              className="text-sm text-muted-foreground [&_strong]:text-emerald-600 dark:[&_strong]:text-emerald-400 [&_strong]:font-semibold"
-                              dangerouslySetInnerHTML={{ __html: t('guru.listenFreeDesc') }}
-                            />
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {(selectedMode === 'summarize' || selectedMode === 'craft') && !aiResult && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="p-3 rounded-lg bg-primary/5 border border-primary/20 mb-4"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="p-1.5 rounded-md bg-primary/20">
-                            {selectedMode === 'summarize' ? (
-                              <FileText className="w-4 h-4 text-primary" />
-                            ) : (
-                              <Wand2 className="w-4 h-4 text-primary" />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-muted-foreground mb-3">
-                              {selectedMode === 'summarize' ? t('guru.summarizeConfirmDesc') : t('guru.craftConfirmDesc')}
-                            </p>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <Button
-                                onClick={handleConfirmGenerate}
-                                disabled={isProcessing || !originalContent.trim()}
-                                size="sm"
-                                className="gap-2"
-                              >
-                                {isProcessing ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  <Sparkles className="w-4 h-4" />
-                                )}
-                                {t('guru.confirmGenerate')}
-                              </Button>
-                              <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                                ✨ {t('guru.confirmCredit')}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {/* Voice Controls Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                      {/* Language Dropdown */}
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-muted-foreground">
-                          {t('tools.tts.languageLabel')}
-                        </label>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild disabled={isPlaying}>
-                            <button
-                              className={cn(
-                                "w-full h-10 px-3 rounded-lg border border-input bg-background flex items-center justify-between text-sm font-medium transition-colors",
-                                isPlaying ? "cursor-not-allowed opacity-50" : "hover:bg-accent/50"
-                              )}
-                              disabled={isPlaying}
-                            >
-                              <span className="flex items-center gap-2">
-                                <span>{selectedLanguageDisplay.flag}</span>
-                                {selectedLanguageDisplay.name}
-                              </span>
-                              <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" className="w-48">
-                            {availableLanguages.map((lang) => (
-                              <DropdownMenuItem
-                                key={lang.code}
-                                onClick={() => handleLanguageChange(lang.code)}
-                                className={cn(
-                                  'flex items-center gap-2 cursor-pointer',
-                                  selectedTargetLanguage === lang.code && 'bg-accent'
-                                )}
-                              >
-                                <span>{lang.flag}</span>
-                                <span>{lang.name}</span>
-                                {selectedTargetLanguage === lang.code && (
-                                  <Check className="w-4 h-4 ml-auto text-primary" />
-                                )}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-
-                      {/* Speed Dropdown */}
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-muted-foreground">
-                          {t('tools.tts.speedLabel')}
-                        </label>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild disabled={isPlaying}>
-                            <button
-                              className={cn(
-                                "w-full h-10 px-3 rounded-lg border border-input bg-background flex items-center justify-between text-sm font-medium transition-colors",
-                                isPlaying ? "cursor-not-allowed opacity-50" : "hover:bg-accent/50"
-                              )}
-                              disabled={isPlaying}
-                            >
-                              <span className="flex items-center gap-2">
-                                <span>⚡</span>
-                                {rateOptions.find(r => r.value === rate)?.label || '1x'}
-                              </span>
-                              <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" className="w-48">
-                            {rateOptions.map((option) => (
-                              <DropdownMenuItem
-                                key={option.value}
-                                onClick={() => setRate(option.value)}
-                                className={cn(
-                                  'flex items-center gap-2 cursor-pointer',
-                                  rate === option.value && 'bg-accent'
-                                )}
-                              >
-                                <span>{option.label}</span>
-                                {rate === option.value && (
-                                  <Check className="w-4 h-4 ml-auto text-primary" />
-                                )}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-
-                      {/* Female Voice Button */}
-                      <button
-                        onClick={() => handleGenderSelect('female')}
-                        disabled={!femaleVoice || isPlaying}
-                        className={cn(
-                          'h-10 sm:mt-6 flex items-center justify-center gap-2 rounded-lg text-sm font-medium transition-all',
-                          selectedGender === 'female'
-                            ? 'bg-pink-500 text-white shadow-md shadow-pink-500/25'
-                            : 'bg-background border border-input hover:bg-accent/50 text-foreground',
-                          (!femaleVoice || isPlaying) && 'opacity-50 cursor-not-allowed'
-                        )}
-                      >
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <circle cx="12" cy="8" r="5" />
-                          <path d="M12 13v8M9 21h6" />
-                        </svg>
-                        {uiLanguage === 'th' ? 'หญิง' : 'Female'}
-                      </button>
-
-                      {/* Male Voice Button */}
-                      <button
-                        onClick={() => handleGenderSelect('male')}
-                        disabled={!maleVoice || isPlaying}
-                        className={cn(
-                          'h-10 sm:mt-6 flex items-center justify-center gap-2 rounded-lg text-sm font-medium transition-all',
-                          selectedGender === 'male'
-                            ? 'bg-blue-500 text-white shadow-md shadow-blue-500/25'
-                            : 'bg-background border border-input hover:bg-accent/50 text-foreground',
-                          (!maleVoice || isPlaying) && 'opacity-50 cursor-not-allowed'
-                        )}
-                      >
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <circle cx="10" cy="14" r="5" />
-                          <path d="M19 5l-5.4 5.4M19 5h-5M19 5v5" />
-                        </svg>
-                        {uiLanguage === 'th' ? 'ชาย' : 'Male'}
-                      </button>
-                    </div>
-                  </div>
+                  {/* TextToLoud Component - Voice Settings, Reader Mode, Float Controls */}
+                  <TextToLoud
+                    ref={textToLoudRef}
+                    text={displayContent}
+                    detectedLanguage={originalDetectedLanguage}
+                    uiLanguage={uiLanguage as 'en' | 'th'}
+                    // Controlled state
+                    isReaderMode={isReaderMode}
+                    onReaderModeChange={setIsReaderMode}
+                    selectedLanguage={selectedTargetLanguage}
+                    onLanguageChange={handleLanguageChange}
+                    availableLanguages={availableLanguages}
+                    rate={rate}
+                    onRateChange={handleRateChange}
+                    selectedGender={selectedGender}
+                    onGenderChange={handleGenderChange}
+                    // Callbacks
+                    onPlay={handlePlay}
+                    onPause={handlePause}
+                    onStop={handleStop}
+                    onHighlightChange={handleHighlightChange}
+                    initialHighlightIndex={highlightIndex}
+                    // Visibility
+                    showSettings={!isReaderMode}
+                    showReaderMode={true}
+                    showFloatControls={true}
+                    showPlayButton={false} // We'll render our own play button section
+                    // Custom content
+                    renderBeforeSettings={renderModeSelector}
+                    // Translations
+                    translations={{
+                      settings: uiLanguage === 'th' ? 'ตั้งค่าเสียง Guru' : 'Guru Voice Settings',
+                      language: t('tools.tts.languageLabel'),
+                      speed: t('tools.tts.speedLabel'),
+                      playing: t('tools.tts.playing'),
+                      paused: t('tools.tts.paused'),
+                      copy: t('tools.tts.copy'),
+                      characters: t('tools.tts.characters'),
+                    }}
+                  />
 
                   {/* AI Result Display */}
                   {aiResult && (
@@ -1588,140 +1211,102 @@ function GuruPage() {
                     </motion.div>
                   )}
 
-                  {/* Play Button & History */}
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {!isPlaying && !isPaused ? (
+                  {/* Play Button & History - only show when not in reader mode */}
+                  {!isReaderMode && (
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <Button
-                          onClick={handlePlay}
+                          onClick={() => textToLoudRef.current?.play()}
                           disabled={!displayContent.trim()}
                           className="gap-2 bg-linear-to-r from-primary to-emerald-500 hover:from-primary/90 hover:to-emerald-500/90"
                         >
                           <Play className="w-4 h-4" />
                           {t('tools.tts.play')}
                         </Button>
-                      ) : isPlaying ? (
-                        <>
-                          <Button
-                            onClick={handlePause}
-                            variant="outline"
-                            className="gap-2"
-                          >
-                            <Pause className="w-4 h-4" />
-                            {t('tools.tts.pause')}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            onClick={handleStop}
-                            className="gap-2"
-                          >
-                            <Square className="w-4 h-4" />
-                            {t('tools.tts.stop')}
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button
-                            onClick={handlePlay}
-                            variant="outline"
-                            className="gap-2"
-                          >
-                            <Play className="w-4 h-4" />
-                            {t('tools.tts.resume')}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            onClick={handleStop}
-                            className="gap-2"
-                          >
-                            <Square className="w-4 h-4" />
-                            {t('tools.tts.stop')}
-                          </Button>
-                        </>
+                      </div>
+
+                      {/* Mobile buttons - New & History */}
+                      <div className="flex items-center gap-2 lg:hidden">
+                        {/* New Loud Button - Mobile */}
+                        <Button
+                          onClick={handleNewLoud}
+                          size="sm"
+                          className="gap-2 bg-linear-to-r from-primary to-emerald-500 hover:from-primary/90 hover:to-emerald-500/90"
+                        >
+                          <Plus className="w-4 h-4" />
+                          {uiLanguage === 'th' ? 'ใหม่' : 'New'}
+                        </Button>
+
+                        {/* History Button - Mobile only */}
+                        {history.length > 0 && (
+                          <DropdownMenu open={showHistory} onOpenChange={setShowHistory}>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm" className="gap-2">
+                              <History className="w-4 h-4" />
+                              {uiLanguage === 'th' ? 'ประวัติ' : 'History'}
+                              <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-muted">
+                                {history.length}
+                              </span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-auto">
+                            <div className="flex items-center justify-between px-2 py-1.5 border-b border-border">
+                              <span className="text-xs font-medium text-muted-foreground">
+                                {uiLanguage === 'th' ? 'ประวัติล่าสุด' : 'Recent History'}
+                              </span>
+                              <button
+                                onClick={handleClearAllHistory}
+                                className="text-xs text-destructive hover:underline"
+                              >
+                                {uiLanguage === 'th' ? 'ล้างทั้งหมด' : 'Clear All'}
+                              </button>
+                            </div>
+                            {history.map((item) => (
+                              <DropdownMenuItem
+                                key={item.id}
+                                onClick={() => handleLoadHistory(item)}
+                                className="flex items-start gap-2 p-2 cursor-pointer"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate">
+                                    {item.title}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <Clock className="w-3 h-3" />
+                                      {new Date(item.lastPlayedAt).toLocaleDateString(uiLanguage === 'th' ? 'th-TH' : 'en-US', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      })}
+                                    </span>
+                                    <span className="text-xs px-1.5 py-0.5 rounded bg-muted">
+                                      {SUPPORTED_LANGUAGES.find(l => l.code === item.language)?.flag || '🌐'}
+                                    </span>
+                                    {item.contentMode !== 'original' && (
+                                      <span className="text-xs px-1.5 py-0.5 rounded bg-primary/20 text-primary">
+                                        {item.contentMode === 'summarized' && (uiLanguage === 'th' ? 'สรุป' : 'Summary')}
+                                        {item.contentMode === 'crafted' && (uiLanguage === 'th' ? 'ปรับแต่ง' : 'Crafted')}
+                                        {item.contentMode === 'translated' && (uiLanguage === 'th' ? 'แปล' : 'Translated')}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={(e) => handleDeleteHistory(item.id, e)}
+                                  className="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       )}
                     </div>
-
-                    {/* Mobile buttons - New & History */}
-                    <div className="flex items-center gap-2 lg:hidden">
-                      {/* New Loud Button - Mobile */}
-                      <Button
-                        onClick={handleNewLoud}
-                        size="sm"
-                        className="gap-2 bg-linear-to-r from-primary to-emerald-500 hover:from-primary/90 hover:to-emerald-500/90"
-                      >
-                        <Plus className="w-4 h-4" />
-                        {uiLanguage === 'th' ? 'ใหม่' : 'New'}
-                      </Button>
-
-                      {/* History Button - Mobile only */}
-                      {history.length > 0 && (
-                        <DropdownMenu open={showHistory} onOpenChange={setShowHistory}>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="gap-2">
-                            <History className="w-4 h-4" />
-                            {uiLanguage === 'th' ? 'ประวัติ' : 'History'}
-                            <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-muted">
-                              {history.length}
-                            </span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-auto">
-                          <div className="flex items-center justify-between px-2 py-1.5 border-b border-border">
-                            <span className="text-xs font-medium text-muted-foreground">
-                              {uiLanguage === 'th' ? 'ประวัติล่าสุด' : 'Recent History'}
-                            </span>
-                            <button
-                              onClick={handleClearAllHistory}
-                              className="text-xs text-destructive hover:underline"
-                            >
-                              {uiLanguage === 'th' ? 'ล้างทั้งหมด' : 'Clear All'}
-                            </button>
-                          </div>
-                          {history.map((item) => (
-                            <DropdownMenuItem
-                              key={item.id}
-                              onClick={() => handleLoadHistory(item)}
-                              className="flex items-start gap-2 p-2 cursor-pointer"
-                            >
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">
-                                  {item.title}
-                                </p>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Clock className="w-3 h-3" />
-                                    {new Date(item.lastPlayedAt).toLocaleDateString(uiLanguage === 'th' ? 'th-TH' : 'en-US', {
-                                      month: 'short',
-                                      day: 'numeric',
-                                      hour: '2-digit',
-                                      minute: '2-digit'
-                                    })}
-                                  </span>
-                                  <span className="text-xs px-1.5 py-0.5 rounded bg-muted">
-                                    {SUPPORTED_LANGUAGES.find(l => l.code === item.language)?.flag || '🌐'}
-                                  </span>
-                                  {item.contentMode !== 'original' && (
-                                    <span className="text-xs px-1.5 py-0.5 rounded bg-primary/20 text-primary">
-                                      {item.contentMode === 'summarized' && (uiLanguage === 'th' ? 'สรุป' : 'Summary')}
-                                      {item.contentMode === 'crafted' && (uiLanguage === 'th' ? 'ปรับแต่ง' : 'Crafted')}
-                                      {item.contentMode === 'translated' && (uiLanguage === 'th' ? 'แปล' : 'Translated')}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              <button
-                                onClick={(e) => handleDeleteHistory(item.id, e)}
-                                className="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </div>
-                  </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -1860,49 +1445,6 @@ function GuruPage() {
             </div>
           </motion.div>
         </div>
-      )}
-
-      {/* Floating Status Indicator */}
-      {(isPlaying || isPaused) && (
-        <motion.div
-          initial={{ opacity: 0, y: 20, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.9 }}
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-full bg-card/95 backdrop-blur-sm border border-border shadow-lg"
-        >
-          {isPlaying && (
-            <>
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <motion.div
-                    key={i}
-                    className="w-1 bg-primary rounded-full"
-                    animate={{ height: ['8px', '20px', '8px'] }}
-                    transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.1 }}
-                  />
-                ))}
-              </div>
-              <span className="text-sm font-medium text-primary">{t("tools.tts.playing")}</span>
-              <Button size="sm" variant="ghost" onClick={handlePause} className="h-8 w-8 p-0 rounded-full hover:bg-amber-500/20">
-                <Pause className="w-4 h-4 text-amber-500" />
-              </Button>
-              <Button size="sm" variant="ghost" onClick={handleStop} className="h-8 w-8 p-0 rounded-full hover:bg-destructive/20">
-                <Square className="w-4 h-4 text-destructive" />
-              </Button>
-            </>
-          )}
-          {isPaused && (
-            <>
-              <span className="text-sm font-medium text-amber-500">{t("tools.tts.paused")}</span>
-              <Button size="sm" variant="ghost" onClick={handlePlay} className="h-8 w-8 p-0 rounded-full hover:bg-primary/20">
-                <Play className="w-4 h-4 text-primary" />
-              </Button>
-              <Button size="sm" variant="ghost" onClick={handleStop} className="h-8 w-8 p-0 rounded-full hover:bg-destructive/20">
-                <Square className="w-4 h-4 text-destructive" />
-              </Button>
-            </>
-          )}
-        </motion.div>
       )}
     </DefaultLayout>
   )

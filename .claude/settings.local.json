@@ -29,7 +29,8 @@
       "Bash(echo:*)",
       "Bash(pnpm dlx:*)",
       "Bash(pnpm exec tsc:*)",
-      "Bash(npx @tanstack/router-cli generate:*)"
+      "Bash(npx @tanstack/router-cli generate:*)",
+      "Bash(pnpm build:check:*)"
     ]
   }
 }
