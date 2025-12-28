@@ -1158,20 +1158,33 @@ function GuruPage() {
                     {isReaderMode ? (
                       // Reader mode - markdown display with close button
                       <div className="relative">
-                        <button
-                          onClick={() => {
-                            // Stop playback but keep position when closing reader
-                            speechSynthesis.cancel()
-                            setIsPlaying(false)
-                            setIsPaused(false)
-                            setIsReaderMode(false)
-                            // Don't reset charIndexRef and highlightIndex - keep position
-                          }}
-                          className="absolute top-2 right-2 z-10 p-1.5 rounded-lg bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                          aria-label="Close reader"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
+                        <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+                          <button
+                            onClick={handleCopy}
+                            className="p-1.5 rounded-lg bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                            title={t('tools.tts.copy')}
+                          >
+                            {copied ? (
+                              <Check className="w-4 h-4 text-green-500" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => {
+                              // Stop playback but keep position when closing reader
+                              speechSynthesis.cancel()
+                              setIsPlaying(false)
+                              setIsPaused(false)
+                              setIsReaderMode(false)
+                              // Don't reset charIndexRef and highlightIndex - keep position
+                            }}
+                            className="p-1.5 rounded-lg bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                            aria-label="Close reader"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
                         <div
                           ref={containerRef}
                           className="min-h-[200px] max-h-[400px] overflow-auto p-4 pr-10 rounded-xl border border-primary/30 bg-linear-to-br from-primary/5 to-emerald-500/5"
@@ -1195,36 +1208,14 @@ function GuruPage() {
                             </div>
                           )}
                         </div>
-                        {/* Info bar with actions */}
-                        <div className="flex items-center justify-between mt-2 px-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs bg-muted px-2 py-1 rounded-full">
-                              {detectedLanguageDisplay.flag} {detectedLanguageDisplay.name}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {displayContent.length} {t('tools.tts.characters')}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={handleCopy}
-                              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                              title={t('tools.tts.copy')}
-                            >
-                              {copied ? (
-                                <Check className="w-4 h-4 text-green-500" />
-                              ) : (
-                                <Copy className="w-4 h-4" />
-                              )}
-                            </button>
-                            <button
-                              onClick={handleClear}
-                              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                              title={t('tools.tts.clear')}
-                            >
-                              <RotateCcw className="w-4 h-4" />
-                            </button>
-                          </div>
+                        {/* Info bar */}
+                        <div className="flex items-center justify-end gap-2 mt-2 px-1">
+                          <span className="text-xs bg-muted px-2 py-1 rounded-full">
+                            {detectedLanguageDisplay.flag} {detectedLanguageDisplay.name}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {displayContent.length} {t('tools.tts.characters')}
+                          </span>
                         </div>
                       </div>
                     ) : (
@@ -1247,6 +1238,15 @@ function GuruPage() {
                           <span className="text-xs text-muted-foreground">
                             {contentMode === 'original' ? charCount : displayContent.length} {t('tools.tts.characters')}
                           </span>
+                          {(originalContent.length > 0 || displayContent.length > 0) && (
+                            <button
+                              onClick={handleClear}
+                              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                              title={t('tools.tts.clear')}
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     )}
