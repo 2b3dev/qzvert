@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import Markdown from 'react-markdown'
 import {
@@ -78,6 +78,45 @@ const SUPPORTED_LANGUAGES: LanguageOption[] = [
   { code: 'id', name: 'Bahasa Indonesia', flag: '🇮🇩' },
 ]
 
+// LocalStorage key
+const STORAGE_KEY = 'guru-to-loud-state'
+
+// Saved state interface
+interface SavedState {
+  originalContent: string
+  displayContent: string
+  contentMode: 'original' | 'summarized' | 'crafted' | 'translated'
+  keyPoints: string[]
+  highlightIndex: number
+  charIndex: number
+  selectedTargetLanguage: string
+  originalDetectedLanguage: string
+  rate: number
+  selectedGender: 'male' | 'female'
+}
+
+// Load saved state from localStorage
+const loadSavedState = (): Partial<SavedState> | null => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      return JSON.parse(saved)
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return null
+}
+
+// Save state to localStorage (debounced in component)
+const saveStateToStorage = (state: SavedState) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+  } catch {
+    // Ignore storage errors (quota exceeded, etc.)
+  }
+}
+
 // Activity type styles
 const getActivityTypeStyle = (type: string) => {
   switch (type) {
@@ -100,15 +139,18 @@ function GuruPage() {
   const { t, language: uiLanguage } = useTranslation()
   const navigate = useNavigate()
 
-  // Content states
-  const [originalContent, setOriginalContent] = useState('')
-  const [displayContent, setDisplayContent] = useState('')
-  const [contentMode, setContentMode] = useState<'original' | 'summarized' | 'crafted' | 'translated'>('original')
+  // Load saved state once on mount
+  const savedState = useMemo(() => loadSavedState(), [])
+
+  // Content states - initialize from localStorage
+  const [originalContent, setOriginalContent] = useState(() => savedState?.originalContent || '')
+  const [displayContent, setDisplayContent] = useState(() => savedState?.displayContent || '')
+  const [contentMode, setContentMode] = useState<'original' | 'summarized' | 'crafted' | 'translated'>(() => savedState?.contentMode || 'original')
 
   // AI processing states
   const [isProcessing, setIsProcessing] = useState(false)
   const [processingAction, setProcessingAction] = useState<string>('')
-  const [keyPoints, setKeyPoints] = useState<string[]>([])
+  const [keyPoints, setKeyPoints] = useState<string[]>(() => savedState?.keyPoints || [])
 
   // AI confirmation and result states
   const [selectedMode, setSelectedMode] = useState<'listen' | 'summarize' | 'craft'>('listen')
@@ -130,25 +172,82 @@ function GuruPage() {
   const [isPaused, setIsPaused] = useState(false)
   const [voices, setVoices] = useState<VoiceOption[]>([])
   const [selectedVoice, setSelectedVoice] = useState<string>('')
-  const [selectedGender, setSelectedGender] = useState<'male' | 'female'>('female')
-  const [originalDetectedLanguage, setOriginalDetectedLanguage] = useState<string>('en') // Language detected from text
-  const [selectedTargetLanguage, setSelectedTargetLanguage] = useState<string>('en') // Language selected in dropdown
+  const [selectedGender, setSelectedGender] = useState<'male' | 'female'>(() => savedState?.selectedGender || 'female')
+  const [originalDetectedLanguage, setOriginalDetectedLanguage] = useState<string>(() => savedState?.originalDetectedLanguage || 'en')
+  const [selectedTargetLanguage, setSelectedTargetLanguage] = useState<string>(() => savedState?.selectedTargetLanguage || 'en')
   const [availableLanguages, setAvailableLanguages] = useState<LanguageOption[]>([])
   const [maleVoice, setMaleVoice] = useState<string | null>(null)
   const [femaleVoice, setFemaleVoice] = useState<string | null>(null)
-  const [rate, setRate] = useState(1)
+  const [rate, setRate] = useState(() => savedState?.rate || 1)
   const [copied, setCopied] = useState(false)
-  const [charCount, setCharCount] = useState(0)
-  const [highlightIndex, setHighlightIndex] = useState<number>(0)
+  const [charCount, setCharCount] = useState(() => savedState?.originalContent?.length || 0)
+  const [highlightIndex, setHighlightIndex] = useState<number>(() => savedState?.highlightIndex || 0)
 
   // Refs
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
   const detectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pauseTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const suggestTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const charIndexRef = useRef<number>(0)
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const charIndexRef = useRef<number>(savedState?.charIndex || 0)
   const highlightRef = useRef<HTMLSpanElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Debounced save to localStorage
+  const debouncedSave = useCallback(() => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+    saveTimeoutRef.current = setTimeout(() => {
+      saveStateToStorage({
+        originalContent,
+        displayContent,
+        contentMode,
+        keyPoints,
+        highlightIndex,
+        charIndex: charIndexRef.current,
+        selectedTargetLanguage,
+        originalDetectedLanguage,
+        rate,
+        selectedGender,
+      })
+    }, 500) // Debounce 500ms
+  }, [originalContent, displayContent, contentMode, keyPoints, highlightIndex, selectedTargetLanguage, originalDetectedLanguage, rate, selectedGender])
+
+  // Auto-save when relevant state changes (debounced)
+  useEffect(() => {
+    debouncedSave()
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+    }
+  }, [debouncedSave])
+
+  // Save immediately on page unload (safety net)
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // Cancel debounce and save immediately
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+      saveStateToStorage({
+        originalContent,
+        displayContent,
+        contentMode,
+        keyPoints,
+        highlightIndex,
+        charIndex: charIndexRef.current,
+        selectedTargetLanguage,
+        originalDetectedLanguage,
+        rate,
+        selectedGender,
+      })
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [originalContent, displayContent, contentMode, keyPoints, highlightIndex, selectedTargetLanguage, originalDetectedLanguage, rate, selectedGender])
 
   // Detect language from text
   const detectLanguage = useCallback((inputText: string): string => {
@@ -202,22 +301,31 @@ function GuruPage() {
   }, [])
 
   // Update voices when language changes
-  const updateVoicesForLanguage = useCallback((langCode: string, allVoices: SpeechSynthesisVoice[]) => {
+  const updateVoicesForLanguage = useCallback((langCode: string, allVoices: SpeechSynthesisVoice[], forceUpdate = false) => {
     const { femaleVoice: fVoice, maleVoice: mVoice } = findVoicesForLanguage(allVoices, langCode)
 
     setFemaleVoice(fVoice?.name || null)
     setMaleVoice(mVoice?.name || null)
 
-    if (selectedGender === 'female' && fVoice) {
-      setSelectedVoice(fVoice.name)
-    } else if (selectedGender === 'male' && mVoice) {
-      setSelectedVoice(mVoice.name)
-    } else if (fVoice) {
-      setSelectedVoice(fVoice.name)
-    } else if (mVoice) {
-      setSelectedVoice(mVoice.name)
+    // Only update selectedVoice if:
+    // 1. forceUpdate is true (language changed by user)
+    // 2. Current selectedVoice is not valid for this language
+    const currentVoiceValid = allVoices.some(v =>
+      v.name === selectedVoice && v.lang.toLowerCase().startsWith(langCode.toLowerCase())
+    )
+
+    if (forceUpdate || !selectedVoice || !currentVoiceValid) {
+      if (selectedGender === 'female' && fVoice) {
+        setSelectedVoice(fVoice.name)
+      } else if (selectedGender === 'male' && mVoice) {
+        setSelectedVoice(mVoice.name)
+      } else if (fVoice) {
+        setSelectedVoice(fVoice.name)
+      } else if (mVoice) {
+        setSelectedVoice(mVoice.name)
+      }
     }
-  }, [findVoicesForLanguage, selectedGender])
+  }, [findVoicesForLanguage, selectedGender, selectedVoice])
 
   // Load available voices
   useEffect(() => {
@@ -272,6 +380,13 @@ function GuruPage() {
     }
   }, [])
 
+  // Fetch suggestions on mount if there's saved content
+  useEffect(() => {
+    if (savedState?.originalContent && savedState.originalContent.length >= 20) {
+      fetchSuggestions(savedState.originalContent)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Handle text change with language detection and suggestions
   const handleTextChange = (newText: string) => {
     setOriginalContent(newText)
@@ -304,7 +419,8 @@ function GuruPage() {
   const handleLanguageChange = (langCode: string) => {
     setSelectedTargetLanguage(langCode)
     if (voices.length > 0) {
-      updateVoicesForLanguage(langCode, voices.map(v => v.voice))
+      // Force update voice when user changes language
+      updateVoicesForLanguage(langCode, voices.map(v => v.voice), true)
     }
   }
 
@@ -474,13 +590,20 @@ function GuruPage() {
 
     utterance.onerror = (event) => {
       if (event.error !== 'interrupted') {
+        // Reset playback state but keep position for resume
+        speechSynthesis.cancel()
         setIsPlaying(false)
         setIsPaused(false)
-        setHighlightIndex(0)
+        // Don't reset charIndexRef - keep position so user can resume from here
+        console.warn('TTS error:', event.error)
       }
     }
 
-    speechSynthesis.speak(utterance)
+    // Cancel any existing speech before starting new one
+    speechSynthesis.cancel()
+    setTimeout(() => {
+      speechSynthesis.speak(utterance)
+    }, 50)
   }, [voices, selectedVoice, rate])
 
   const handlePlay = () => {
@@ -494,12 +617,17 @@ function GuruPage() {
 
       setTimeout(() => {
         if (speechSynthesis.paused || !speechSynthesis.speaking) {
+          // Resume failed, restart from current position or beginning
           const remainingText = displayContent.slice(charIndexRef.current)
           if (remainingText.trim()) {
             playFromText(remainingText, charIndexRef.current)
+          } else {
+            // If no remaining text, restart from beginning
+            charIndexRef.current = 0
+            playFromText(displayContent, 0)
           }
         }
-      }, 100)
+      }, 150)
 
       setIsPaused(false)
       setIsPlaying(true)
@@ -515,9 +643,21 @@ function GuruPage() {
       return
     }
 
-    // Enter reader mode when playing
+    // Enter reader mode
     setIsReaderMode(true)
+
+    // If already in reader mode with a saved position, resume from there
+    if (charIndexRef.current > 0 && charIndexRef.current < displayContent.length) {
+      const remainingText = displayContent.slice(charIndexRef.current)
+      if (remainingText.trim()) {
+        playFromText(remainingText, charIndexRef.current)
+        return
+      }
+    }
+
+    // Otherwise start from beginning
     charIndexRef.current = 0
+    setHighlightIndex(0)
     playFromText(displayContent, 0)
   }
 
@@ -526,10 +666,19 @@ function GuruPage() {
     setIsPaused(true)
     setIsPlaying(false)
 
+    // Save position immediately when pausing
+    debouncedSave()
+
     if (pauseTimeoutRef.current) {
       clearTimeout(pauseTimeoutRef.current)
     }
-    pauseTimeoutRef.current = setTimeout(() => {}, 10000)
+    // Auto reset playback state after 30 seconds, but keep position
+    pauseTimeoutRef.current = setTimeout(() => {
+      speechSynthesis.cancel()
+      setIsPaused(false)
+      setIsPlaying(false)
+      // Don't reset charIndexRef - keep position so user can resume from here
+    }, 30000)
   }
 
   const handleStop = () => {
@@ -558,7 +707,15 @@ function GuruPage() {
     setKeyPoints([])
     setCharCount(0)
     setSuggestedActivities([])
+    setHighlightIndex(0)
+    charIndexRef.current = 0
     handleStop()
+    // Clear localStorage
+    try {
+      localStorage.removeItem(STORAGE_KEY)
+    } catch {
+      // Ignore storage errors
+    }
   }
 
   const rateOptions = [
@@ -684,8 +841,12 @@ function GuruPage() {
                       <div className="relative">
                         <button
                           onClick={() => {
+                            // Stop playback but keep position when closing reader
+                            speechSynthesis.cancel()
+                            setIsPlaying(false)
+                            setIsPaused(false)
                             setIsReaderMode(false)
-                            handleStop()
+                            // Don't reset charIndexRef and highlightIndex - keep position
                           }}
                           className="absolute top-2 right-2 z-10 p-1.5 rounded-lg bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                           aria-label="Close reader"
@@ -696,8 +857,8 @@ function GuruPage() {
                           ref={containerRef}
                           className="min-h-[200px] max-h-[400px] overflow-auto p-4 pr-10 rounded-xl border border-primary/30 bg-linear-to-br from-primary/5 to-emerald-500/5"
                         >
-                          {(isPlaying || isPaused) ? (
-                            // Show highlighted text when playing
+                          {(isPlaying || isPaused || highlightIndex > 0) ? (
+                            // Show highlighted text when playing or has saved position
                             <div className="prose prose-sm dark:prose-invert max-w-none">
                               <span className="text-muted-foreground">{displayContent.slice(0, highlightIndex)}</span>
                               <span
@@ -709,25 +870,47 @@ function GuruPage() {
                               <span className="text-foreground">{displayContent.slice(displayContent.indexOf(' ', highlightIndex) === -1 ? displayContent.length : displayContent.indexOf(' ', highlightIndex))}</span>
                             </div>
                           ) : (
-                            // Show markdown when not playing
+                            // Show markdown when not playing and no saved position
                             <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground prose-li:text-foreground prose-strong:text-foreground">
                               <Markdown>{displayContent}</Markdown>
                             </div>
                           )}
                         </div>
-                        {/* Info bar */}
+                        {/* Info bar with actions */}
                         <div className="flex items-center justify-between mt-2 px-1">
-                          <span className="text-xs bg-muted px-2 py-1 rounded-full">
-                            {detectedLanguageDisplay.flag} {detectedLanguageDisplay.name}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {displayContent.length} {t('tools.tts.characters')}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs bg-muted px-2 py-1 rounded-full">
+                              {detectedLanguageDisplay.flag} {detectedLanguageDisplay.name}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {displayContent.length} {t('tools.tts.characters')}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={handleCopy}
+                              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                              title={t('tools.tts.copy')}
+                            >
+                              {copied ? (
+                                <Check className="w-4 h-4 text-green-500" />
+                              ) : (
+                                <Copy className="w-4 h-4" />
+                              )}
+                            </button>
+                            <button
+                              onClick={handleClear}
+                              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                              title={t('tools.tts.clear')}
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ) : (
                       // Normal textarea mode
-                      <>
+                      <div>
                         <Textarea
                           value={contentMode === 'original' ? originalContent : displayContent}
                           onChange={(e) => contentMode === 'original' && handleTextChange(e.target.value)}
@@ -735,7 +918,8 @@ function GuruPage() {
                           className="min-h-[200px] resize-none text-base"
                           readOnly={contentMode !== 'original'}
                         />
-                        <div className="absolute bottom-3 right-3 flex items-center gap-2">
+                        {/* Info bar below textarea */}
+                        <div className="flex items-center justify-end gap-2 mt-2 px-1">
                           {displayContent.length > 0 && (
                             <span className="text-xs bg-muted px-2 py-1 rounded-full">
                               {detectedLanguageDisplay.flag} {detectedLanguageDisplay.name}
@@ -745,7 +929,7 @@ function GuruPage() {
                             {contentMode === 'original' ? charCount : displayContent.length} {t('tools.tts.characters')}
                           </span>
                         </div>
-                      </>
+                      </div>
                     )}
                   </div>
 
@@ -825,11 +1009,23 @@ function GuruPage() {
                     {/* Mode Description & Action */}
                     <div className="mt-4">
                       {selectedMode === 'listen' && (
-                        <div className="text-center py-2">
-                          <span className="text-sm text-muted-foreground">
-                            {t('guru.listenDesc')}
-                          </span>
-                        </div>
+                        <motion.div
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="p-3 rounded-lg bg-primary/5 border border-primary/20"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="p-1.5 rounded-md bg-emerald-500/20">
+                              <Volume2 className="w-4 h-4 text-emerald-500" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p
+                                className="text-sm text-muted-foreground [&_strong]:text-emerald-600 dark:[&_strong]:text-emerald-400 [&_strong]:font-semibold"
+                                dangerouslySetInnerHTML={{ __html: t('guru.listenFreeDesc') }}
+                              />
+                            </div>
+                          </div>
+                        </motion.div>
                       )}
 
                       {(selectedMode === 'summarize' || selectedMode === 'craft') && !aiResult && (
@@ -1105,35 +1301,6 @@ function GuruPage() {
                         </Button>
                       </>
                     )}
-                  </div>
-
-                  {/* Utility Buttons */}
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleCopy}
-                      disabled={!displayContent}
-                      className="gap-2"
-                    >
-                      {copied ? (
-                        <Check className="w-4 h-4 text-green-500" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
-                      {copied ? t('tools.tts.copied') : t('tools.tts.copy')}
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleClear}
-                      disabled={!originalContent}
-                      className="gap-2"
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                      {t('tools.tts.clear')}
-                    </Button>
                   </div>
                 </CardContent>
               </Card>
