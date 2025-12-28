@@ -23,6 +23,8 @@ import {
   History,
   Trash2,
   Clock,
+  Plus,
+  Monitor,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { DefaultLayout } from '../components/layouts/DefaultLayout'
@@ -187,6 +189,37 @@ const getActivityTypeStyle = (type: string) => {
   }
 }
 
+// Hero Section - Static component for SEO (outside main component to prevent re-renders)
+function HeroSection({ t }: { t: (key: string) => string }) {
+  return (
+    <section className="relative py-12 px-6 overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
+      <div className="absolute top-20 left-1/4 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-20 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
+
+      <div className="relative max-w-4xl mx-auto text-center">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm font-medium mb-6">
+          <GraduationCap className="w-4 h-4" />
+          {t('guru.badge')}
+        </div>
+
+        <h1 className="text-2xl md:text-4xl font-black mb-4 leading-tight">
+          <span className="text-foreground">{t("guru.title1")}</span>
+          <br className="md:hidden" />
+          {" "}
+          <span className="bg-linear-to-r from-primary via-emerald-500 to-cyan-400 bg-clip-text text-transparent whitespace-nowrap">
+            {t('guru.title2')}
+          </span>
+        </h1>
+
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          {t('guru.subtitle')}
+        </p>
+      </div>
+    </section>
+  )
+}
+
 function GuruPage() {
   const { t, language: uiLanguage } = useTranslation()
   const navigate = useNavigate()
@@ -217,7 +250,8 @@ function GuruPage() {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
 
   // History
-  const [history, setHistory] = useState<HistoryItem[]>(() => loadHistory())
+  const [history, setHistory] = useState<HistoryItem[]>([])
+  const [isHistoryLoading, setIsHistoryLoading] = useState(true)
   const [showHistory, setShowHistory] = useState(false)
   const currentHistoryIdRef = useRef<string | null>(null)
 
@@ -280,6 +314,17 @@ function GuruPage() {
       }
     }
   }, [debouncedSave])
+
+  // Load history from localStorage on mount
+  useEffect(() => {
+    // Simulate brief delay to show loading state (also handles async storage)
+    const timer = setTimeout(() => {
+      const loaded = loadHistory()
+      setHistory(loaded)
+      setIsHistoryLoading(false)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [])
 
   // Save immediately on page unload (safety net)
   useEffect(() => {
@@ -876,6 +921,36 @@ function GuruPage() {
     }
   }
 
+  // New Loud - Save current to history then clear for new content
+  const handleNewLoud = useCallback(() => {
+    // Save current content to history if it has content
+    if (originalContent.trim() && originalContent.length >= 10) {
+      saveToHistory()
+    }
+
+    // Clear current content
+    setOriginalContent('')
+    setDisplayContent('')
+    setContentMode('original')
+    setKeyPoints([])
+    setCharCount(0)
+    setSuggestedActivities([])
+    setHighlightIndex(0)
+    charIndexRef.current = 0
+    currentHistoryIdRef.current = null
+    setIsReaderMode(false)
+    handleStop()
+
+    // Clear localStorage for current state
+    try {
+      localStorage.removeItem(STORAGE_KEY)
+    } catch {
+      // Ignore storage errors
+    }
+
+    toast.success(uiLanguage === 'th' ? 'เริ่มใหม่เรียบร้อย' : 'Ready for new content')
+  }, [originalContent, saveToHistory, uiLanguage])
+
   const rateOptions = [
     { value: 0.5, label: '0.5x' },
     { value: 0.75, label: '0.75x' },
@@ -913,51 +988,137 @@ function GuruPage() {
     }
   }, [highlightIndex, isPlaying, isPaused])
 
+  // Show loading screen while history is loading
+  if (isHistoryLoading) {
+    return (
+      <DefaultLayout>
+        <div className="min-h-screen bg-linear-to-b from-background via-muted/50 to-background">
+          <HeroSection t={t} />
+
+          {/* Loading indicator */}
+          <div className="flex flex-col items-center justify-center gap-3 py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">
+              {uiLanguage === 'th' ? 'กำลังเตรียม Loud UI...' : 'Initializing Loud UI...'}
+            </p>
+          </div>
+        </div>
+      </DefaultLayout>
+    )
+  }
+
   return (
     <DefaultLayout>
       <div className="min-h-screen bg-linear-to-b from-background via-muted/50 to-background">
         {/* Hero Section */}
-        <section className="relative py-12 px-6 overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
-          <div className="absolute top-20 left-1/4 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
+        <HeroSection t={t} />
 
-          <div className="relative max-w-4xl mx-auto text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm font-medium mb-6">
-                <GraduationCap className="w-4 h-4" />
-                {t('guru.badge')}
-              </div>
-
-              <h1 className="text-2xl md:text-4xl font-black mb-4 leading-tight">
-                <span className="text-foreground">{t("guru.title1")}</span>
-                <br className="md:hidden" />
-                {" "}
-                <span className="bg-linear-to-r from-primary via-emerald-500 to-cyan-400 bg-clip-text text-transparent whitespace-nowrap">
-                  {t('guru.title2')}
-                </span>
-              </h1>
-
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                {t('guru.subtitle')}
-              </p>
-            </motion.div>
-          </div>
-        </section>
-
-        {/* Main Content */}
+        {/* Main Content with Sidebar */}
         <section className="px-6 pb-20">
-          <div className="max-w-4xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <Card className="border-primary/20 overflow-hidden">
+          <div className="max-w-6xl mx-auto flex gap-6">
+            {/* History Sidebar - Desktop only */}
+            <aside className="hidden lg:block w-72 shrink-0">
+              <div className="sticky top-24 space-y-3">
+                {/* New Loud Button */}
+                <Button
+                  onClick={handleNewLoud}
+                  className="w-full gap-2 bg-linear-to-r from-primary to-emerald-500 hover:from-primary/90 hover:to-emerald-500/90"
+                >
+                  <Plus className="w-4 h-4" />
+                  {uiLanguage === 'th' ? 'เริ่มใหม่' : 'New Loud'}
+                </Button>
+
+                <Card className="border-primary/20">
+                  <CardHeader className="py-3 px-4 border-b border-border">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <History className="w-4 h-4 text-primary" />
+                        <span className="font-medium text-sm flex items-center gap-1">
+                          {uiLanguage === 'th' ? 'ประวัติ Loud' : 'Loud History'}
+                          <Monitor className="w-3 h-3 opacity-50 relative top-1" title={uiLanguage === 'th' ? 'เก็บบนเครื่องนี้' : 'Stored on this device'} />
+                        </span>
+                      </div>
+                      {history.length > 0 && (
+                        <span className="px-1.5 py-0.5 text-xs rounded-full bg-muted">
+                          {history.length}
+                        </span>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    {history.length === 0 ? (
+                      <div className="p-6 text-center text-muted-foreground">
+                        <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">
+                          {uiLanguage === 'th' ? 'ยังไม่มีประวัติ' : 'No history yet'}
+                        </p>
+                        <p className="text-xs mt-1">
+                          {uiLanguage === 'th' ? 'กดเล่นเนื้อหาเพื่อบันทึก' : 'Play content to save here'}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="max-h-[calc(100vh-240px)] overflow-auto">
+                        {history.map((item) => (
+                          <div
+                            key={item.id}
+                            onClick={() => handleLoadHistory(item)}
+                            className={cn(
+                              'p-3 border-b border-border cursor-pointer hover:bg-accent/50 transition-colors',
+                              currentHistoryIdRef.current === item.id && 'bg-primary/10 border-l-2 border-l-primary'
+                            )}
+                          >
+                            <p className="text-sm font-medium truncate mb-1">
+                              {item.title}
+                            </p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {new Date(item.lastPlayedAt).toLocaleDateString(uiLanguage === 'th' ? 'th-TH' : 'en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                })}
+                              </span>
+                              <span className="text-xs px-1.5 py-0.5 rounded bg-muted">
+                                {SUPPORTED_LANGUAGES.find(l => l.code === item.language)?.flag || '🌐'}
+                              </span>
+                              {item.contentMode !== 'original' && (
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-primary/20 text-primary">
+                                  {item.contentMode === 'summarized' && (uiLanguage === 'th' ? 'สรุป' : 'Sum')}
+                                  {item.contentMode === 'crafted' && (uiLanguage === 'th' ? 'จัด' : 'Craft')}
+                                  {item.contentMode === 'translated' && (uiLanguage === 'th' ? 'แปล' : 'Trans')}
+                                </span>
+                              )}
+                              <button
+                                onClick={(e) => handleDeleteHistory(item.id, e)}
+                                className="ml-auto p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        {/* Clear All Button */}
+                        <button
+                          onClick={handleClearAllHistory}
+                          className="w-full p-3 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+                        >
+                          {uiLanguage === 'th' ? 'ล้างประวัติทั้งหมด' : 'Clear All History'}
+                        </button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </aside>
+
+            {/* Main Content Area */}
+            <div className="flex-1 min-w-0">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <Card className="border-primary/20 overflow-hidden">
                 <CardHeader className="bg-linear-to-r from-primary/10 to-emerald-500/10 border-b border-border">
                   <CardTitle className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -1462,11 +1623,23 @@ function GuruPage() {
                       )}
                     </div>
 
-                    {/* History Button */}
-                    {history.length > 0 && (
-                      <DropdownMenu open={showHistory} onOpenChange={setShowHistory}>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm" className="gap-2">
+                    {/* Mobile buttons - New & History */}
+                    <div className="flex items-center gap-2 lg:hidden">
+                      {/* New Loud Button - Mobile */}
+                      <Button
+                        onClick={handleNewLoud}
+                        size="sm"
+                        className="gap-2 bg-linear-to-r from-primary to-emerald-500 hover:from-primary/90 hover:to-emerald-500/90"
+                      >
+                        <Plus className="w-4 h-4" />
+                        {uiLanguage === 'th' ? 'ใหม่' : 'New'}
+                      </Button>
+
+                      {/* History Button - Mobile only */}
+                      {history.length > 0 && (
+                        <DropdownMenu open={showHistory} onOpenChange={setShowHistory}>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="gap-2">
                             <History className="w-4 h-4" />
                             {uiLanguage === 'th' ? 'ประวัติ' : 'History'}
                             <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-muted">
@@ -1529,6 +1702,7 @@ function GuruPage() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     )}
+                  </div>
                   </div>
                 </CardContent>
               </Card>
@@ -1599,6 +1773,7 @@ function GuruPage() {
                 </motion.div>
               )}
             </motion.div>
+            </div>
           </div>
         </section>
       </div>
