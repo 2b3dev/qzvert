@@ -20,6 +20,9 @@ import {
   ArrowLeft,
   Users,
   X,
+  History,
+  Trash2,
+  Clock,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { DefaultLayout } from '../components/layouts/DefaultLayout'
@@ -78,8 +81,10 @@ const SUPPORTED_LANGUAGES: LanguageOption[] = [
   { code: 'id', name: 'Bahasa Indonesia', flag: '🇮🇩' },
 ]
 
-// LocalStorage key
+// LocalStorage keys
 const STORAGE_KEY = 'guru-to-loud-state'
+const HISTORY_KEY = 'guru-to-loud-history'
+const MAX_HISTORY_ITEMS = 10
 
 // Saved state interface
 interface SavedState {
@@ -93,6 +98,19 @@ interface SavedState {
   originalDetectedLanguage: string
   rate: number
   selectedGender: 'male' | 'female'
+}
+
+// History item interface
+interface HistoryItem {
+  id: string
+  title: string // First 50 chars of content
+  originalContent: string
+  displayContent: string
+  contentMode: 'original' | 'summarized' | 'crafted' | 'translated'
+  keyPoints: string[]
+  language: string
+  createdAt: number
+  lastPlayedAt: number
 }
 
 // Load saved state from localStorage
@@ -115,6 +133,40 @@ const saveStateToStorage = (state: SavedState) => {
   } catch {
     // Ignore storage errors (quota exceeded, etc.)
   }
+}
+
+// Load history from localStorage
+const loadHistory = (): HistoryItem[] => {
+  try {
+    const saved = localStorage.getItem(HISTORY_KEY)
+    if (saved) {
+      return JSON.parse(saved)
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return []
+}
+
+// Save history to localStorage
+const saveHistory = (history: HistoryItem[]) => {
+  try {
+    // Keep only the latest MAX_HISTORY_ITEMS
+    const trimmed = history.slice(0, MAX_HISTORY_ITEMS)
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(trimmed))
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+// Generate a simple ID
+const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+
+// Get title from content (first 50 chars, clean up)
+const getTitleFromContent = (content: string): string => {
+  const cleaned = content.replace(/\s+/g, ' ').trim()
+  if (cleaned.length <= 50) return cleaned
+  return cleaned.slice(0, 47) + '...'
 }
 
 // Activity type styles
@@ -163,6 +215,11 @@ function GuruPage() {
   // Suggested activities
   const [suggestedActivities, setSuggestedActivities] = useState<SuggestedActivity[]>([])
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
+
+  // History
+  const [history, setHistory] = useState<HistoryItem[]>(() => loadHistory())
+  const [showHistory, setShowHistory] = useState(false)
+  const currentHistoryIdRef = useRef<string | null>(null)
 
   // Display mode - show markdown reader view
   const [isReaderMode, setIsReaderMode] = useState(false)
@@ -248,6 +305,104 @@ function GuruPage() {
     window.addEventListener('beforeunload', handleBeforeUnload)
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [originalContent, displayContent, contentMode, keyPoints, highlightIndex, selectedTargetLanguage, originalDetectedLanguage, rate, selectedGender])
+
+  // Save current content to history
+  const saveToHistory = useCallback(() => {
+    if (!originalContent.trim() || originalContent.length < 10) return
+
+    const now = Date.now()
+    const title = getTitleFromContent(originalContent)
+
+    setHistory(prev => {
+      // Check if this content already exists (by comparing title or first 100 chars)
+      const existingIndex = prev.findIndex(item =>
+        item.originalContent.slice(0, 100) === originalContent.slice(0, 100)
+      )
+
+      let updated: HistoryItem[]
+      if (existingIndex !== -1) {
+        // Update existing item's lastPlayedAt
+        updated = [...prev]
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          displayContent,
+          contentMode,
+          keyPoints,
+          lastPlayedAt: now,
+        }
+        // Move to front
+        const [item] = updated.splice(existingIndex, 1)
+        updated.unshift(item)
+        currentHistoryIdRef.current = item.id
+      } else {
+        // Create new history item
+        const newItem: HistoryItem = {
+          id: generateId(),
+          title,
+          originalContent,
+          displayContent,
+          contentMode,
+          keyPoints,
+          language: originalDetectedLanguage,
+          createdAt: now,
+          lastPlayedAt: now,
+        }
+        updated = [newItem, ...prev].slice(0, MAX_HISTORY_ITEMS)
+        currentHistoryIdRef.current = newItem.id
+      }
+
+      saveHistory(updated)
+      return updated
+    })
+  }, [originalContent, displayContent, contentMode, keyPoints, originalDetectedLanguage])
+
+  // Load content from history item
+  const handleLoadHistory = useCallback((item: HistoryItem) => {
+    setOriginalContent(item.originalContent)
+    setDisplayContent(item.displayContent)
+    setContentMode(item.contentMode)
+    setKeyPoints(item.keyPoints)
+    setOriginalDetectedLanguage(item.language)
+    setSelectedTargetLanguage(item.language)
+    setCharCount(item.originalContent.length)
+    setHighlightIndex(0)
+    charIndexRef.current = 0
+    currentHistoryIdRef.current = item.id
+    setShowHistory(false)
+    setIsReaderMode(false)
+
+    // Update lastPlayedAt
+    setHistory(prev => {
+      const updated = prev.map(h =>
+        h.id === item.id ? { ...h, lastPlayedAt: Date.now() } : h
+      )
+      saveHistory(updated)
+      return updated
+    })
+
+    toast.success(uiLanguage === 'th' ? 'โหลดประวัติเรียบร้อย' : 'History loaded')
+  }, [uiLanguage])
+
+  // Delete history item
+  const handleDeleteHistory = useCallback((id: string, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent triggering load
+    setHistory(prev => {
+      const updated = prev.filter(h => h.id !== id)
+      saveHistory(updated)
+      return updated
+    })
+    if (currentHistoryIdRef.current === id) {
+      currentHistoryIdRef.current = null
+    }
+  }, [])
+
+  // Clear all history
+  const handleClearAllHistory = useCallback(() => {
+    setHistory([])
+    saveHistory([])
+    currentHistoryIdRef.current = null
+    toast.success(uiLanguage === 'th' ? 'ล้างประวัติทั้งหมดแล้ว' : 'All history cleared')
+  }, [uiLanguage])
 
   // Detect language from text
   const detectLanguage = useCallback((inputText: string): string => {
@@ -659,6 +814,9 @@ function GuruPage() {
     charIndexRef.current = 0
     setHighlightIndex(0)
     playFromText(displayContent, 0)
+
+    // Save to history when starting new playback
+    saveToHistory()
   }
 
   const handlePause = () => {
@@ -1251,55 +1409,125 @@ function GuruPage() {
                     </div>
                   </div>
 
-                  {/* Play Button - Always visible */}
-                  <div className="flex flex-wrap items-center gap-2">
-                    {!isPlaying && !isPaused ? (
-                      <Button
-                        onClick={handlePlay}
-                        disabled={!displayContent.trim()}
-                        className="gap-2 bg-linear-to-r from-primary to-emerald-500 hover:from-primary/90 hover:to-emerald-500/90"
-                      >
-                        <Play className="w-4 h-4" />
-                        {t('tools.tts.play')}
-                      </Button>
-                    ) : isPlaying ? (
-                      <>
-                        <Button
-                          onClick={handlePause}
-                          variant="outline"
-                          className="gap-2"
-                        >
-                          <Pause className="w-4 h-4" />
-                          {t('tools.tts.pause')}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={handleStop}
-                          className="gap-2"
-                        >
-                          <Square className="w-4 h-4" />
-                          {t('tools.tts.stop')}
-                        </Button>
-                      </>
-                    ) : (
-                      <>
+                  {/* Play Button & History */}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {!isPlaying && !isPaused ? (
                         <Button
                           onClick={handlePlay}
-                          variant="outline"
-                          className="gap-2"
+                          disabled={!displayContent.trim()}
+                          className="gap-2 bg-linear-to-r from-primary to-emerald-500 hover:from-primary/90 hover:to-emerald-500/90"
                         >
                           <Play className="w-4 h-4" />
-                          {t('tools.tts.resume')}
+                          {t('tools.tts.play')}
                         </Button>
-                        <Button
-                          variant="outline"
-                          onClick={handleStop}
-                          className="gap-2"
-                        >
-                          <Square className="w-4 h-4" />
-                          {t('tools.tts.stop')}
-                        </Button>
-                      </>
+                      ) : isPlaying ? (
+                        <>
+                          <Button
+                            onClick={handlePause}
+                            variant="outline"
+                            className="gap-2"
+                          >
+                            <Pause className="w-4 h-4" />
+                            {t('tools.tts.pause')}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={handleStop}
+                            className="gap-2"
+                          >
+                            <Square className="w-4 h-4" />
+                            {t('tools.tts.stop')}
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            onClick={handlePlay}
+                            variant="outline"
+                            className="gap-2"
+                          >
+                            <Play className="w-4 h-4" />
+                            {t('tools.tts.resume')}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={handleStop}
+                            className="gap-2"
+                          >
+                            <Square className="w-4 h-4" />
+                            {t('tools.tts.stop')}
+                          </Button>
+                        </>
+                      )}
+                    </div>
+
+                    {/* History Button */}
+                    {history.length > 0 && (
+                      <DropdownMenu open={showHistory} onOpenChange={setShowHistory}>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="gap-2">
+                            <History className="w-4 h-4" />
+                            {uiLanguage === 'th' ? 'ประวัติ' : 'History'}
+                            <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-muted">
+                              {history.length}
+                            </span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-auto">
+                          <div className="flex items-center justify-between px-2 py-1.5 border-b border-border">
+                            <span className="text-xs font-medium text-muted-foreground">
+                              {uiLanguage === 'th' ? 'ประวัติล่าสุด' : 'Recent History'}
+                            </span>
+                            <button
+                              onClick={handleClearAllHistory}
+                              className="text-xs text-destructive hover:underline"
+                            >
+                              {uiLanguage === 'th' ? 'ล้างทั้งหมด' : 'Clear All'}
+                            </button>
+                          </div>
+                          {history.map((item) => (
+                            <DropdownMenuItem
+                              key={item.id}
+                              onClick={() => handleLoadHistory(item)}
+                              className="flex items-start gap-2 p-2 cursor-pointer"
+                            >
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">
+                                  {item.title}
+                                </p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    {new Date(item.lastPlayedAt).toLocaleDateString(uiLanguage === 'th' ? 'th-TH' : 'en-US', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </span>
+                                  <span className="text-xs px-1.5 py-0.5 rounded bg-muted">
+                                    {SUPPORTED_LANGUAGES.find(l => l.code === item.language)?.flag || '🌐'}
+                                  </span>
+                                  {item.contentMode !== 'original' && (
+                                    <span className="text-xs px-1.5 py-0.5 rounded bg-primary/20 text-primary">
+                                      {item.contentMode === 'summarized' && (uiLanguage === 'th' ? 'สรุป' : 'Summary')}
+                                      {item.contentMode === 'crafted' && (uiLanguage === 'th' ? 'ปรับแต่ง' : 'Crafted')}
+                                      {item.contentMode === 'translated' && (uiLanguage === 'th' ? 'แปล' : 'Translated')}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <button
+                                onClick={(e) => handleDeleteHistory(item.id, e)}
+                                className="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
                   </div>
                 </CardContent>
