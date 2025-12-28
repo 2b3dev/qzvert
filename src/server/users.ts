@@ -17,6 +17,7 @@ export interface UserProfile {
   created_at: string
   updated_at: string
   activity_count: number
+  deleted_at?: string | null
 }
 
 // Get all users (admin only)
@@ -28,6 +29,7 @@ export const getUsers = createServerFn({ method: 'GET' })
     pageSize?: number
     sortBy?: 'created_at' | 'display_name' | 'activity_count'
     sortOrder?: 'asc' | 'desc'
+    showDeleted?: boolean
   }) => data)
   .handler(async ({ data }) => {
     const supabase = getSupabaseFromCookies()
@@ -68,6 +70,13 @@ export const getUsers = createServerFn({ method: 'GET' })
       query = query.eq('role', data.role)
     }
 
+    // Apply deleted filter
+    if (data.showDeleted) {
+      query = query.not('deleted_at', 'is', null)
+    } else {
+      query = query.is('deleted_at', null)
+    }
+
     // Apply sorting
     if (sortBy === 'activity_count') {
       // For activity_count, we'll sort after fetching
@@ -96,6 +105,7 @@ export const getUsers = createServerFn({ method: 'GET' })
         return {
           ...p,
           activity_count: activityCount || 0,
+          deleted_at: p.deleted_at,
         } as UserProfile
       })
     )
