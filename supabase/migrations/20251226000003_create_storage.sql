@@ -12,26 +12,19 @@ VALUES (
 
 -- Storage policies
 CREATE POLICY "Users can upload thumbnails to own folder"
-  ON storage.objects FOR INSERT TO authenticated
+  ON storage.objects FOR INSERT
   WITH CHECK (
     bucket_id = 'thumbnails'
-    AND (storage.foldername(name))[1] = auth.uid()::text
-  );
-
-CREATE POLICY "Users can update own thumbnails"
-  ON storage.objects FOR UPDATE TO authenticated
-  USING (
-    bucket_id = 'thumbnails'
-    AND (storage.foldername(name))[1] = auth.uid()::text
+    AND (storage.foldername(name))[1] = (SELECT auth.uid())::text
   );
 
 CREATE POLICY "Users can delete own thumbnails"
-  ON storage.objects FOR DELETE TO authenticated
+  ON storage.objects FOR DELETE
   USING (
     bucket_id = 'thumbnails'
-    AND (storage.foldername(name))[1] = auth.uid()::text
+    AND (storage.foldername(name))[1] = (SELECT auth.uid())::text
   );
 
 CREATE POLICY "Public read access for thumbnails"
-  ON storage.objects FOR SELECT TO public
+  ON storage.objects FOR SELECT
   USING (bucket_id = 'thumbnails');

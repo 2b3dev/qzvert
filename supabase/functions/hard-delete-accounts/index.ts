@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Supabase Edge Function for hard deleting expired accounts
 // This function should be scheduled to run daily via Supabase Cron
 // Schedule: 0 3 * * * (every day at 3 AM UTC)
@@ -12,6 +13,7 @@ const corsHeaders = {
 interface DeletedProfile {
   id: string
   display_name: string | null
+  avatar_url: string | null
   deleted_at: string
 }
 
@@ -47,7 +49,7 @@ Deno.serve(async (req) => {
 
     const { data: expiredProfiles, error: fetchError } = await supabase
       .from('profiles')
-      .select('id, display_name, deleted_at')
+      .select('id, display_name, avatar_url, deleted_at')
       .not('deleted_at', 'is', null)
       .lt('deleted_at', thirtyDaysAgo)
 
@@ -71,6 +73,26 @@ Deno.serve(async (req) => {
 
     for (const profile of expiredProfiles as DeletedProfile[]) {
       try {
+        // Delete avatar from storage if exists
+        if (profile.avatar_url) {
+          // Extract storage path from URL
+          // URL format: https://<project>.supabase.co/storage/v1/object/public/thumbnails/<user_id>/<filename>
+          const match = profile.avatar_url.match(/\/thumbnails\/(.+)$/)
+          if (match) {
+            const storagePath = match[1]
+            const { error: storageError } = await supabase.storage
+              .from('thumbnails')
+              .remove([storagePath])
+
+            if (storageError) {
+              console.warn(`Failed to delete avatar for user ${profile.id}: ${storageError.message}`)
+              // Continue with user deletion even if avatar deletion fails
+            } else {
+              console.log(`Deleted avatar for user ${profile.id}: ${storagePath}`)
+            }
+          }
+        }
+
         // Delete user from auth.users (this cascades to profiles due to FK)
         const { error: deleteAuthError } = await supabase.auth.admin.deleteUser(profile.id)
 
