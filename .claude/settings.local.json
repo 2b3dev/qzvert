@@ -26,7 +26,10 @@
       "Bash(pkill:*)",
       "Bash(pnpm dev)",
       "Bash(timeout:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(pnpm dlx:*)",
+      "Bash(pnpm exec tsc:*)",
+      "Bash(npx @tanstack/router-cli generate:*)"
     ]
   }
 }

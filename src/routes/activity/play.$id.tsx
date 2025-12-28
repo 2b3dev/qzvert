@@ -27,6 +27,7 @@ import {
 import {
   checkCanUserPlay,
   getActivityById,
+  incrementPlayCount,
   recordPlay,
   updatePlayRecord,
 } from '../../server/activities'
@@ -195,6 +196,13 @@ function ActivityPlayPage() {
     const startedAt = new Date().toISOString()
     let recordId: string | undefined
 
+    // Increment play count for activity
+    try {
+      await incrementPlayCount({ data: { activityId } })
+    } catch {
+      // Ignore error, continue playing
+    }
+
     if (session) {
       try {
         const result = await recordPlay({
@@ -237,6 +245,13 @@ function ActivityPlayPage() {
   }
 
   const handleStartQuest = async () => {
+    // Increment play count for activity
+    try {
+      await incrementPlayCount({ data: { activityId } })
+    } catch {
+      // Ignore error, continue playing
+    }
+
     if (session) {
       try {
         const result = await recordPlay({

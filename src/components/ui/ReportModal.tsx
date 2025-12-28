@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Flag, AlertTriangle, Shield, Ban, FileWarning, Loader2 } from 'lucide-react'
 import { Button } from './button'
 import { cn } from '../../lib/utils'
-import { submitReport, type ReportReason } from '../../server/reports'
+import { submitReport, type ReportReason, type ContentType } from '../../server/reports'
 
 interface ReportModalProps {
   isOpen: boolean
@@ -77,19 +77,15 @@ export function ReportModal({
     try {
       await submitReport({
         data: {
-          activityId,
+          contentType: 'activity',
+          contentId: activityId,
           reason: selectedReason,
           additionalInfo: additionalInfo || undefined,
         },
       })
 
-      setSubmitted(true)
       onReported?.()
-
-      // Auto close after showing success
-      setTimeout(() => {
-        handleClose()
-      }, 2000)
+      handleClose()
     } catch (error) {
       console.error('Failed to submit report:', error)
     } finally {

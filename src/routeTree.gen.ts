@@ -17,9 +17,11 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as ContactRouteImport } from './routes/contact'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminUsersRouteImport } from './routes/admin/users'
+import { Route as AdminReportsRouteImport } from './routes/admin/reports'
 import { Route as ActivityResultsRouteImport } from './routes/activity/results'
 import { Route as ActivityMeRouteImport } from './routes/activity/me'
 import { Route as ActivityPlayIdRouteImport } from './routes/activity/play.$id'
@@ -67,11 +69,6 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -80,6 +77,21 @@ const AboutRoute = AboutRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminReportsRoute = AdminReportsRouteImport.update({
+  id: '/admin/reports',
+  path: '/admin/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ActivityResultsRoute = ActivityResultsRouteImport.update({
@@ -116,7 +128,6 @@ const ActivityUploadLessonIdRoute = ActivityUploadLessonIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRoute
   '/contact': typeof ContactRoute
   '/create': typeof CreateRoute
   '/explore': typeof ExploreRoute
@@ -127,6 +138,9 @@ export interface FileRoutesByFullPath {
   '/saved': typeof SavedRoute
   '/activity/me': typeof ActivityMeRoute
   '/activity/results': typeof ActivityResultsRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/admin': typeof AdminIndexRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
   '/activity/upload/lesson/$id': typeof ActivityUploadLessonIdRoute
   '/activity/upload/quest/$id': typeof ActivityUploadQuestIdRoute
@@ -135,7 +149,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRoute
   '/contact': typeof ContactRoute
   '/create': typeof CreateRoute
   '/explore': typeof ExploreRoute
@@ -146,6 +159,9 @@ export interface FileRoutesByTo {
   '/saved': typeof SavedRoute
   '/activity/me': typeof ActivityMeRoute
   '/activity/results': typeof ActivityResultsRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/admin': typeof AdminIndexRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
   '/activity/upload/lesson/$id': typeof ActivityUploadLessonIdRoute
   '/activity/upload/quest/$id': typeof ActivityUploadQuestIdRoute
@@ -155,7 +171,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRoute
   '/contact': typeof ContactRoute
   '/create': typeof CreateRoute
   '/explore': typeof ExploreRoute
@@ -166,6 +181,9 @@ export interface FileRoutesById {
   '/saved': typeof SavedRoute
   '/activity/me': typeof ActivityMeRoute
   '/activity/results': typeof ActivityResultsRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/admin/': typeof AdminIndexRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
   '/activity/upload/lesson/$id': typeof ActivityUploadLessonIdRoute
   '/activity/upload/quest/$id': typeof ActivityUploadQuestIdRoute
@@ -176,7 +194,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
-    | '/admin'
     | '/contact'
     | '/create'
     | '/explore'
@@ -187,6 +204,9 @@ export interface FileRouteTypes {
     | '/saved'
     | '/activity/me'
     | '/activity/results'
+    | '/admin/reports'
+    | '/admin/users'
+    | '/admin'
     | '/activity/play/$id'
     | '/activity/upload/lesson/$id'
     | '/activity/upload/quest/$id'
@@ -195,7 +215,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
-    | '/admin'
     | '/contact'
     | '/create'
     | '/explore'
@@ -206,6 +225,9 @@ export interface FileRouteTypes {
     | '/saved'
     | '/activity/me'
     | '/activity/results'
+    | '/admin/reports'
+    | '/admin/users'
+    | '/admin'
     | '/activity/play/$id'
     | '/activity/upload/lesson/$id'
     | '/activity/upload/quest/$id'
@@ -214,7 +236,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about'
-    | '/admin'
     | '/contact'
     | '/create'
     | '/explore'
@@ -225,6 +246,9 @@ export interface FileRouteTypes {
     | '/saved'
     | '/activity/me'
     | '/activity/results'
+    | '/admin/reports'
+    | '/admin/users'
+    | '/admin/'
     | '/activity/play/$id'
     | '/activity/upload/lesson/$id'
     | '/activity/upload/quest/$id'
@@ -234,7 +258,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
-  AdminRoute: typeof AdminRoute
   ContactRoute: typeof ContactRoute
   CreateRoute: typeof CreateRoute
   ExploreRoute: typeof ExploreRoute
@@ -245,6 +268,9 @@ export interface RootRouteChildren {
   SavedRoute: typeof SavedRoute
   ActivityMeRoute: typeof ActivityMeRoute
   ActivityResultsRoute: typeof ActivityResultsRoute
+  AdminReportsRoute: typeof AdminReportsRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
   ActivityPlayIdRoute: typeof ActivityPlayIdRoute
   ActivityUploadLessonIdRoute: typeof ActivityUploadLessonIdRoute
   ActivityUploadQuestIdRoute: typeof ActivityUploadQuestIdRoute
@@ -309,13 +335,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/about': {
       id: '/about'
       path: '/about'
@@ -328,6 +347,27 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/reports': {
+      id: '/admin/reports'
+      path: '/admin/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AdminReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/activity/results': {
@@ -378,7 +418,6 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
-  AdminRoute: AdminRoute,
   ContactRoute: ContactRoute,
   CreateRoute: CreateRoute,
   ExploreRoute: ExploreRoute,
@@ -389,6 +428,9 @@ const rootRouteChildren: RootRouteChildren = {
   SavedRoute: SavedRoute,
   ActivityMeRoute: ActivityMeRoute,
   ActivityResultsRoute: ActivityResultsRoute,
+  AdminReportsRoute: AdminReportsRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminIndexRoute: AdminIndexRoute,
   ActivityPlayIdRoute: ActivityPlayIdRoute,
   ActivityUploadLessonIdRoute: ActivityUploadLessonIdRoute,
   ActivityUploadQuestIdRoute: ActivityUploadQuestIdRoute,

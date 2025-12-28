@@ -388,7 +388,7 @@ function ExplorePage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 + index * 0.05 }}
                 >
-                  <Card className="h-full transition-all duration-300 group relative overflow-hidden">
+                  <Card className="h-full transition-all duration-300 group relative overflow-hidden flex flex-col">
                     {activity.thumbnail ? (
                       <div className="relative w-full h-40 overflow-hidden rounded-t-lg">
                         <img
@@ -396,7 +396,7 @@ function ExplorePage() {
                           alt={activity.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                        <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
                       </div>
                     ) : (
                       (() => {
@@ -408,7 +408,7 @@ function ExplorePage() {
                             style={{ background: typeStyle.bgPattern }}
                           >
                             <div className={cn(
-                              "absolute inset-0 bg-gradient-to-br opacity-90",
+                              "absolute inset-0 bg-linear-to-br opacity-90",
                               typeStyle.gradient
                             )} />
                             <div className="absolute inset-0 flex items-center justify-center">
@@ -447,7 +447,7 @@ function ExplorePage() {
                         </CardDescription>
                       )}
                     </CardHeader>
-                    <CardContent className="p-4">
+                    <CardContent className="p-4 flex-1 flex flex-col">
                       <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
                         <div className="flex items-center gap-3">
                           <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium capitalize">
@@ -477,7 +477,7 @@ function ExplorePage() {
                           </span>
                         </div>
                       )}
-                      <div className="flex items-center gap-2 mt-4">
+                      <div className="flex items-center gap-2 mt-auto pt-4">
                         <Button
                           variant="default"
                           className="flex-1"

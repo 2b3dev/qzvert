@@ -474,12 +474,25 @@ export const incrementPlayCount = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const supabase = getSupabaseFromCookies()
 
-    const { error } = await supabase.rpc('increment_play_count', {
-      activity_id: data.activityId
-    })
+    // Get current play_count
+    const { data: activity, error: fetchError } = await supabase
+      .from('activities')
+      .select('play_count')
+      .eq('id', data.activityId)
+      .single()
 
-    if (error) {
-      throw new Error(`Failed to increment play count: ${error.message}`)
+    if (fetchError) {
+      throw new Error(`Failed to fetch activity: ${fetchError.message}`)
+    }
+
+    // Increment play_count
+    const { error: updateError } = await supabase
+      .from('activities')
+      .update({ play_count: (activity?.play_count || 0) + 1 })
+      .eq('id', data.activityId)
+
+    if (updateError) {
+      throw new Error(`Failed to increment play count: ${updateError.message}`)
     }
 
     return { success: true }

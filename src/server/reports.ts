@@ -186,16 +186,10 @@ export const getReports = createServerFn({ method: 'GET' })
       throw new Error('Admin access required')
     }
 
-    // Build query
+    // Build query - fetch reports without join
     let query = supabase
       .from('reports')
-      .select(`
-        *,
-        reporter:profiles!reports_reporter_id_fkey (
-          display_name,
-          avatar_url
-        )
-      `, { count: 'exact' })
+      .select('*', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(offset, offset + pageSize - 1)
 
@@ -213,13 +207,26 @@ export const getReports = createServerFn({ method: 'GET' })
       throw new Error(`Failed to fetch reports: ${error.message}`)
     }
 
-    // Fetch content info for each report
+    // Fetch content info and reporter info for each report
     const reportsWithContent: ReportWithContent[] = await Promise.all(
       (reports || []).map(async (report) => {
         const content = await fetchContentInfo(supabase, report.content_type, report.content_id)
+
+        // Fetch reporter info if reporter_id exists
+        let reporter: { display_name: string | null; avatar_url: string | null } | null = null
+        if (report.reporter_id) {
+          const { data: reporterData } = await supabase
+            .from('profiles')
+            .select('display_name, avatar_url')
+            .eq('id', report.reporter_id)
+            .single()
+          reporter = reporterData
+        }
+
         return {
           ...report,
           content,
+          reporter,
         } as ReportWithContent
       })
     )
@@ -415,12 +422,12 @@ export const getAdminDashboardStats = createServerFn({ method: 'GET' })
       .gte('created_at', oneWeekAgo.toISOString())
 
     // Get activities by type
-    const { data: quizCount } = await supabase
+    const { count: quizCount } = await supabase
       .from('activities')
       .select('id', { count: 'exact', head: true })
       .eq('type', 'quiz')
 
-    const { data: questCount } = await supabase
+    const { count: questCount } = await supabase
       .from('activities')
       .select('id', { count: 'exact', head: true })
       .eq('type', 'quest')
@@ -471,8 +478,8 @@ export const getAdminDashboardStats = createServerFn({ method: 'GET' })
         public: publicActivities || 0,
         thisWeek: activitiesThisWeek || 0,
         byType: {
-          quiz: quizCount?.length || 0,
-          quest: questCount?.length || 0,
+          quiz: quizCount || 0,
+          quest: questCount || 0,
         },
       },
       plays: {
