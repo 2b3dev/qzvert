@@ -35,7 +35,7 @@
     "login": "Login",
     "logout": "Logout",
     "or": "or",
-    "freeStart": "Start for free, no cost"
+    "freeStart": "Start learning for free, no cost"
   },
   "nav": {
     "explore": "Explore",
@@ -52,6 +52,13 @@
     "switchToThai": "Switch to Thai",
     "switchToEnglish": "Switch to English"
   },
+  "profile": {
+    "deleteAccount": {
+      "title": "Delete Account",
+      "description": "Permanently delete your account and all associated data. This action cannot be undone.",
+      "button": "Request Account Deletion"
+    }
+  },
   "footer": {
     "tagline": "Transform any content into gamified learning quests with AI.",
     "product": "Product",
@@ -61,6 +68,8 @@
     "company": "Company",
     "aboutUs": "About Us",
     "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "deleteAccount": "Delete Account",
     "startLearning": "Start Learning",
     "ctaText": "Turn boring content into exciting adventures.",
     "createFreeQuest": "Create Free Quest",
@@ -316,7 +325,7 @@
         "quiz": "Multiple quiz types with explanations"
       },
       "loginButton": "Login / Sign Up",
-      "freeStart": "Start for free, no cost"
+      "freeStart": "Start learning for free, no cost"
     }
   },
   "pricing": {
@@ -582,7 +591,6 @@
       "badge": "Direct Support",
       "title": "Contact Us",
       "subtitle": "For usage issues, bug reports, or Enterprise package inquiries, you can email us directly",
-      "email": "support@qzvert.com",
       "responseTime": "We'll respond within 24 hours on business days"
     },
     "social": {
@@ -719,12 +727,15 @@
       "title": "Contact Us",
       "titleEn": "Contact Us",
       "description": "If you have questions about the privacy policy or want to exercise your PDPA rights, contact us at:",
-      "contactTeam": "Contact Team",
-      "email": "privacy@qzvert.com"
+      "contactTeam": "Contact Team"
     },
     "consent": {
       "text1": "By signing up for QzVert, you consent to us collecting and using data according to this policy.",
       "text2": "You can withdraw consent anytime by contacting us."
+    },
+    "deleteSection": {
+      "description": "If you wish to delete your account and all associated data, you can submit a deletion request. Your data will be permanently removed within 30 days.",
+      "requestButton": "Request Account Deletion"
     }
   },
   "tools": {
@@ -813,5 +824,203 @@
     "translateModalDescription": "The selected language differs from the content language. Would you like to translate the content first?",
     "translateAndPlay": "Translate to {{language}} & Play",
     "playOriginal": "Play in Original ({{language}})"
+  },
+  "terms": {
+    "hero": {
+      "badge": "Terms of Service",
+      "backToHome": "Back to Home",
+      "title1": "Terms of ",
+      "title2": "Service",
+      "subtitle1": "Please read these terms carefully before using QzVert.",
+      "subtitle2": "By using our service, you agree to be bound by these terms.",
+      "lastUpdated": "Last updated: December 28, 2024"
+    },
+    "sections": {
+      "acceptance": {
+        "title": "Acceptance of Terms",
+        "titleEn": "Acceptance of Terms",
+        "subtitle": "By using QzVert, you agree that:",
+        "items": {
+          "agree": "You have read, understood, and agree to be bound by these Terms of Service",
+          "age": "You are at least 13 years old, have parental/guardian consent, or are using through an authorized educational institution",
+          "changes": "We may update these terms from time to time. Continued use constitutes acceptance of changes"
+        }
+      },
+      "services": {
+        "title": "Our Services",
+        "titleEn": "Our Services",
+        "subtitle": "QzVert provides:",
+        "items": {
+          "create": "AI-powered tools to transform content into gamified learning activities",
+          "play": "Platform to play and share quizzes, quests, and other learning activities",
+          "ai": "AI generation credits for creating content (subject to plan limits)",
+          "storage": "Cloud storage for your activities and progress data"
+        }
+      },
+      "account": {
+        "title": "User Account",
+        "titleEn": "User Account",
+        "subtitle": "When creating an account, you must:",
+        "items": {
+          "accurate": "Provide accurate and complete information",
+          "secure": "Keep your login credentials secure and confidential",
+          "oneAccount": "Maintain only one account per person",
+          "responsible": "Be responsible for all activities under your account"
+        }
+      },
+      "education": {
+        "title": "Educational Institution Use",
+        "titleEn": "Educational Institution Use",
+        "subtitle": "For schools, universities, and educational organizations:",
+        "items": {
+          "authorization": "Educational institutions may create and manage accounts for students of any age",
+          "consent": "The institution assumes responsibility for obtaining necessary parental consents as required by local law",
+          "supervision": "Student accounts must be supervised by authorized teachers or administrators",
+          "compliance": "Institutions must comply with applicable education privacy laws (FERPA, COPPA, GDPR-K, etc.)",
+          "data": "Student data collected through institutional accounts is governed by our Data Processing Agreement",
+          "agreement": "Institutions must accept our Educational Institution Agreement before creating student accounts"
+        }
+      },
+      "content": {
+        "title": "Content & Intellectual Property",
+        "titleEn": "Content & Intellectual Property",
+        "yourContent": "Your Content",
+        "aiContent": "AI-Generated Content",
+        "items": {
+          "ownership": "You retain ownership of original content you upload",
+          "license": "By uploading, you grant QzVert a license to use, display, and process your content for service operation",
+          "responsibility": "You are responsible for ensuring you have rights to any content you upload",
+          "aiOwnership": "AI-generated content created using our tools may be used freely for personal and commercial purposes",
+          "aiReview": "You are responsible for reviewing and verifying AI-generated content before publishing"
+        }
+      },
+      "prohibited": {
+        "title": "Prohibited Activities",
+        "titleEn": "Prohibited Activities",
+        "subtitle": "You may not use QzVert to:",
+        "items": {
+          "illegal": "Engage in any illegal activities or promote illegal content",
+          "harmful": "Upload harmful, offensive, or inappropriate content",
+          "infringe": "Infringe on intellectual property rights of others",
+          "spam": "Distribute spam, malware, or engage in phishing",
+          "hack": "Attempt to hack, disrupt, or interfere with our services",
+          "impersonate": "Impersonate others or create fake accounts"
+        }
+      },
+      "ip": {
+        "title": "QzVert Intellectual Property",
+        "titleEn": "QzVert Intellectual Property",
+        "subtitle": "Regarding our platform:",
+        "items": {
+          "qzvertOwns": "QzVert owns all rights to the platform, including design, code, and branding",
+          "noUse": "You may not copy, modify, or distribute our platform without permission",
+          "feedback": "Any feedback or suggestions you provide may be used to improve our services"
+        }
+      },
+      "disclaimer": {
+        "title": "Disclaimers & Limitations",
+        "titleEn": "Disclaimers & Limitations",
+        "subtitle": "Please be aware that:",
+        "items": {
+          "asIs": "Services are provided \"as is\" without warranties of any kind",
+          "noWarranty": "We do not guarantee AI-generated content accuracy or suitability",
+          "limitation": "Our liability is limited to the amount you paid for our services"
+        }
+      },
+      "termination": {
+        "title": "Termination",
+        "titleEn": "Termination",
+        "subtitle": "Regarding account termination:",
+        "items": {
+          "terminate": "You may terminate your account at any time by contacting us",
+          "suspend": "We may suspend or terminate accounts that violate these terms",
+          "effect": "Upon termination, your right to use the service ends, but some provisions continue"
+        }
+      },
+      "governing": {
+        "title": "Governing Law",
+        "titleEn": "Governing Law",
+        "subtitle": "Legal jurisdiction:",
+        "items": {
+          "law": "These terms are governed by the laws of Thailand",
+          "dispute": "Any disputes shall be resolved in the courts of Thailand"
+        }
+      }
+    },
+    "contact": {
+      "title": "Questions?",
+      "titleEn": "Questions?",
+      "description": "If you have any questions about these Terms of Service, please contact us:",
+      "contactTeam": "Contact Team"
+    },
+    "related": {
+      "title": "Related Policies",
+      "privacy": "Privacy Policy"
+    },
+    "agreement": {
+      "text1": "By using QzVert, you acknowledge that you have read and agree to these Terms of Service.",
+      "text2": "If you do not agree, please discontinue use of our services."
+    }
+  },
+  "deleteAccount": {
+    "hero": {
+      "badge": "Account Deletion",
+      "backToPrivacy": "Back to Privacy Policy",
+      "title1": "Delete Your ",
+      "title2": "Account",
+      "subtitle": "We're sorry to see you go. Please read carefully before proceeding with account deletion."
+    },
+    "gracePeriod": {
+      "title": "30-Day Grace Period",
+      "description": "After you confirm deletion, your account will be deactivated immediately. You have 30 days to change your mind and restore your account by contacting our support team."
+    },
+    "warning": {
+      "title": "After 30 days, this action is permanent",
+      "description": "Once the grace period ends, all your data will be permanently removed and cannot be recovered. Please make sure you have backed up any important data before proceeding."
+    },
+    "whatDeleted": {
+      "title": "What will be deleted:"
+    },
+    "items": {
+      "profile": {
+        "title": "Profile Information",
+        "description": "Your email, display name, and profile picture will be permanently removed."
+      },
+      "activities": {
+        "title": "Activities & Content",
+        "description": "All quizzes, quests, and learning activities you created will be deleted."
+      },
+      "progress": {
+        "title": "Learning Progress",
+        "description": "Your scores, achievements, and learning history will be erased."
+      }
+    },
+    "form": {
+      "title": "Confirm Account Deletion",
+      "emailLabel": "Account Email",
+      "confirmLabel": "Type DELETE to confirm",
+      "confirmHint": "To confirm deletion, please type \"DELETE\" in the field below:",
+      "submit": "Delete My Account",
+      "submitting": "Deleting...",
+      "loginRequired": "Please login to request account deletion."
+    },
+    "success": {
+      "title": "Account Scheduled for Deletion",
+      "description": "Your account has been deactivated and scheduled for permanent deletion.",
+      "permanentDate": "Permanent deletion date",
+      "canRestore": "Changed your mind?",
+      "restoreInfo": "Contact our support team within 30 days to restore your account.",
+      "backHome": "Back to Home"
+    },
+    "alternative": {
+      "text": "Need help? Contact our support team:"
+    },
+    "timeline": {
+      "title": "What happens next?",
+      "description": "Your account is now deactivated and hidden from the platform. After 30 days, all your data will be permanently deleted. You can restore your account within this period by contacting support."
+    },
+    "error": {
+      "generic": "Failed to delete account. Please try again."
+    }
   }
 }

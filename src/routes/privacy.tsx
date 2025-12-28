@@ -15,6 +15,7 @@ import {
 import { DefaultLayout } from '../components/layouts/DefaultLayout'
 import { Button } from '../components/ui/button'
 import { useTranslation } from '../hooks/useTranslation'
+import { PRIVACY_EMAIL } from '../lib/utils'
 
 export const Route = createFileRoute('/privacy')({ component: PrivacyPage })
 
@@ -226,6 +227,41 @@ function PrivacyPage() {
               </motion.div>
             ))}
 
+            {/* Delete Account Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="p-6 md:p-8 rounded-2xl bg-destructive/5 border border-destructive/20"
+            >
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 rounded-xl bg-destructive/20 flex items-center justify-center shrink-0">
+                  <Trash2 className="w-6 h-6 text-destructive" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-foreground">
+                    {t('privacy.sections.dataDeletion.title')}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {t('privacy.sections.dataDeletion.titleEn')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="pl-16 space-y-4">
+                <p className="text-muted-foreground">
+                  {t('privacy.deleteSection.description')}
+                </p>
+
+                <Button variant="destructive" asChild>
+                  <Link to="/delete-account">
+                    <Trash2 className="w-4 h-4" />
+                    {t('privacy.deleteSection.requestButton')}
+                  </Link>
+                </Button>
+              </div>
+            </motion.div>
+
             {/* Contact Section */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -260,9 +296,9 @@ function PrivacyPage() {
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>
-                    <a href="mailto:privacy@qzvert.com">
+                    <a href={`mailto:${PRIVACY_EMAIL}`}>
                       <FileText className="w-4 h-4" />
-                      privacy@qzvert.com
+                      {PRIVACY_EMAIL}
                     </a>
                   </Button>
                 </div>

@@ -1,8 +1,9 @@
-import IconApp from '@/components/icon/icon-app'
 import { Link } from '@tanstack/react-router'
 import { Github, Globe, Heart, Mail, Twitter } from 'lucide-react'
 import { useTranslation } from '../hooks/useTranslation'
+import { CONTACT_EMAIL } from '../lib/utils'
 import { useLanguageStore } from '../stores/language-store'
+import IconApp from '@/components/icon/icon-app'
 
 export default function Footer() {
   const currentYear = new Date().getFullYear()
@@ -23,12 +24,13 @@ export default function Footer() {
     { to: '/about', label: t('footer.aboutUs') },
     { to: '/contact', label: t('nav.contact') },
     { to: '/privacy', label: t('footer.privacyPolicy') },
+    { to: '/terms', label: t('footer.termsOfService') },
   ]
 
   const socialLinks = [
     { href: 'https://github.com/qzvert', icon: Github, label: 'GitHub' },
     { href: 'https://twitter.com/qzvert', icon: Twitter, label: 'Twitter' },
-    { href: 'mailto:hello@qzvert.com', icon: Mail, label: 'Email' },
+    { href: `mailto:${CONTACT_EMAIL}`, icon: Mail, label: 'Email' },
   ]
 
   return (

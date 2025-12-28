@@ -18,6 +18,7 @@ import { DefaultLayout } from '../components/layouts/DefaultLayout'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { useTranslation } from '../hooks/useTranslation'
+import { CONTACT_EMAIL } from '../lib/utils'
 
 export const Route = createFileRoute('/contact')({ component: ContactPage })
 
@@ -147,11 +148,11 @@ function ContactPage() {
                       </p>
 
                       <a
-                        href="mailto:support@qzvert.com"
+                        href={`mailto:${CONTACT_EMAIL}`}
                         className="inline-flex items-center gap-2 text-xl md:text-2xl font-bold text-primary hover:text-primary/80 transition-colors group"
                       >
                         <Mail className="w-6 h-6" />
-                        {t('contact.directSupport.email')}
+                        {CONTACT_EMAIL}
                         <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                       </a>
 

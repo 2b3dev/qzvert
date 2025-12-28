@@ -10,6 +10,7 @@ import {
   LogOut,
   Play,
   Save,
+  Trash2,
   Trophy,
   User,
   X,
@@ -26,6 +27,7 @@ import {
 } from '../components/ui/card'
 import { ImageInput } from '../components/ui/image-input'
 import { Input } from '../components/ui/input'
+import { useTranslation } from '../hooks/useTranslation'
 import { useAuthStore } from '../stores/auth-store'
 import { useProfileStore } from '../stores/profile-store'
 import { getUserStats, type UserStats } from '../server/activities'
@@ -36,6 +38,7 @@ export const Route = createFileRoute('/profile')({
 })
 
 function ProfilePage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { user, signOut, isInitialized } = useAuthStore()
   const { profile, fetchProfile, updateProfile, isLoading: profileLoading } = useProfileStore()
@@ -228,7 +231,7 @@ function ProfilePage() {
                 </div>
               ) : (
                 <div className="flex items-start gap-4">
-                  <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden flex-shrink-0">
+                  <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden shrink-0">
                     {profile?.avatar_url ? (
                       <img
                         src={profile.avatar_url}
@@ -331,7 +334,7 @@ function ProfilePage() {
                       params={{ id: play.activity_id }}
                       className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
                     >
-                      <div className="w-12 h-12 rounded-lg bg-muted overflow-hidden flex-shrink-0">
+                      <div className="w-12 h-12 rounded-lg bg-muted overflow-hidden shrink-0">
                         {play.activity_thumbnail ? (
                           <img
                             src={play.activity_thumbnail}
@@ -380,6 +383,33 @@ function ProfilePage() {
                   No recent activity. Start playing to see your history!
                 </p>
               )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Delete Account Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <Card className="border-destructive/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <Trash2 className="w-5 h-5" />
+                {t('profile.deleteAccount.title')}
+              </CardTitle>
+              <CardDescription>
+                {t('profile.deleteAccount.description')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="destructive" asChild>
+                <Link to="/delete-account">
+                  <Trash2 className="w-4 h-4" />
+                  {t('profile.deleteAccount.button')}
+                </Link>
+              </Button>
             </CardContent>
           </Card>
         </motion.div>

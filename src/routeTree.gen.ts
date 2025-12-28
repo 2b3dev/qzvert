@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SavedRouteImport } from './routes/saved'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -16,6 +17,7 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as GuruToLoudRouteImport } from './routes/guru-to-loud'
 import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as DeleteAccountRouteImport } from './routes/delete-account'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
@@ -30,6 +32,11 @@ import { Route as ActivityUploadQuizIdRouteImport } from './routes/activity/uplo
 import { Route as ActivityUploadQuestIdRouteImport } from './routes/activity/upload/quest.$id'
 import { Route as ActivityUploadLessonIdRouteImport } from './routes/activity/upload/lesson.$id'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SavedRoute = SavedRouteImport.update({
   id: '/saved',
   path: '/saved',
@@ -63,6 +70,11 @@ const GuruToLoudRoute = GuruToLoudRouteImport.update({
 const ExploreRoute = ExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeleteAccountRoute = DeleteAccountRouteImport.update({
+  id: '/delete-account',
+  path: '/delete-account',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CreateRoute = CreateRouteImport.update({
@@ -136,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/create': typeof CreateRoute
+  '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
   '/guru-to-loud': typeof GuruToLoudRoute
   '/login': typeof LoginRoute
@@ -143,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/saved': typeof SavedRoute
+  '/terms': typeof TermsRoute
   '/activity/me': typeof ActivityMeRoute
   '/activity/results': typeof ActivityResultsRoute
   '/admin/reports': typeof AdminReportsRoute
@@ -158,6 +172,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/create': typeof CreateRoute
+  '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
   '/guru-to-loud': typeof GuruToLoudRoute
   '/login': typeof LoginRoute
@@ -165,6 +180,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/saved': typeof SavedRoute
+  '/terms': typeof TermsRoute
   '/activity/me': typeof ActivityMeRoute
   '/activity/results': typeof ActivityResultsRoute
   '/admin/reports': typeof AdminReportsRoute
@@ -181,6 +197,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/create': typeof CreateRoute
+  '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
   '/guru-to-loud': typeof GuruToLoudRoute
   '/login': typeof LoginRoute
@@ -188,6 +205,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/saved': typeof SavedRoute
+  '/terms': typeof TermsRoute
   '/activity/me': typeof ActivityMeRoute
   '/activity/results': typeof ActivityResultsRoute
   '/admin/reports': typeof AdminReportsRoute
@@ -205,6 +223,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/contact'
     | '/create'
+    | '/delete-account'
     | '/explore'
     | '/guru-to-loud'
     | '/login'
@@ -212,6 +231,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/profile'
     | '/saved'
+    | '/terms'
     | '/activity/me'
     | '/activity/results'
     | '/admin/reports'
@@ -227,6 +247,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/contact'
     | '/create'
+    | '/delete-account'
     | '/explore'
     | '/guru-to-loud'
     | '/login'
@@ -234,6 +255,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/profile'
     | '/saved'
+    | '/terms'
     | '/activity/me'
     | '/activity/results'
     | '/admin/reports'
@@ -249,6 +271,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/contact'
     | '/create'
+    | '/delete-account'
     | '/explore'
     | '/guru-to-loud'
     | '/login'
@@ -256,6 +279,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/profile'
     | '/saved'
+    | '/terms'
     | '/activity/me'
     | '/activity/results'
     | '/admin/reports'
@@ -272,6 +296,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   ContactRoute: typeof ContactRoute
   CreateRoute: typeof CreateRoute
+  DeleteAccountRoute: typeof DeleteAccountRoute
   ExploreRoute: typeof ExploreRoute
   GuruToLoudRoute: typeof GuruToLoudRoute
   LoginRoute: typeof LoginRoute
@@ -279,6 +304,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
   SavedRoute: typeof SavedRoute
+  TermsRoute: typeof TermsRoute
   ActivityMeRoute: typeof ActivityMeRoute
   ActivityResultsRoute: typeof ActivityResultsRoute
   AdminReportsRoute: typeof AdminReportsRoute
@@ -292,6 +318,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/saved': {
       id: '/saved'
       path: '/saved'
@@ -339,6 +372,13 @@ declare module '@tanstack/react-router' {
       path: '/explore'
       fullPath: '/explore'
       preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/delete-account': {
+      id: '/delete-account'
+      path: '/delete-account'
+      fullPath: '/delete-account'
+      preLoaderRoute: typeof DeleteAccountRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/create': {
@@ -440,6 +480,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   ContactRoute: ContactRoute,
   CreateRoute: CreateRoute,
+  DeleteAccountRoute: DeleteAccountRoute,
   ExploreRoute: ExploreRoute,
   GuruToLoudRoute: GuruToLoudRoute,
   LoginRoute: LoginRoute,
@@ -447,6 +488,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
   SavedRoute: SavedRoute,
+  TermsRoute: TermsRoute,
   ActivityMeRoute: ActivityMeRoute,
   ActivityResultsRoute: ActivityResultsRoute,
   AdminReportsRoute: AdminReportsRoute,
