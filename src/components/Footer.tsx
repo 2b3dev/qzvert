@@ -17,7 +17,7 @@ export default function Footer() {
   ]
 
   const toolsLinks = [
-    { to: '/guru-to-loud', label: t('footer.guruToLoud') },
+    { to: '/text-to-loud', label: t('footer.textToLoud') },
   ]
 
   const companyLinks = [

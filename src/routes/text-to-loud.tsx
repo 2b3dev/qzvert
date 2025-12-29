@@ -41,8 +41,8 @@ import { isAIGenerationEnabled } from '../server/admin-settings'
 import { TextToLoud } from '../components/TextToLoud'
 import type { LanguageOption, TextToLoudRef } from '../components/TextToLoud'
 
-export const Route = createFileRoute('/guru-to-loud')({
-  component: GuruPage,
+export const Route = createFileRoute('/text-to-loud')({
+  component: TextToLoudPage,
 })
 
 interface SuggestedActivity {
@@ -72,8 +72,8 @@ const SUPPORTED_LANGUAGES: LanguageOption[] = [
 ]
 
 // LocalStorage keys
-const STORAGE_KEY = 'guru-to-loud-state'
-const HISTORY_KEY = 'guru-to-loud-history'
+const STORAGE_KEY = 'text-to-loud-state'
+const HISTORY_KEY = 'text-to-loud-history'
 const MAX_HISTORY_ITEMS = 10
 
 // Saved state interface
@@ -208,7 +208,7 @@ function HeroSection({ t }: { t: (key: string) => string }) {
   )
 }
 
-function GuruPage() {
+function TextToLoudPage() {
   const { t, language: uiLanguage } = useTranslation()
   const navigate = useNavigate()
 
@@ -1076,10 +1076,10 @@ function GuruPage() {
                   <div className="relative">
                     {isReaderMode ? (
                       // Reader mode - use TextToLoud's reader
-                      null // TextToLoud will render the reader mode
+                      (null) // TextToLoud will render the reader mode
                     ) : (
                       // Normal textarea mode
-                      <div>
+                      (<div>
                         <Textarea
                           value={contentMode === 'original' ? originalContent : displayContent}
                           onChange={(e) => contentMode === 'original' && handleTextChange(e.target.value)}
@@ -1107,7 +1107,7 @@ function GuruPage() {
                             </button>
                           )}
                         </div>
-                      </div>
+                      </div>)
                     )}
                   </div>
 
@@ -1405,7 +1405,6 @@ function GuruPage() {
           </div>
         </section>
       </div>
-
       {/* Translation Confirmation Modal */}
       {showTranslateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

@@ -9,13 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TextToLoudRouteImport } from './routes/text-to-loud'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SavedRouteImport } from './routes/saved'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as GuruToLoudRouteImport } from './routes/guru-to-loud'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DeleteAccountRouteImport } from './routes/delete-account'
 import { Route as CreateRouteImport } from './routes/create'
@@ -36,6 +36,11 @@ import { Route as ActivityUploadQuizIdRouteImport } from './routes/activity/uplo
 import { Route as ActivityUploadQuestIdRouteImport } from './routes/activity/upload/quest.$id'
 import { Route as ActivityUploadLessonIdRouteImport } from './routes/activity/upload/lesson.$id'
 
+const TextToLoudRoute = TextToLoudRouteImport.update({
+  id: '/text-to-loud',
+  path: '/text-to-loud',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -64,11 +69,6 @@ const PricingRoute = PricingRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GuruToLoudRoute = GuruToLoudRouteImport.update({
-  id: '/guru-to-loud',
-  path: '/guru-to-loud',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExploreRoute = ExploreRouteImport.update({
@@ -174,13 +174,13 @@ export interface FileRoutesByFullPath {
   '/create': typeof CreateRoute
   '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
-  '/guru-to-loud': typeof GuruToLoudRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/saved': typeof SavedRoute
   '/terms': typeof TermsRoute
+  '/text-to-loud': typeof TextToLoudRoute
   '/activity/me': typeof ActivityMeRoute
   '/activity/results': typeof ActivityResultsRoute
   '/admin/activities': typeof AdminActivitiesRoute
@@ -202,13 +202,13 @@ export interface FileRoutesByTo {
   '/create': typeof CreateRoute
   '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
-  '/guru-to-loud': typeof GuruToLoudRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/saved': typeof SavedRoute
   '/terms': typeof TermsRoute
+  '/text-to-loud': typeof TextToLoudRoute
   '/activity/me': typeof ActivityMeRoute
   '/activity/results': typeof ActivityResultsRoute
   '/admin/activities': typeof AdminActivitiesRoute
@@ -231,13 +231,13 @@ export interface FileRoutesById {
   '/create': typeof CreateRoute
   '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
-  '/guru-to-loud': typeof GuruToLoudRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/saved': typeof SavedRoute
   '/terms': typeof TermsRoute
+  '/text-to-loud': typeof TextToLoudRoute
   '/activity/me': typeof ActivityMeRoute
   '/activity/results': typeof ActivityResultsRoute
   '/admin/activities': typeof AdminActivitiesRoute
@@ -261,13 +261,13 @@ export interface FileRouteTypes {
     | '/create'
     | '/delete-account'
     | '/explore'
-    | '/guru-to-loud'
     | '/login'
     | '/pricing'
     | '/privacy'
     | '/profile'
     | '/saved'
     | '/terms'
+    | '/text-to-loud'
     | '/activity/me'
     | '/activity/results'
     | '/admin/activities'
@@ -289,13 +289,13 @@ export interface FileRouteTypes {
     | '/create'
     | '/delete-account'
     | '/explore'
-    | '/guru-to-loud'
     | '/login'
     | '/pricing'
     | '/privacy'
     | '/profile'
     | '/saved'
     | '/terms'
+    | '/text-to-loud'
     | '/activity/me'
     | '/activity/results'
     | '/admin/activities'
@@ -317,13 +317,13 @@ export interface FileRouteTypes {
     | '/create'
     | '/delete-account'
     | '/explore'
-    | '/guru-to-loud'
     | '/login'
     | '/pricing'
     | '/privacy'
     | '/profile'
     | '/saved'
     | '/terms'
+    | '/text-to-loud'
     | '/activity/me'
     | '/activity/results'
     | '/admin/activities'
@@ -346,13 +346,13 @@ export interface RootRouteChildren {
   CreateRoute: typeof CreateRoute
   DeleteAccountRoute: typeof DeleteAccountRoute
   ExploreRoute: typeof ExploreRoute
-  GuruToLoudRoute: typeof GuruToLoudRoute
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
   SavedRoute: typeof SavedRoute
   TermsRoute: typeof TermsRoute
+  TextToLoudRoute: typeof TextToLoudRoute
   ActivityMeRoute: typeof ActivityMeRoute
   ActivityResultsRoute: typeof ActivityResultsRoute
   AdminActivitiesRoute: typeof AdminActivitiesRoute
@@ -370,6 +370,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/text-to-loud': {
+      id: '/text-to-loud'
+      path: '/text-to-loud'
+      fullPath: '/text-to-loud'
+      preLoaderRoute: typeof TextToLoudRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terms': {
       id: '/terms'
       path: '/terms'
@@ -410,13 +417,6 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/guru-to-loud': {
-      id: '/guru-to-loud'
-      path: '/guru-to-loud'
-      fullPath: '/guru-to-loud'
-      preLoaderRoute: typeof GuruToLoudRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/explore': {
@@ -562,13 +562,13 @@ const rootRouteChildren: RootRouteChildren = {
   CreateRoute: CreateRoute,
   DeleteAccountRoute: DeleteAccountRoute,
   ExploreRoute: ExploreRoute,
-  GuruToLoudRoute: GuruToLoudRoute,
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
   SavedRoute: SavedRoute,
   TermsRoute: TermsRoute,
+  TextToLoudRoute: TextToLoudRoute,
   ActivityMeRoute: ActivityMeRoute,
   ActivityResultsRoute: ActivityResultsRoute,
   AdminActivitiesRoute: AdminActivitiesRoute,
