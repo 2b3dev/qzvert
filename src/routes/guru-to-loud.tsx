@@ -37,6 +37,7 @@ import { useTranslation } from '../hooks/useTranslation'
 import { cn } from '../lib/utils'
 import { craftContent, summarizeContent, translateContent } from '../server/guru'
 import { getSuggestedActivities } from '../server/activities'
+import { isAIGenerationEnabled } from '../server/admin-settings'
 import { TextToLoud } from '../components/TextToLoud'
 import type { LanguageOption, TextToLoudRef } from '../components/TextToLoud'
 
@@ -245,6 +246,9 @@ function GuruPage() {
   // Display mode - show markdown reader view
   const [isReaderMode, setIsReaderMode] = useState(false)
 
+  // AI generation setting
+  const [aiEnabled, setAiEnabled] = useState(true)
+
   // TTS states - controlled by TextToLoud component
   const [selectedTargetLanguage, setSelectedTargetLanguage] = useState<string>(() => savedState?.selectedTargetLanguage || 'en')
   const [originalDetectedLanguage, setOriginalDetectedLanguage] = useState<string>(() => savedState?.originalDetectedLanguage || 'en')
@@ -315,6 +319,11 @@ function GuruPage() {
       setIsHistoryLoading(false)
     }, 300)
     return () => clearTimeout(timer)
+  }, [])
+
+  // Check AI generation setting on mount
+  useEffect(() => {
+    isAIGenerationEnabled().then(setAiEnabled)
   }, [])
 
   // Filter available languages based on system voices
@@ -784,35 +793,51 @@ function GuruPage() {
             {t('guru.listen')}
           </button>
           {/* Summarize Button */}
-          <button
-            onClick={() => handleModeSelect('summarize')}
-            disabled={isProcessing || isPlaying}
-            className={cn(
-              'flex items-center justify-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium transition-all',
-              selectedMode === 'summarize'
-                ? 'bg-primary text-primary-foreground shadow-md'
-                : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground',
-              (isProcessing || isPlaying) && 'opacity-50 cursor-not-allowed'
+          <div className="relative group/summarize">
+            <button
+              onClick={() => aiEnabled && handleModeSelect('summarize')}
+              disabled={isProcessing || isPlaying || !aiEnabled}
+              className={cn(
+                'w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium transition-all',
+                selectedMode === 'summarize'
+                  ? 'bg-primary text-primary-foreground shadow-md'
+                  : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground',
+                (isProcessing || isPlaying || !aiEnabled) && 'opacity-50 cursor-not-allowed'
+              )}
+            >
+              <FileText className="w-4 h-4" />
+              {t('guru.summarize')}
+            </button>
+            {!aiEnabled && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-popover border border-border rounded-lg shadow-lg text-sm text-foreground opacity-0 group-hover/summarize:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                {t('common.aiDisabled')}
+                <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-popover" />
+              </div>
             )}
-          >
-            <FileText className="w-4 h-4" />
-            {t('guru.summarize')}
-          </button>
+          </div>
           {/* Craft Button */}
-          <button
-            onClick={() => handleModeSelect('craft')}
-            disabled={isProcessing || isPlaying}
-            className={cn(
-              'flex items-center justify-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium transition-all',
-              selectedMode === 'craft'
-                ? 'bg-primary text-primary-foreground shadow-md'
-                : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground',
-              (isProcessing || isPlaying) && 'opacity-50 cursor-not-allowed'
+          <div className="relative group/craft">
+            <button
+              onClick={() => aiEnabled && handleModeSelect('craft')}
+              disabled={isProcessing || isPlaying || !aiEnabled}
+              className={cn(
+                'w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium transition-all',
+                selectedMode === 'craft'
+                  ? 'bg-primary text-primary-foreground shadow-md'
+                  : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground',
+                (isProcessing || isPlaying || !aiEnabled) && 'opacity-50 cursor-not-allowed'
+              )}
+            >
+              <Wand2 className="w-4 h-4" />
+              {t('guru.craft')}
+            </button>
+            {!aiEnabled && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-popover border border-border rounded-lg shadow-lg text-sm text-foreground opacity-0 group-hover/craft:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                {t('common.aiDisabled')}
+                <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-popover" />
+              </div>
             )}
-          >
-            <Wand2 className="w-4 h-4" />
-            {t('guru.craft')}
-          </button>
+          </div>
         </div>
       </div>
 
@@ -878,7 +903,7 @@ function GuruPage() {
         </motion.div>
       )}
     </>
-  ), [t, selectedMode, isProcessing, isPlaying, aiResult, originalContent, handleConfirmGenerate, handleModeSelect])
+  ), [t, selectedMode, isProcessing, isPlaying, aiResult, originalContent, aiEnabled, handleConfirmGenerate, handleModeSelect])
 
   // Show loading screen while history is loading
   if (isHistoryLoading) {

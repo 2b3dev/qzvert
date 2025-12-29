@@ -453,6 +453,22 @@ export const getSettingValue = createServerFn({ method: 'GET' })
     return setting.value as string | number | boolean
   })
 
+// Check if AI generation is enabled (public, no auth required)
+export const isAIGenerationEnabled = createServerFn({ method: 'GET' }).handler(
+  async (): Promise<boolean> => {
+    const supabase = getSupabaseFromCookies()
+
+    const { data: setting } = await supabase
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'enable_ai_generation')
+      .single()
+
+    // Default to true if not set
+    return setting?.value !== false
+  },
+)
+
 // Check if maintenance mode is enabled (public, no auth required)
 export const isMaintenanceMode = createServerFn({ method: 'GET' }).handler(
   async (): Promise<{ enabled: boolean; message: string }> => {

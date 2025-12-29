@@ -4,6 +4,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useTranslation } from '../../../hooks/useTranslation'
 import { generateQuest } from '../../../server/gemini'
+import { isAIGenerationEnabled } from '../../../server/admin-settings'
 import { useActivityStore } from '../../../stores/activity-store'
 import { useAuthStore } from '../../../stores/auth-store'
 import { useProfileStore } from '../../../stores/profile-store'
@@ -45,6 +46,7 @@ export function LessonCreator() {
   const [settings, setSettings] = useState<LessonSettings>(defaultLessonSettings)
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [aiEnabled, setAiEnabled] = useState(true)
 
   const { setActivity, setTimeLimitMinutes } = useActivityStore()
   const { user, isLoading: isAuthLoading } = useAuthStore()
@@ -55,6 +57,10 @@ export function LessonCreator() {
       fetchProfile(user.id)
     }
   }, [user?.id, profile, fetchProfile])
+
+  useEffect(() => {
+    isAIGenerationEnabled().then(setAiEnabled)
+  }, [])
 
   // Auth gate
   if (!isAuthLoading && !user) {
@@ -265,6 +271,7 @@ export function LessonCreator() {
             credits={profile?.ai_credits ?? null}
             isAdmin={profile?.role === 'admin'}
             showManualButton={false}
+            aiDisabled={!aiEnabled}
           />
         </CardContent>
       </Card>

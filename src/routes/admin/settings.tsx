@@ -407,40 +407,6 @@ function AdminSettings() {
               <div className="flex items-center justify-between py-3 px-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
                 <div>
                   <p className="font-medium text-foreground">
-                    Enable Public Activities
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Allow users to publish activities publicly
-                  </p>
-                </div>
-                <Toggle
-                  checked={settings?.enablePublicActivities ?? true}
-                  onChange={(checked) =>
-                    updateSetting('enablePublicActivities', checked)
-                  }
-                />
-              </div>
-
-              <div className="flex items-center justify-between py-3 px-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
-                <div>
-                  <p className="font-medium text-foreground">
-                    Enable User Registration
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Allow new users to register
-                  </p>
-                </div>
-                <Toggle
-                  checked={settings?.enableUserRegistration ?? true}
-                  onChange={(checked) =>
-                    updateSetting('enableUserRegistration', checked)
-                  }
-                />
-              </div>
-
-              <div className="flex items-center justify-between py-3 px-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
-                <div>
-                  <p className="font-medium text-foreground">
                     Enable AI Generation
                   </p>
                   <p className="text-sm text-muted-foreground">
@@ -451,23 +417,6 @@ function AdminSettings() {
                   checked={settings?.enableAIGeneration ?? true}
                   onChange={(checked) =>
                     updateSetting('enableAIGeneration', checked)
-                  }
-                />
-              </div>
-
-              <div className="flex items-center justify-between py-3 px-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
-                <div>
-                  <p className="font-medium text-foreground">
-                    Require Email Verification
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Require users to verify email before using the platform
-                  </p>
-                </div>
-                <Toggle
-                  checked={settings?.requireEmailVerification ?? false}
-                  onChange={(checked) =>
-                    updateSetting('requireEmailVerification', checked)
                   }
                 />
               </div>
@@ -524,30 +473,6 @@ function AdminSettings() {
                     <span className="font-medium text-foreground">
                       {storageStats.totalStorageMB} MB
                     </span>
-                  </div>
-                  <div className="flex justify-between py-2 px-3 rounded-lg bg-muted/30">
-                    <span className="text-muted-foreground">Limit</span>
-                    <span className="font-medium text-foreground">
-                      {storageStats.storageLimitMB} MB
-                    </span>
-                  </div>
-                  <div className="mt-4">
-                    <div className="h-3 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className="h-full bg-linear-to-r from-amber-500 to-orange-500 transition-all"
-                        style={{
-                          width: `${Math.min((storageStats.totalStorageMB / storageStats.storageLimitMB) * 100, 100)}%`,
-                        }}
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {Math.round(
-                        (storageStats.totalStorageMB /
-                          storageStats.storageLimitMB) *
-                          100,
-                      )}
-                      % used
-                    </p>
                   </div>
                 </div>
               )}

@@ -35,7 +35,8 @@
     "login": "Login",
     "logout": "Logout",
     "or": "or",
-    "freeStart": "Start learning for free, no cost"
+    "freeStart": "Start learning for free, no cost",
+    "aiDisabled": "AI generation is currently unavailable"
   },
   "nav": {
     "explore": "Explore",
