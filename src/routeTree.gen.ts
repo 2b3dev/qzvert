@@ -24,6 +24,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
+import { Route as AdminUsagesRouteImport } from './routes/admin/usages'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminReportsRouteImport } from './routes/admin/reports'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
@@ -110,6 +111,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/admin/users',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminUsagesRoute = AdminUsagesRouteImport.update({
+  id: '/admin/usages',
+  path: '/admin/usages',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminSettingsRoute = AdminSettingsRouteImport.update({
   id: '/admin/settings',
   path: '/admin/settings',
@@ -181,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/usages': typeof AdminUsagesRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin': typeof AdminIndexRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
@@ -208,6 +215,7 @@ export interface FileRoutesByTo {
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/usages': typeof AdminUsagesRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin': typeof AdminIndexRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
@@ -236,6 +244,7 @@ export interface FileRoutesById {
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/usages': typeof AdminUsagesRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/': typeof AdminIndexRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
@@ -265,6 +274,7 @@ export interface FileRouteTypes {
     | '/admin/analytics'
     | '/admin/reports'
     | '/admin/settings'
+    | '/admin/usages'
     | '/admin/users'
     | '/admin'
     | '/activity/play/$id'
@@ -292,6 +302,7 @@ export interface FileRouteTypes {
     | '/admin/analytics'
     | '/admin/reports'
     | '/admin/settings'
+    | '/admin/usages'
     | '/admin/users'
     | '/admin'
     | '/activity/play/$id'
@@ -319,6 +330,7 @@ export interface FileRouteTypes {
     | '/admin/analytics'
     | '/admin/reports'
     | '/admin/settings'
+    | '/admin/usages'
     | '/admin/users'
     | '/admin/'
     | '/activity/play/$id'
@@ -347,6 +359,7 @@ export interface RootRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminReportsRoute: typeof AdminReportsRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminUsagesRoute: typeof AdminUsagesRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
   ActivityPlayIdRoute: typeof ActivityPlayIdRoute
@@ -462,6 +475,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/usages': {
+      id: '/admin/usages'
+      path: '/admin/usages'
+      fullPath: '/admin/usages'
+      preLoaderRoute: typeof AdminUsagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/settings': {
       id: '/admin/settings'
       path: '/admin/settings'
@@ -555,6 +575,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminReportsRoute: AdminReportsRoute,
   AdminSettingsRoute: AdminSettingsRoute,
+  AdminUsagesRoute: AdminUsagesRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
   ActivityPlayIdRoute: ActivityPlayIdRoute,

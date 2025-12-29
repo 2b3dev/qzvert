@@ -5,6 +5,7 @@ import {
   ChevronDown,
   FileText,
   Flag,
+  HardDrive,
   Home,
   LayoutDashboard,
   LogOut,
@@ -37,6 +38,7 @@ interface AdminLayoutProps {
     | 'users'
     | 'activities'
     | 'analytics'
+    | 'usages'
     | 'settings'
   /** Optional badge count for reports in sidebar */
   pendingReportsCount?: number
@@ -88,6 +90,13 @@ const sidebarItems: Array<SidebarItem> = [
     icon: Flag,
     href: '/admin/reports',
     gradient: 'from-rose-500 to-pink-500',
+  },
+  {
+    id: 'usages',
+    label: 'Usages',
+    icon: HardDrive,
+    href: '/admin/usages',
+    gradient: 'from-amber-500 to-orange-500',
   },
   {
     id: 'settings',

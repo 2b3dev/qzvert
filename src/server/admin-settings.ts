@@ -252,20 +252,36 @@ export const getStorageStats = createServerFn({ method: 'GET' }).handler(
       throw new Error('Admin access required')
     }
 
-    // Get storage bucket stats
-    const { data: files } = await supabase.storage.from('thumbnails').list('', {
-      limit: 1000,
-    })
-
     let thumbnailsCount = 0
     let thumbnailsSizeMB = 0
 
-    if (files) {
-      // Count files recursively (this is a simplified version)
-      for (const file of files) {
-        if (file.metadata) {
+    // List root level (user folders)
+    const { data: folders } = await supabase.storage
+      .from('thumbnails')
+      .list('', { limit: 1000 })
+
+    if (folders) {
+      // For each folder (user_id), list files inside
+      for (const folder of folders) {
+        // Skip if it's a file at root level (has metadata)
+        if (folder.metadata) {
           thumbnailsCount++
-          thumbnailsSizeMB += (file.metadata.size || 0) / (1024 * 1024)
+          thumbnailsSizeMB += (folder.metadata.size || 0) / (1024 * 1024)
+          continue
+        }
+
+        // It's a folder, list files inside
+        const { data: files } = await supabase.storage
+          .from('thumbnails')
+          .list(folder.name, { limit: 1000 })
+
+        if (files) {
+          for (const file of files) {
+            if (file.metadata) {
+              thumbnailsCount++
+              thumbnailsSizeMB += (file.metadata.size || 0) / (1024 * 1024)
+            }
+          }
         }
       }
     }
