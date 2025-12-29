@@ -30,7 +30,10 @@
       "Bash(pnpm dlx:*)",
       "Bash(pnpm exec tsc:*)",
       "Bash(npx @tanstack/router-cli generate:*)",
-      "Bash(pnpm build:check:*)"
+      "Bash(pnpm build:check:*)",
+      "Bash(npx eslint:*)",
+      "Bash(pnpm eslint:*)",
+      "Bash(pnpm remove:*)"
     ]
   }
 }

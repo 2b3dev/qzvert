@@ -1,7 +1,8 @@
 import { createServerFn } from '@tanstack/react-start'
 import type { GeneratedQuest } from '../types/database'
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+const GEMINI_API_URL =
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
 
 interface GenerateQuestInput {
   content: string
@@ -9,7 +10,7 @@ interface GenerateQuestInput {
   language: 'th' | 'en'
   outputType: 'quiz' | 'quest' | 'flashcard' | 'roleplay' | 'lesson'
   // Quiz types - can select multiple (multiple_choice, subjective, or both)
-  quizTypes?: ('multiple_choice' | 'subjective')[]
+  quizTypes?: Array<'multiple_choice' | 'subjective'>
   choiceCount?: number
   questionCount?: number
   // Separate counts for mixed mode
@@ -19,7 +20,7 @@ interface GenerateQuestInput {
   stageCount?: number
   questionsPerStage?: number
   // Common settings
-  tags?: string[]
+  tags?: Array<string>
   ageRange?: string
 }
 
@@ -32,9 +33,10 @@ export const generateQuest = createServerFn({ method: 'POST' })
       throw new Error('GEMINI_API_KEY is not configured')
     }
 
-    const languageInstruction = data.language === 'th'
-      ? 'Generate ALL content in Thai language (ภาษาไทย). Quest title, stage titles, lessons, questions, options, and explanations must ALL be in Thai.'
-      : 'Generate ALL content in English language.'
+    const languageInstruction =
+      data.language === 'th'
+        ? 'Generate ALL content in Thai language (ภาษาไทย). Quest title, stage titles, lessons, questions, options, and explanations must ALL be in Thai.'
+        : 'Generate ALL content in English language.'
 
     // Determine quiz format based on settings
     const quizTypes = data.quizTypes || ['multiple_choice']
@@ -47,9 +49,10 @@ export const generateQuest = createServerFn({ method: 'POST' })
     const questionsPerStage = data.questionsPerStage || 3
 
     // Tags and age range instructions
-    const tagsInstruction = data.tags && data.tags.length > 0
-      ? `Use these exact tags: ${JSON.stringify(data.tags)}`
-      : 'Generate 3-5 relevant tags that describe the content topic (lowercase, e.g., "physics", "newton\'s laws", "motion")'
+    const tagsInstruction =
+      data.tags && data.tags.length > 0
+        ? `Use these exact tags: ${JSON.stringify(data.tags)}`
+        : 'Generate 3-5 relevant tags that describe the content topic (lowercase, e.g., "physics", "newton\'s laws", "motion")'
 
     const ageRangeInstruction = data.ageRange
       ? `Target age range: ${data.ageRange}. Adjust language complexity and examples accordingly.`
@@ -59,7 +62,7 @@ export const generateQuest = createServerFn({ method: 'POST' })
     let quizJsonExample: string
 
     const optionLetters = ['A', 'B', 'C', 'D', 'E'].slice(0, choiceCount)
-    const optionsExample = optionLetters.map(l => `"Option ${l}"`).join(', ')
+    const optionsExample = optionLetters.map((l) => `"Option ${l}"`).join(', ')
 
     const multipleChoiceExample = `{
           "question": "Question text?",
@@ -80,8 +83,12 @@ export const generateQuest = createServerFn({ method: 'POST' })
       // Mixed mode: both multiple choice and subjective
       const mcCount = data.multipleChoiceCount
       const subjCount = data.subjectiveCount
-      const mcInstruction = mcCount ? `Generate exactly ${mcCount} multiple choice questions.` : 'Generate multiple choice questions (AI decides the number).'
-      const subjInstruction = subjCount ? `Generate exactly ${subjCount} subjective questions.` : 'Generate subjective questions (AI decides the number).'
+      const mcInstruction = mcCount
+        ? `Generate exactly ${mcCount} multiple choice questions.`
+        : 'Generate multiple choice questions (AI decides the number).'
+      const subjInstruction = subjCount
+        ? `Generate exactly ${subjCount} subjective questions.`
+        : 'Generate subjective questions (AI decides the number).'
 
       quizFormatInstruction = `Generate a mix of both multiple choice and subjective questions.
 ${mcInstruction}
@@ -265,16 +272,16 @@ Rules:
       body: JSON.stringify({
         contents: [
           {
-            parts: [{ text: prompt }]
-          }
+            parts: [{ text: prompt }],
+          },
         ],
         generationConfig: {
           temperature: 0.7,
           topK: 40,
           topP: 0.95,
           maxOutputTokens: 8192,
-        }
-      })
+        },
+      }),
     })
 
     if (!response.ok) {

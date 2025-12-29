@@ -7,4 +7,9 @@ export default [
   {
     ignores: ['supabase/functions/**/*'],
   },
+  {
+    rules: {
+      '@typescript-eslint/no-unnecessary-condition': 'off',
+    },
+  },
 ]

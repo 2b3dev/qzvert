@@ -20,7 +20,10 @@ export const uploadImage = createServerFn({ method: 'POST' })
     const supabase = getSupabaseFromCookies()
 
     // Verify user
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
     if (userError || !user) {
       throw new Error('Authentication failed')
     }
@@ -50,7 +53,7 @@ export const uploadImage = createServerFn({ method: 'POST' })
       .from(BUCKET_NAME)
       .upload(filePath, bytes, {
         contentType: mimeType,
-        upsert: false
+        upsert: false,
       })
 
     if (uploadError) {
@@ -75,14 +78,19 @@ export const deleteImage = createServerFn({ method: 'POST' })
     const supabase = getSupabaseFromCookies()
 
     // Verify user
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
     if (userError || !user) {
       throw new Error('Authentication failed')
     }
 
     // Extract file path from URL
     // URL format: https://xxx.supabase.co/storage/v1/object/public/thumbnails/user_id/filename.ext
-    const urlParts = data.imageUrl.split(`/storage/v1/object/public/${BUCKET_NAME}/`)
+    const urlParts = data.imageUrl.split(
+      `/storage/v1/object/public/${BUCKET_NAME}/`,
+    )
     if (urlParts.length !== 2) {
       // Not a storage URL, ignore
       return { success: true }

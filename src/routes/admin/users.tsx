@@ -1,25 +1,25 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { useState, useEffect, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
-  Loader2,
-  Users,
-  Search,
-  ChevronDown,
-  Filter,
-  Crown,
   Calendar,
-  MoreVertical,
-  ExternalLink,
-  TrendingUp,
-  GraduationCap,
-  Pencil,
-  Trash2,
+  ChevronDown,
   Clock,
+  Crown,
+  ExternalLink,
+  Filter,
+  GraduationCap,
+  Loader2,
+  MoreVertical,
+  Pencil,
+  Search,
+  Trash2,
+  TrendingUp,
+  Users,
 } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { Input } from '../../components/ui/input'
+import { AdminLayout } from '../../components/layouts/AdminLayout'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +28,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../../components/ui/dropdown-menu'
+import { Input } from '../../components/ui/input'
 import {
   PaginatedTable,
   TableAvatar,
@@ -35,15 +36,9 @@ import {
   TableCellMuted,
 } from '../../components/ui/paginated-table'
 import { cn } from '../../lib/utils'
-import { AdminLayout } from '../../components/layouts/AdminLayout'
 import { checkAdminAccess } from '../../server/reports'
-import {
-  getUsers,
-  getUserStats,
-  updateUserRole,
-  type UserProfile,
-  type UserRole,
-} from '../../server/users'
+import type { UserProfile, UserRole } from '../../server/users'
+import { getUserStats, getUsers, updateUserRole } from '../../server/users'
 
 export const Route = createFileRoute('/admin/users')({
   beforeLoad: async () => {
@@ -56,7 +51,7 @@ export const Route = createFileRoute('/admin/users')({
 })
 
 function AdminUsers() {
-  const [users, setUsers] = useState<UserProfile[]>([])
+  const [users, setUsers] = useState<Array<UserProfile>>([])
   const [totalUsers, setTotalUsers] = useState(0)
   const [stats, setStats] = useState<{
     total: number
@@ -79,11 +74,14 @@ function AdminUsers() {
 
   // Sorting state
   const [sorting, setSorting] = useState<SortingState>([
-    { id: 'created_at', desc: true }
+    { id: 'created_at', desc: true },
   ])
 
   // Map column id to server sortBy field
-  const columnIdToSortBy: Record<string, 'created_at' | 'display_name' | 'activity_count'> = {
+  const columnIdToSortBy: Record<
+    string,
+    'created_at' | 'display_name' | 'activity_count'
+  > = {
     user: 'display_name',
     display_name: 'display_name',
     created_at: 'created_at',
@@ -109,7 +107,7 @@ function AdminUsers() {
               showDeleted,
               page: pageIndex + 1,
               pageSize,
-            }
+            },
           }),
           getUserStats(),
         ])
@@ -134,17 +132,15 @@ function AdminUsers() {
       await updateUserRole({ data: { userId, role: newRole } })
 
       // Update local state
-      setUsers(prev =>
-        prev.map(u =>
-          u.id === userId ? { ...u, role: newRole } : u
-        )
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u)),
       )
 
       // Update stats
       if (stats) {
-        const oldRole = users.find(u => u.id === userId)?.role
+        const oldRole = users.find((u) => u.id === userId)?.role
         if (oldRole && oldRole !== newRole) {
-          setStats(prev => {
+          setStats((prev) => {
             if (!prev) return prev
             const updated = { ...prev }
             // Decrease old role count
@@ -163,7 +159,9 @@ function AdminUsers() {
       toast.success(`User role updated to ${newRole}`)
     } catch (error) {
       console.error('Failed to update role:', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to update role')
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to update role',
+      )
     } finally {
       setUpdatingRole(null)
     }
@@ -179,15 +177,19 @@ function AdminUsers() {
 
   const getDaysUntilHardDelete = (deletedAt: string) => {
     const deletedDate = new Date(deletedAt)
-    const hardDeleteDate = new Date(deletedDate.getTime() + 30 * 24 * 60 * 60 * 1000)
+    const hardDeleteDate = new Date(
+      deletedDate.getTime() + 30 * 24 * 60 * 60 * 1000,
+    )
     const now = new Date()
-    const daysRemaining = Math.ceil((hardDeleteDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))
+    const daysRemaining = Math.ceil(
+      (hardDeleteDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000),
+    )
     return daysRemaining
   }
 
   // Define columns for the table
-  const columns = useMemo<ColumnDef<UserProfile>[]>(() => {
-    const baseColumns: ColumnDef<UserProfile>[] = [
+  const columns = useMemo<Array<ColumnDef<UserProfile>>>(() => {
+    const baseColumns: Array<ColumnDef<UserProfile>> = [
       {
         id: 'display_name',
         header: 'Display Name',
@@ -224,7 +226,12 @@ function AdminUsers() {
         accessorKey: 'role',
         cell: ({ row }) => {
           const user = row.original
-          const variant = user.role === 'admin' ? 'warning' : user.role === 'creator' ? 'success' : 'default'
+          const variant =
+            user.role === 'admin'
+              ? 'warning'
+              : user.role === 'creator'
+                ? 'success'
+                : 'default'
           return (
             <TableCellBadge variant={variant}>
               {user.role === 'admin' && <Crown className="w-3 h-3" />}
@@ -240,14 +247,18 @@ function AdminUsers() {
         header: 'Activities',
         accessorKey: 'activity_count',
         enableSorting: true,
-        cell: ({ row }) => <span className="text-foreground">{row.original.activity_count}</span>,
+        cell: ({ row }) => (
+          <span className="text-foreground">{row.original.activity_count}</span>
+        ),
       },
       {
         id: 'created_at',
         header: 'Joined',
         accessorKey: 'created_at',
         enableSorting: true,
-        cell: ({ row }) => <TableCellMuted>{formatDate(row.original.created_at)}</TableCellMuted>,
+        cell: ({ row }) => (
+          <TableCellMuted>{formatDate(row.original.created_at)}</TableCellMuted>
+        ),
       },
     ]
 
@@ -268,10 +279,16 @@ function AdminUsers() {
               </div>
               <div className="flex items-center gap-1.5 text-xs">
                 <Clock className="w-3 h-3" />
-                <span className={cn(
-                  days <= 7 ? 'text-red-500 font-medium' : 'text-muted-foreground'
-                )}>
-                  {days > 0 ? `${days} days until hard delete` : 'Pending hard delete'}
+                <span
+                  className={cn(
+                    days <= 7
+                      ? 'text-red-500 font-medium'
+                      : 'text-muted-foreground',
+                  )}
+                >
+                  {days > 0
+                    ? `${days} days until hard delete`
+                    : 'Pending hard delete'}
                 </span>
               </div>
             </div>
@@ -319,8 +336,9 @@ function AdminUsers() {
                       'flex items-center gap-2 cursor-pointer',
                       user.role === role && 'opacity-50',
                       role === 'admin' && 'text-amber-500 focus:text-amber-500',
-                      role === 'creator' && 'text-emerald-500 focus:text-emerald-500',
-                      role === 'learner' && 'text-gray-400 focus:text-gray-400'
+                      role === 'creator' &&
+                        'text-emerald-500 focus:text-emerald-500',
+                      role === 'learner' && 'text-gray-400 focus:text-gray-400',
                     )}
                   >
                     {updatingRole === user.id ? (
@@ -329,7 +347,9 @@ function AdminUsers() {
                       <>
                         {role === 'admin' && <Crown className="w-4 h-4" />}
                         {role === 'creator' && <Pencil className="w-4 h-4" />}
-                        {role === 'learner' && <GraduationCap className="w-4 h-4" />}
+                        {role === 'learner' && (
+                          <GraduationCap className="w-4 h-4" />
+                        )}
                       </>
                     )}
                     {role.charAt(0).toUpperCase() + role.slice(1)}
@@ -360,7 +380,9 @@ function AdminUsers() {
                   <Users className="w-4 h-4 text-blue-500" />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-foreground">{stats.total}</p>
+              <p className="text-2xl font-bold text-foreground">
+                {stats.total}
+              </p>
               <p className="text-sm text-muted-foreground">Total Users</p>
             </div>
 
@@ -370,7 +392,9 @@ function AdminUsers() {
                   <Crown className="w-4 h-4 text-amber-500" />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-foreground">{stats.admins}</p>
+              <p className="text-2xl font-bold text-foreground">
+                {stats.admins}
+              </p>
               <p className="text-sm text-muted-foreground">Admins</p>
             </div>
 
@@ -380,7 +404,9 @@ function AdminUsers() {
                   <Pencil className="w-4 h-4 text-emerald-500" />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-foreground">{stats.creators}</p>
+              <p className="text-2xl font-bold text-foreground">
+                {stats.creators}
+              </p>
               <p className="text-sm text-muted-foreground">Creators</p>
             </div>
 
@@ -390,7 +416,9 @@ function AdminUsers() {
                   <GraduationCap className="w-4 h-4 text-gray-500" />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-foreground">{stats.learners}</p>
+              <p className="text-2xl font-bold text-foreground">
+                {stats.learners}
+              </p>
               <p className="text-sm text-muted-foreground">Learners</p>
             </div>
 
@@ -400,7 +428,9 @@ function AdminUsers() {
                   <TrendingUp className="w-4 h-4 text-green-500" />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-foreground">{stats.thisWeek}</p>
+              <p className="text-2xl font-bold text-foreground">
+                {stats.thisWeek}
+              </p>
               <p className="text-sm text-muted-foreground">This Week</p>
             </div>
 
@@ -410,7 +440,9 @@ function AdminUsers() {
                   <Calendar className="w-4 h-4 text-purple-500" />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-foreground">{stats.thisMonth}</p>
+              <p className="text-2xl font-bold text-foreground">
+                {stats.thisMonth}
+              </p>
               <p className="text-sm text-muted-foreground">This Month</p>
             </div>
           </div>
@@ -440,9 +472,13 @@ function AdminUsers() {
             >
               <Filter className="w-4 h-4" />
               <span>
-                {roleFilter === 'all' ? 'All Roles' :
-                  roleFilter === 'admin' ? 'Admins' :
-                    roleFilter === 'creator' ? 'Creators' : 'Learners'}
+                {roleFilter === 'all'
+                  ? 'All Roles'
+                  : roleFilter === 'admin'
+                    ? 'Admins'
+                    : roleFilter === 'creator'
+                      ? 'Creators'
+                      : 'Learners'}
               </span>
               <ChevronDown className="w-4 h-4" />
             </button>
@@ -455,28 +491,36 @@ function AdminUsers() {
                   exit={{ opacity: 0, y: -10 }}
                   className="absolute top-full mt-2 left-0 w-40 bg-card border border-border rounded-lg shadow-lg py-2 z-10"
                 >
-                  {(['all', 'admin', 'creator', 'learner'] as const).map((role) => (
-                    <button
-                      key={role}
-                      onClick={() => {
-                        setRoleFilter(role)
-                        setShowFilterMenu(false)
-                        setPageIndex(0) // Reset to first page on filter change
-                      }}
-                      className={cn(
-                        'w-full px-4 py-2 text-left text-sm hover:bg-accent transition-colors flex items-center gap-2',
-                        roleFilter === role && 'text-primary'
-                      )}
-                    >
-                      {role === 'admin' && <Crown className="w-4 h-4" />}
-                      {role === 'creator' && <Pencil className="w-4 h-4" />}
-                      {role === 'learner' && <GraduationCap className="w-4 h-4" />}
-                      {role === 'all' && <Users className="w-4 h-4" />}
-                      {role === 'all' ? 'All Roles' :
-                        role === 'admin' ? 'Admins' :
-                          role === 'creator' ? 'Creators' : 'Learners'}
-                    </button>
-                  ))}
+                  {(['all', 'admin', 'creator', 'learner'] as const).map(
+                    (role) => (
+                      <button
+                        key={role}
+                        onClick={() => {
+                          setRoleFilter(role)
+                          setShowFilterMenu(false)
+                          setPageIndex(0) // Reset to first page on filter change
+                        }}
+                        className={cn(
+                          'w-full px-4 py-2 text-left text-sm hover:bg-accent transition-colors flex items-center gap-2',
+                          roleFilter === role && 'text-primary',
+                        )}
+                      >
+                        {role === 'admin' && <Crown className="w-4 h-4" />}
+                        {role === 'creator' && <Pencil className="w-4 h-4" />}
+                        {role === 'learner' && (
+                          <GraduationCap className="w-4 h-4" />
+                        )}
+                        {role === 'all' && <Users className="w-4 h-4" />}
+                        {role === 'all'
+                          ? 'All Roles'
+                          : role === 'admin'
+                            ? 'Admins'
+                            : role === 'creator'
+                              ? 'Creators'
+                              : 'Learners'}
+                      </button>
+                    ),
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -492,11 +536,13 @@ function AdminUsers() {
               'flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors',
               showDeleted
                 ? 'border-red-500 bg-red-500/10 text-red-500'
-                : 'border-border bg-card hover:bg-accent'
+                : 'border-border bg-card hover:bg-accent',
             )}
           >
             <Trash2 className="w-4 h-4" />
-            <span className="text-sm">{showDeleted ? 'Deleted Users' : 'Show Deleted'}</span>
+            <span className="text-sm">
+              {showDeleted ? 'Deleted Users' : 'Show Deleted'}
+            </span>
           </button>
 
           <p className="text-sm text-muted-foreground ml-auto">
@@ -513,9 +559,10 @@ function AdminUsers() {
           pageIndex={pageIndex}
           pageSize={pageSize}
           onPaginationChange={(updater) => {
-            const newState = typeof updater === 'function'
-              ? updater({ pageIndex, pageSize })
-              : updater
+            const newState =
+              typeof updater === 'function'
+                ? updater({ pageIndex, pageSize })
+                : updater
             setPageIndex(newState.pageIndex)
           }}
           manualPagination
@@ -523,7 +570,9 @@ function AdminUsers() {
           onSortingChange={setSorting}
           manualSorting
           emptyMessage="No users found"
-          emptyIcon={<Users className="w-12 h-12 text-muted-foreground mx-auto" />}
+          emptyIcon={
+            <Users className="w-12 h-12 text-muted-foreground mx-auto" />
+          }
         />
       </div>
 

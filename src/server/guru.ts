@@ -1,7 +1,8 @@
 import { createServerFn } from '@tanstack/react-start'
 import type { GeneratedQuest } from '../types/database'
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+const GEMINI_API_URL =
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
 
 interface SummarizeInput {
   content: string
@@ -75,9 +76,10 @@ async function callGeminiAPI(prompt: string): Promise<string> {
 export const summarizeContent = createServerFn({ method: 'POST' })
   .inputValidator((data: SummarizeInput) => data)
   .handler(async ({ data }) => {
-    const languageInstruction = data.language === 'th'
-      ? 'ตอบเป็นภาษาไทยเท่านั้น'
-      : 'Respond in English only.'
+    const languageInstruction =
+      data.language === 'th'
+        ? 'ตอบเป็นภาษาไทยเท่านั้น'
+        : 'Respond in English only.'
 
     const prompt = `${languageInstruction}
 
@@ -99,9 +101,10 @@ Summary:`
 export const craftContent = createServerFn({ method: 'POST' })
   .inputValidator((data: CraftInput) => data)
   .handler(async ({ data }) => {
-    const languageInstruction = data.language === 'th'
-      ? 'ตอบเป็นภาษาไทยเท่านั้น'
-      : 'Respond in English only.'
+    const languageInstruction =
+      data.language === 'th'
+        ? 'ตอบเป็นภาษาไทยเท่านั้น'
+        : 'Respond in English only.'
 
     const prompt = `${languageInstruction}
 
@@ -132,7 +135,7 @@ ${crafted}
 
 JSON array of key points:`
 
-    let keyPoints: string[] = []
+    let keyPoints: Array<string> = []
     try {
       const keyPointsResponse = await callGeminiAPI(keyPointsPrompt)
       // Clean up response and parse JSON
@@ -149,12 +152,15 @@ JSON array of key points:`
       keyPoints = JSON.parse(cleaned.trim())
     } catch {
       // If parsing fails, create key points from first few sentences
-      keyPoints = crafted.split('\n').filter(line => line.trim()).slice(0, 5)
+      keyPoints = crafted
+        .split('\n')
+        .filter((line) => line.trim())
+        .slice(0, 5)
     }
 
     return {
       crafted: crafted.trim(),
-      keyPoints
+      keyPoints,
     }
   })
 
@@ -196,9 +202,10 @@ Translation:`
 export const generateDeepLesson = createServerFn({ method: 'POST' })
   .inputValidator((data: DeepLessonInput) => data)
   .handler(async ({ data }) => {
-    const languageInstruction = data.language === 'th'
-      ? 'สร้างเนื้อหาทั้งหมดเป็นภาษาไทย'
-      : 'Generate all content in English.'
+    const languageInstruction =
+      data.language === 'th'
+        ? 'สร้างเนื้อหาทั้งหมดเป็นภาษาไทย'
+        : 'Generate all content in English.'
 
     const prompt = `${languageInstruction}
 

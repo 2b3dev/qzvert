@@ -61,7 +61,7 @@
   },
   "footer": {
     "tagline": "Transform any content into gamified learning quests with AI.",
-    "product": "Product",
+    "product": "Products",
     "tools": "Tools",
     "textToSpeech": "Text to Speech",
     "guruToLoud": "Guru to Loud",
@@ -340,22 +340,22 @@
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "nameThai": "Explorer",
+        "namePlan": "Free",
         "description": "Unlimited learning, try AI creation"
       },
       "hero": {
         "name": "Hero",
-        "nameThai": "Hero",
+        "namePlan": "Plus",
         "description": "For starting Creators and tutors"
       },
       "legend": {
         "name": "Legend",
-        "nameThai": "Legend",
+        "namePlan": "Pro",
         "description": "Professional Creators who need flexibility"
       },
       "enterprise": {
         "name": "Enterprise",
-        "nameThai": "Enterprise",
+        "namePlan": "Ultra",
         "description": "Schools, universities, and organizations"
       },
       "free": "Free",

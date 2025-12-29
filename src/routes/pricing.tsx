@@ -105,7 +105,7 @@ function PricingPage() {
   const plans = [
     {
       name: 'Explorer',
-      nameThai: t('pricing.plans.explorer.nameThai'),
+      namePlan: t('pricing.plans.explorer.namePlan'),
       description: t('pricing.plans.explorer.description'),
       price: t('pricing.plans.free'),
       priceSuffix: t('pricing.plans.forever'),
@@ -117,7 +117,7 @@ function PricingPage() {
     },
     {
       name: 'Hero',
-      nameThai: t('pricing.plans.hero.nameThai'),
+      namePlan: t('pricing.plans.hero.namePlan'),
       description: t('pricing.plans.hero.description'),
       price: '฿290',
       priceSuffix: t('pricing.plans.perMonth'),
@@ -129,7 +129,7 @@ function PricingPage() {
     },
     {
       name: 'Legend',
-      nameThai: t('pricing.plans.legend.nameThai'),
+      namePlan: t('pricing.plans.legend.namePlan'),
       description: t('pricing.plans.legend.description'),
       price: '฿790',
       priceSuffix: t('pricing.plans.perMonth'),
@@ -141,7 +141,7 @@ function PricingPage() {
     },
     {
       name: 'Enterprise',
-      nameThai: t('pricing.plans.enterprise.nameThai'),
+      namePlan: t('pricing.plans.enterprise.namePlan'),
       description: t('pricing.plans.enterprise.description'),
       price: t('pricing.plans.contactUs'),
       priceSuffix: '',
@@ -335,7 +335,7 @@ function PricingPage() {
                       <div className="flex items-baseline gap-2 mb-1">
                         <CardTitle className="text-2xl">{plan.name}</CardTitle>
                         <span className="text-sm text-muted-foreground">
-                          ({plan.nameThai})
+                          ({plan.namePlan})
                         </span>
                       </div>
                       <CardDescription className="text-sm">

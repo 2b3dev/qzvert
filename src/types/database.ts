@@ -1,6 +1,33 @@
 // Activity visibility status (must be defined before Database interface)
 export type ActivityStatus = 'draft' | 'private_group' | 'link' | 'public'
 
+// Profile types (must be defined before Database interface)
+export type UserRole = 'learner' | 'creator' | 'admin'
+
+// JSON types for metadata fields
+export type JsonValue = string | number | boolean | null | JsonObject | JsonArray
+export type JsonObject = { [key: string]: JsonValue }
+export type JsonArray = JsonValue[]
+
+// Can User Play Result (from Supabase function) - must be defined before Database interface
+export type CanPlayReason =
+  | 'unlimited'
+  | 'within_limit'
+  | 'activity_not_found'
+  | 'not_yet_available'
+  | 'expired'
+  | 'replay_limit_reached'
+
+export interface CanUserPlayResult {
+  can_play: boolean
+  reason: CanPlayReason
+  available_from?: string
+  available_until?: string
+  plays_used?: number
+  plays_remaining?: number
+  replay_limit?: number
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -59,6 +86,7 @@ export interface Database {
           available_until?: string | null
           time_limit_minutes?: number | null
         }
+        Relationships: []
       }
       stages: {
         Row: {
@@ -82,6 +110,7 @@ export interface Database {
           lesson_summary?: string
           order_index?: number
         }
+        Relationships: []
       }
       questions: {
         Row: {
@@ -108,6 +137,7 @@ export interface Database {
           correct_answer?: number
           explanation?: string
         }
+        Relationships: []
       }
       embeddings: {
         Row: {
@@ -125,7 +155,249 @@ export interface Database {
           activity_id?: string
           vector_data?: number[]
         }
+        Relationships: []
       }
+      profiles: {
+        Row: {
+          id: string
+          display_name: string | null
+          avatar_url: string | null
+          role: UserRole
+          ai_credits: number
+          metadata: JsonObject
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id: string
+          display_name?: string | null
+          avatar_url?: string | null
+          role?: UserRole
+          ai_credits?: number
+          metadata?: JsonObject
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          display_name?: string | null
+          avatar_url?: string | null
+          role?: UserRole
+          ai_credits?: number
+          metadata?: JsonObject
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Relationships: []
+      }
+      activity_pending_invites: {
+        Row: {
+          id: string
+          activity_id: string
+          email: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          activity_id: string
+          email: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          activity_id?: string
+          email?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      activity_play_records: {
+        Row: {
+          id: string
+          activity_id: string
+          user_id: string
+          played_at: string
+          started_at: string
+          score: number | null
+          duration_seconds: number | null
+          completed: boolean
+          activities?: {
+            title: string
+            thumbnail: string | null
+            type: string
+          } | null
+        }
+        Insert: {
+          id?: string
+          activity_id: string
+          user_id: string
+          played_at?: string
+          started_at?: string
+          score?: number | null
+          duration_seconds?: number | null
+          completed?: boolean
+        }
+        Update: {
+          id?: string
+          activity_id?: string
+          user_id?: string
+          played_at?: string
+          started_at?: string
+          score?: number | null
+          duration_seconds?: number | null
+          completed?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'activity_play_records_activity_id_fkey'
+            columns: ['activity_id']
+            isOneToOne: false
+            referencedRelation: 'activities'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      reports: {
+        Row: {
+          id: string
+          content_type: 'activity' | 'media' | 'comment' | 'profile'
+          content_id: string
+          reporter_id: string | null
+          reason: 'inappropriate' | 'spam' | 'copyright' | 'misinformation' | 'harassment' | 'other'
+          additional_info: string | null
+          status: 'pending' | 'reviewed' | 'resolved' | 'dismissed'
+          admin_notes: string | null
+          reviewed_by: string | null
+          reviewed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          content_type: 'activity' | 'media' | 'comment' | 'profile'
+          content_id: string
+          reporter_id?: string | null
+          reason: 'inappropriate' | 'spam' | 'copyright' | 'misinformation' | 'harassment' | 'other'
+          additional_info?: string | null
+          status?: 'pending' | 'reviewed' | 'resolved' | 'dismissed'
+          admin_notes?: string | null
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          content_type?: 'activity' | 'media' | 'comment' | 'profile'
+          content_id?: string
+          reporter_id?: string | null
+          reason?: 'inappropriate' | 'spam' | 'copyright' | 'misinformation' | 'harassment' | 'other'
+          additional_info?: string | null
+          status?: 'pending' | 'reviewed' | 'resolved' | 'dismissed'
+          admin_notes?: string | null
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      collections: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      saved_items: {
+        Row: {
+          id: string
+          user_id: string
+          activity_id: string
+          collection_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          activity_id: string
+          collection_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          activity_id?: string
+          collection_id?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'saved_items_activity_id_fkey'
+            columns: ['activity_id']
+            isOneToOne: false
+            referencedRelation: 'activities'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'saved_items_collection_id_fkey'
+            columns: ['collection_id']
+            isOneToOne: false
+            referencedRelation: 'collections'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      soft_delete_account: {
+        Args: { user_id: string }
+        Returns: undefined
+      }
+      restore_account: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
+      can_user_play_activity: {
+        Args: { p_activity_id: string; p_user_id: string }
+        Returns: CanUserPlayResult
+      }
+      record_activity_play: {
+        Args: {
+          p_activity_id: string
+          p_user_id: string
+          p_score: number | null
+          p_duration_seconds: number | null
+          p_completed: boolean
+        }
+        Returns: string
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
     }
   }
 }
@@ -272,24 +544,22 @@ export function isLesson(quest: GeneratedQuest): quest is GeneratedLesson {
   return quest.type === 'lesson'
 }
 
-// Profile types
-export type UserRole = 'learner' | 'creator' | 'admin'
-
 export interface Profile {
   id: string
   display_name: string | null
   avatar_url: string | null
   role: UserRole
   ai_credits: number
-  metadata: Record<string, unknown>
+  metadata: JsonObject
   created_at: string
   updated_at: string
+  deleted_at: string | null
 }
 
 export interface ProfileUpdate {
   display_name?: string
   avatar_url?: string
-  metadata?: Record<string, unknown>
+  metadata?: JsonObject
 }
 
 // Activity Play Records
@@ -301,25 +571,6 @@ export interface ActivityPlayRecord {
   score: number | null
   duration_seconds: number | null
   completed: boolean
-}
-
-// Can User Play Result (from Supabase function)
-export type CanPlayReason =
-  | 'unlimited'
-  | 'within_limit'
-  | 'activity_not_found'
-  | 'not_yet_available'
-  | 'expired'
-  | 'replay_limit_reached'
-
-export interface CanUserPlayResult {
-  can_play: boolean
-  reason: CanPlayReason
-  available_from?: string
-  available_until?: string
-  plays_used?: number
-  plays_remaining?: number
-  replay_limit?: number
 }
 
 // Collections & Saved Items

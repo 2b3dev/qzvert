@@ -143,13 +143,15 @@ export const getPendingDeletions = createServerFn({ method: 'GET' })
       throw new Error(`Failed to fetch pending deletions: ${error.message}`)
     }
 
-    return (pendingDeletions || []).map(profile => ({
-      ...profile,
-      permanentDeletionDate: new Date(
-        new Date(profile.deleted_at!).getTime() + 30 * 24 * 60 * 60 * 1000
-      ).toISOString(),
-      daysRemaining: Math.max(0, Math.ceil(
-        (new Date(profile.deleted_at!).getTime() + 30 * 24 * 60 * 60 * 1000 - Date.now()) / (24 * 60 * 60 * 1000)
-      ))
-    }))
+    return pendingDeletions.map(profile => {
+      const deletedAt = profile.deleted_at
+      const deletedAtTime = deletedAt ? new Date(deletedAt).getTime() : Date.now()
+      return {
+        ...profile,
+        permanentDeletionDate: new Date(deletedAtTime + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        daysRemaining: Math.max(0, Math.ceil(
+          (deletedAtTime + 30 * 24 * 60 * 60 * 1000 - Date.now()) / (24 * 60 * 60 * 1000)
+        ))
+      }
+    })
   })

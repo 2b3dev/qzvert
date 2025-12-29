@@ -340,22 +340,22 @@
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "nameThai": "นักสำรวจ",
+        "namePlan": "free",
         "description": "เรียนได้ไม่จำกัด ทดลองสร้างด้วย AI"
       },
       "hero": {
         "name": "Hero",
-        "nameThai": "ฮีโร่",
+        "namePlan": "plus",
         "description": "Creator และติวเตอร์ที่เริ่มต้น"
       },
       "legend": {
         "name": "Legend",
-        "nameThai": "ตำนาน",
+        "namePlan": "pro",
         "description": "Creator มืออาชีพที่ต้องการความยืดหยุ่น"
       },
       "enterprise": {
         "name": "Enterprise",
-        "nameThai": "องค์กร",
+        "namePlan": "ultra",
         "description": "โรงเรียน, มหาวิทยาลัย และองค์กร"
       },
       "free": "ฟรี",

@@ -1,36 +1,40 @@
 import { createServerFn } from '@tanstack/react-start'
 import { getCookies, setCookie } from '@tanstack/react-start/server'
 import { createSupabaseServerClient } from '../lib/supabase'
+import type { JsonObject, UserRole } from '../types/database'
 
 const getSupabaseFromCookies = () => {
   return createSupabaseServerClient(getCookies, setCookie)
 }
 
-export type UserRole = 'learner' | 'creator' | 'admin'
+export type { UserRole }
 
 export interface UserProfile {
   id: string
-  email: string | null
   display_name: string | null
   avatar_url: string | null
   role: UserRole
+  ai_credits: number
+  metadata: JsonObject
   created_at: string
   updated_at: string
   activity_count: number
-  deleted_at?: string | null
+  deleted_at: string | null
 }
 
 // Get all users (admin only)
 export const getUsers = createServerFn({ method: 'GET' })
-  .inputValidator((data: {
-    search?: string
-    role?: UserRole
-    page?: number
-    pageSize?: number
-    sortBy?: 'created_at' | 'display_name' | 'activity_count'
-    sortOrder?: 'asc' | 'desc'
-    showDeleted?: boolean
-  }) => data)
+  .inputValidator(
+    (data: {
+      search?: string
+      role?: UserRole
+      page?: number
+      pageSize?: number
+      sortBy?: 'created_at' | 'display_name' | 'activity_count'
+      sortOrder?: 'asc' | 'desc'
+      showDeleted?: boolean
+    }) => data,
+  )
   .handler(async ({ data }) => {
     const supabase = getSupabaseFromCookies()
     const page = data.page || 1
@@ -40,7 +44,10 @@ export const getUsers = createServerFn({ method: 'GET' })
     const sortOrder = data.sortOrder || 'desc'
 
     // Verify admin
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
     if (userError || !user) {
       throw new Error('Authentication required')
     }
@@ -56,13 +63,13 @@ export const getUsers = createServerFn({ method: 'GET' })
     }
 
     // Build query
-    let query = supabase
-      .from('profiles')
-      .select('*', { count: 'exact' })
+    let query = supabase.from('profiles').select('*', { count: 'exact' })
 
     // Apply search filter
     if (data.search) {
-      query = query.or(`display_name.ilike.%${data.search}%,email.ilike.%${data.search}%`)
+      query = query.or(
+        `display_name.ilike.%${data.search}%,email.ilike.%${data.search}%`,
+      )
     }
 
     // Apply role filter
@@ -95,7 +102,7 @@ export const getUsers = createServerFn({ method: 'GET' })
     }
 
     // Get activity counts for each user
-    const usersWithActivityCount: UserProfile[] = await Promise.all(
+    const usersWithActivityCount: Array<UserProfile> = await Promise.all(
       (profiles || []).map(async (p) => {
         const { count: activityCount } = await supabase
           .from('activities')
@@ -107,7 +114,7 @@ export const getUsers = createServerFn({ method: 'GET' })
           activity_count: activityCount || 0,
           deleted_at: p.deleted_at,
         } as UserProfile
-      })
+      }),
     )
 
     // Sort by activity_count if needed
@@ -124,7 +131,7 @@ export const getUsers = createServerFn({ method: 'GET' })
       total: count || 0,
       page,
       pageSize,
-      hasMore: offset + (profiles?.length || 0) < (count || 0)
+      hasMore: offset + (profiles?.length || 0) < (count || 0),
     }
   })
 
@@ -135,7 +142,10 @@ export const getUserDetails = createServerFn({ method: 'GET' })
     const supabase = getSupabaseFromCookies()
 
     // Verify admin
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
     if (userError || !user) {
       throw new Error('Authentication required')
     }
@@ -164,7 +174,9 @@ export const getUserDetails = createServerFn({ method: 'GET' })
     // Get user's activities
     const { data: activities, count: activityCount } = await supabase
       .from('activities')
-      .select('id, title, thumbnail, type, status, play_count, created_at', { count: 'exact' })
+      .select('id, title, thumbnail, type, status, play_count, created_at', {
+        count: 'exact',
+      })
       .eq('user_id', data.userId)
       .order('created_at', { ascending: false })
       .limit(10)
@@ -179,7 +191,10 @@ export const getUserDetails = createServerFn({ method: 'GET' })
     const { count: reportsAgainstCount } = await supabase
       .from('reports')
       .select('id', { count: 'exact', head: true })
-      .in('content_id', (activities || []).map(a => a.id))
+      .in(
+        'content_id',
+        (activities || []).map((a) => a.id),
+      )
 
     return {
       profile,
@@ -188,7 +203,7 @@ export const getUserDetails = createServerFn({ method: 'GET' })
         activityCount: activityCount || 0,
         reportsCount: reportsCount || 0,
         reportsAgainstCount: reportsAgainstCount || 0,
-      }
+      },
     }
   })
 
@@ -199,7 +214,10 @@ export const updateUserRole = createServerFn({ method: 'POST' })
     const supabase = getSupabaseFromCookies()
 
     // Verify admin
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
     if (userError || !user) {
       throw new Error('Authentication required')
     }
@@ -237,12 +255,15 @@ export const updateUserRole = createServerFn({ method: 'POST' })
   })
 
 // Get user stats summary (admin only)
-export const getUserStats = createServerFn({ method: 'GET' })
-  .handler(async () => {
+export const getUserStats = createServerFn({ method: 'GET' }).handler(
+  async () => {
     const supabase = getSupabaseFromCookies()
 
     // Verify admin
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
     if (userError || !user) {
       throw new Error('Authentication required')
     }
@@ -304,4 +325,5 @@ export const getUserStats = createServerFn({ method: 'GET' })
       thisWeek: usersThisWeek || 0,
       thisMonth: usersThisMonth || 0,
     }
-  })
+  },
+)
