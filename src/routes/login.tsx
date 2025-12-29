@@ -95,7 +95,7 @@ function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-linear-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -110,7 +110,7 @@ function LoginPage() {
               transition={{ type: 'spring', delay: 0.2 }}
               className="mx-auto"
             >
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-pink-500 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-primary to-pink-500 flex items-center justify-center">
                 <IconApp className="w-10 h-10" color="white" />
               </div>
             </motion.div>
