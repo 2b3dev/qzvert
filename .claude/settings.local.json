@@ -33,7 +33,11 @@
       "Bash(pnpm build:check:*)",
       "Bash(npx eslint:*)",
       "Bash(pnpm eslint:*)",
-      "Bash(pnpm remove:*)"
+      "Bash(pnpm remove:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill /PID 268364 /F)",
+      "Bash(taskkill:*)"
     ]
   }
 }
