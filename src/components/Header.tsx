@@ -13,7 +13,7 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
-  const { theme, user: loaderUser } = Route.useLoaderData()
+  const { theme, user: loaderUser, siteSettings } = Route.useLoaderData()
   const router = useRouter()
   const { user: storeUser, signOut } = useAuthStore()
 
@@ -84,7 +84,7 @@ export default function Header() {
                 <IconApp className="w-6 h-6" color={'hsl(var(--foreground))'} />
               </motion.div>
               <span className="font-black text-xl text-foreground group-hover:text-primary transition-colors">
-                QzVert
+                {siteSettings?.siteName || 'QzVert'}
               </span>
             </Link>
 

@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { Github, Globe, Heart, Mail, Twitter } from 'lucide-react'
 import { useTranslation } from '../hooks/useTranslation'
 import { CONTACT_EMAIL } from '../lib/utils'
+import { Route } from '../routes/__root'
 import { useLanguageStore } from '../stores/language-store'
 import IconApp from '@/components/icon/icon-app'
 
@@ -9,6 +10,8 @@ export default function Footer() {
   const currentYear = new Date().getFullYear()
   const { language, toggleLanguage } = useLanguageStore()
   const { t } = useTranslation()
+  const { siteSettings } = Route.useLoaderData()
+  const siteName = siteSettings?.siteName || 'QzVert'
 
   const productLinks = [
     { to: '/explore', label: t('nav.explore') },
@@ -42,7 +45,7 @@ export default function Footer() {
             <Link to="/" className="flex items-center gap-2 group mb-4">
               <IconApp className="w-6 h-6" color={'hsl(var(--foreground))'} />
               <span className="font-black text-xl text-foreground">
-                QzVert
+                {siteName}
               </span>
             </Link>
             <p className="text-sm text-muted-foreground mb-4">
@@ -137,7 +140,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            &copy; {currentYear} QzVert. {t('footer.allRightsReserved')}
+            &copy; {currentYear} {siteName}. {t('footer.allRightsReserved')}
           </p>
           <div className="flex items-center gap-4">
             {/* Language Toggle */}

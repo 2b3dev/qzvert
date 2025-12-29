@@ -485,6 +485,41 @@ export const isAIGenerationEnabled = createServerFn({ method: 'GET' }).handler(
   },
 )
 
+// Get public site settings (no auth required) - for Header, Footer, SEO
+export interface PublicSiteSettings {
+  siteName: string
+  siteDescription: string
+}
+
+export const getPublicSiteSettings = createServerFn({ method: 'GET' }).handler(
+  async (): Promise<PublicSiteSettings> => {
+    const supabase = getSupabaseFromCookies()
+
+    const { data: settings } = await supabase
+      .from('system_settings')
+      .select('key, value')
+      .in('key', ['site_name', 'site_description'])
+
+    const result: PublicSiteSettings = {
+      siteName: defaultSettings.siteName,
+      siteDescription: defaultSettings.siteDescription,
+    }
+
+    if (settings) {
+      for (const setting of settings) {
+        if (setting.key === 'site_name' && setting.value) {
+          result.siteName = setting.value as string
+        }
+        if (setting.key === 'site_description' && setting.value) {
+          result.siteDescription = setting.value as string
+        }
+      }
+    }
+
+    return result
+  },
+)
+
 // Check if maintenance mode is enabled (public, no auth required)
 export const isMaintenanceMode = createServerFn({ method: 'GET' }).handler(
   async (): Promise<{ enabled: boolean; message: string }> => {

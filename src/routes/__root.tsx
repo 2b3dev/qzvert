@@ -15,7 +15,7 @@ import { NotFound } from '../components/ui/not-found'
 import en from '../locales/en.json'
 import th from '../locales/th.json'
 import { getAuthSession } from '../server/activities'
-import { isMaintenanceMode } from '../server/admin-settings'
+import { getPublicSiteSettings, isMaintenanceMode } from '../server/admin-settings'
 import { getLanguage } from '../server/language'
 import { getTheme } from '../server/theme'
 import { useAuthStore } from '../stores/auth-store'
@@ -43,11 +43,12 @@ function getSeoData(language: Language) {
 
 export const Route = createRootRoute({
   loader: async () => {
-    const [{ theme }, { language }, authData, maintenance] = await Promise.all([
+    const [{ theme }, { language }, authData, maintenance, siteSettings] = await Promise.all([
       getTheme(),
       getLanguage(),
       getAuthSession(),
       isMaintenanceMode(),
+      getPublicSiteSettings(),
     ])
     return {
       theme,
@@ -56,31 +57,34 @@ export const Route = createRootRoute({
       session: authData.session,
       profile: authData.profile,
       maintenance,
+      siteSettings,
     }
   },
   head: ({ loaderData }) => {
     const seo = getSeoData(loaderData?.language || 'en')
     const locale = loaderData?.language === 'en' ? 'en_US' : 'th_TH'
     const alternateLocale = loaderData?.language === 'en' ? 'th_TH' : 'en_US'
+    const siteName = loaderData?.siteSettings?.siteName || seo.siteName
+    const siteDescription = loaderData?.siteSettings?.siteDescription || seo.description
 
     return {
       meta: [
         { charSet: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { title: seo.title },
-        { name: 'description', content: seo.description },
+        { title: `${siteName} - ${siteDescription}` },
+        { name: 'description', content: siteDescription },
         { name: 'keywords', content: seo.keywords },
         // Open Graph
         { property: 'og:type', content: 'website' },
-        { property: 'og:site_name', content: seo.siteName },
-        { property: 'og:title', content: seo.ogTitle },
-        { property: 'og:description', content: seo.ogDescription },
+        { property: 'og:site_name', content: siteName },
+        { property: 'og:title', content: `${siteName} - ${siteDescription}` },
+        { property: 'og:description', content: siteDescription },
         { property: 'og:locale', content: locale },
         { property: 'og:locale:alternate', content: alternateLocale },
         // Twitter Card
         { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:title', content: seo.ogTitle },
-        { name: 'twitter:description', content: seo.ogDescription },
+        { name: 'twitter:title', content: `${siteName} - ${siteDescription}` },
+        { name: 'twitter:description', content: siteDescription },
       ],
       links: [
         { rel: 'stylesheet', href: appCss },
