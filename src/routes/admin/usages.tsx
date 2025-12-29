@@ -1,22 +1,17 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import {
-  AlertTriangle,
   Cpu,
   Database,
   ExternalLink,
   HardDrive,
   Loader2,
-  Trash2,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { AdminLayout } from '../../components/layouts/AdminLayout'
-import { Button } from '../../components/ui/button'
 import {
   checkAdminAccess,
-  clearAllReports,
-  clearOldPlayRecords,
   getDatabaseStats,
   getStorageStats,
   type DatabaseStats,
@@ -38,10 +33,6 @@ function AdminUsages() {
   const [storageStats, setStorageStats] = useState<StorageStats | null>(null)
   const [dbStats, setDbStats] = useState<DatabaseStats | null>(null)
 
-  // Danger zone loading states
-  const [clearingReports, setClearingReports] = useState(false)
-  const [clearingRecords, setClearingRecords] = useState(false)
-
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
@@ -62,52 +53,6 @@ function AdminUsages() {
 
     fetchData()
   }, [])
-
-  const handleClearReports = async () => {
-    if (
-      !confirm(
-        'Are you sure you want to delete all resolved reports? This cannot be undone.',
-      )
-    )
-      return
-
-    setClearingReports(true)
-    try {
-      const result = await clearAllReports()
-      toast.success(`Deleted ${result.deletedCount} resolved reports`)
-      // Refresh db stats
-      const dbData = await getDatabaseStats()
-      setDbStats(dbData)
-    } catch (error) {
-      console.error('Failed to clear reports:', error)
-      toast.error('Failed to clear reports')
-    } finally {
-      setClearingReports(false)
-    }
-  }
-
-  const handleClearOldRecords = async () => {
-    if (
-      !confirm(
-        'Are you sure you want to delete play records older than 90 days? This cannot be undone.',
-      )
-    )
-      return
-
-    setClearingRecords(true)
-    try {
-      const result = await clearOldPlayRecords({ data: { daysOld: 90 } })
-      toast.success(`Deleted ${result.deletedCount} old play records`)
-      // Refresh db stats
-      const dbData = await getDatabaseStats()
-      setDbStats(dbData)
-    } catch (error) {
-      console.error('Failed to clear records:', error)
-      toast.error('Failed to clear records')
-    } finally {
-      setClearingRecords(false)
-    }
-  }
 
   if (loading) {
     return (
@@ -258,73 +203,6 @@ function AdminUsages() {
             )}
           </motion.div>
         </div>
-
-        {/* Danger Zone */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-card/50 backdrop-blur-sm border border-rose-500/30 rounded-2xl p-6"
-        >
-          <div className="flex items-center gap-2 mb-6">
-            <div className="p-2 rounded-xl bg-rose-500">
-              <AlertTriangle className="w-4 h-4 text-white" />
-            </div>
-            <h2 className="text-lg font-semibold text-rose-500">Danger Zone</h2>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-xl bg-rose-500/5 border border-rose-500/20 hover:border-rose-500/30 transition-colors">
-              <div>
-                <p className="font-medium text-foreground">
-                  Clear Resolved Reports
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Delete all reports with &quot;resolved&quot; status
-                </p>
-              </div>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleClearReports}
-                disabled={clearingReports}
-                className="rounded-xl"
-              >
-                {clearingReports ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : (
-                  <Trash2 className="w-4 h-4 mr-2" />
-                )}
-                Clear Reports
-              </Button>
-            </div>
-
-            <div className="flex items-center justify-between p-4 rounded-xl bg-rose-500/5 border border-rose-500/20 hover:border-rose-500/30 transition-colors">
-              <div>
-                <p className="font-medium text-foreground">
-                  Clear Old Play Records
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Delete play records older than 90 days
-                </p>
-              </div>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleClearOldRecords}
-                disabled={clearingRecords}
-                className="rounded-xl"
-              >
-                {clearingRecords ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : (
-                  <Trash2 className="w-4 h-4 mr-2" />
-                )}
-                Clear Records
-              </Button>
-            </div>
-          </div>
-        </motion.div>
       </div>
     </AdminLayout>
   )
