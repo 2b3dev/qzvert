@@ -238,7 +238,7 @@ export const updateUserRole = createServerFn({ method: 'POST' })
     }
 
     // Validate role value
-    if (!['learner', 'creator', 'admin'].includes(data.role)) {
+    if (!['user', 'plus', 'pro', 'ultra', 'admin'].includes(data.role)) {
       throw new Error('Invalid role value')
     }
 
@@ -289,17 +289,29 @@ export const getUserStats = createServerFn({ method: 'GET' }).handler(
       .select('id', { count: 'exact', head: true })
       .eq('role', 'admin')
 
-    // Get creator count
-    const { count: creatorCount } = await supabase
+    // Get plus count
+    const { count: plusCount } = await supabase
       .from('profiles')
       .select('id', { count: 'exact', head: true })
-      .eq('role', 'creator')
+      .eq('role', 'plus')
 
-    // Get learner count
-    const { count: learnerCount } = await supabase
+    // Get pro count
+    const { count: proCount } = await supabase
       .from('profiles')
       .select('id', { count: 'exact', head: true })
-      .eq('role', 'learner')
+      .eq('role', 'pro')
+
+    // Get ultra count
+    const { count: ultraCount } = await supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('role', 'ultra')
+
+    // Get user count
+    const { count: userCount } = await supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('role', 'user')
 
     // Get users this week
     const oneWeekAgo = new Date()
@@ -320,8 +332,10 @@ export const getUserStats = createServerFn({ method: 'GET' }).handler(
     return {
       total: totalUsers || 0,
       admins: adminCount || 0,
-      creators: creatorCount || 0,
-      learners: learnerCount || 0,
+      plus: plusCount || 0,
+      pro: proCount || 0,
+      ultra: ultraCount || 0,
+      users: userCount || 0,
       thisWeek: usersThisWeek || 0,
       thisMonth: usersThisMonth || 0,
     }

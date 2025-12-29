@@ -6,13 +6,16 @@ CREATE TYPE report_status AS ENUM ('pending', 'reviewed', 'resolved', 'dismissed
 CREATE TYPE content_type AS ENUM ('activity', 'profile', 'comment');
 CREATE TYPE report_reason AS ENUM ('spam', 'inappropriate', 'harassment', 'misinformation', 'copyright', 'other');
 
+-- User role enum type
+CREATE TYPE user_role AS ENUM ('user', 'plus', 'pro', 'ultra', 'admin');
+
 -- Profiles table (extends auth.users)
 CREATE TABLE profiles (
   id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   display_name text,
   avatar_url text,
   email text,
-  role text DEFAULT 'learner',
+  role user_role DEFAULT 'user',
   metadata jsonb DEFAULT '{}',
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now(),

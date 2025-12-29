@@ -38,7 +38,7 @@ FOR SELECT USING (
 
 CREATE POLICY "Creators can insert activities" ON activities
 FOR INSERT WITH CHECK (
-  ((SELECT auth.uid()) = user_id) AND can_create_content()
+  ((SELECT auth.uid()) = user_id) AND (SELECT can_create_content())
 );
 
 CREATE POLICY "Users can update own activities" ON activities
@@ -69,7 +69,7 @@ FOR INSERT WITH CHECK (
     SELECT 1 FROM activities
     WHERE activities.id = stages.activity_id
     AND activities.user_id = (SELECT auth.uid())
-  ) AND can_create_content()
+  ) AND (SELECT can_create_content())
 );
 
 CREATE POLICY "Users can update stages of own activities" ON stages
@@ -110,7 +110,7 @@ FOR INSERT WITH CHECK (
     JOIN activities ON activities.id = stages.activity_id
     WHERE stages.id = questions.stage_id
     AND activities.user_id = (SELECT auth.uid())
-  ) AND can_create_content()
+  ) AND (SELECT can_create_content())
 );
 
 CREATE POLICY "Users can update questions of own activities" ON questions

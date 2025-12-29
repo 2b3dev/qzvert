@@ -56,8 +56,10 @@ function AdminUsers() {
   const [stats, setStats] = useState<{
     total: number
     admins: number
-    creators: number
-    learners: number
+    plus: number
+    pro: number
+    ultra: number
+    users: number
     thisWeek: number
     thisMonth: number
   } | null>(null)
@@ -145,12 +147,16 @@ function AdminUsers() {
             const updated = { ...prev }
             // Decrease old role count
             if (oldRole === 'admin') updated.admins--
-            else if (oldRole === 'creator') updated.creators--
-            else if (oldRole === 'learner') updated.learners--
+            else if (oldRole === 'plus') updated.plus--
+            else if (oldRole === 'pro') updated.pro--
+            else if (oldRole === 'ultra') updated.ultra--
+            else if (oldRole === 'user') updated.users--
             // Increase new role count
             if (newRole === 'admin') updated.admins++
-            else if (newRole === 'creator') updated.creators++
-            else if (newRole === 'learner') updated.learners++
+            else if (newRole === 'plus') updated.plus++
+            else if (newRole === 'pro') updated.pro++
+            else if (newRole === 'ultra') updated.ultra++
+            else if (newRole === 'user') updated.users++
             return updated
           })
         }
@@ -229,14 +235,20 @@ function AdminUsers() {
           const variant =
             user.role === 'admin'
               ? 'warning'
-              : user.role === 'creator'
-                ? 'success'
-                : 'default'
+              : user.role === 'ultra'
+                ? 'danger'
+                : user.role === 'pro'
+                  ? 'success'
+                  : user.role === 'plus'
+                    ? 'info'
+                    : 'default'
           return (
             <TableCellBadge variant={variant}>
               {user.role === 'admin' && <Crown className="w-3 h-3" />}
-              {user.role === 'creator' && <Pencil className="w-3 h-3" />}
-              {user.role === 'learner' && <GraduationCap className="w-3 h-3" />}
+              {user.role === 'ultra' && <Crown className="w-3 h-3" />}
+              {user.role === 'pro' && <Pencil className="w-3 h-3" />}
+              {user.role === 'plus' && <Pencil className="w-3 h-3" />}
+              {user.role === 'user' && <GraduationCap className="w-3 h-3" />}
               {user.role}
             </TableCellBadge>
           )
@@ -327,7 +339,7 @@ function AdminUsers() {
                 <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
                   Change Role
                 </DropdownMenuLabel>
-                {(['admin', 'creator', 'learner'] as const).map((role) => (
+                {(['admin', 'ultra', 'pro', 'plus', 'user'] as const).map((role) => (
                   <DropdownMenuItem
                     key={role}
                     onClick={() => handleRoleUpdate(user.id, role)}
@@ -336,9 +348,10 @@ function AdminUsers() {
                       'flex items-center gap-2 cursor-pointer',
                       user.role === role && 'opacity-50',
                       role === 'admin' && 'text-amber-500 focus:text-amber-500',
-                      role === 'creator' &&
-                        'text-emerald-500 focus:text-emerald-500',
-                      role === 'learner' && 'text-gray-400 focus:text-gray-400',
+                      role === 'ultra' && 'text-purple-500 focus:text-purple-500',
+                      role === 'pro' && 'text-emerald-500 focus:text-emerald-500',
+                      role === 'plus' && 'text-blue-500 focus:text-blue-500',
+                      role === 'user' && 'text-gray-400 focus:text-gray-400',
                     )}
                   >
                     {updatingRole === user.id ? (
@@ -346,8 +359,10 @@ function AdminUsers() {
                     ) : (
                       <>
                         {role === 'admin' && <Crown className="w-4 h-4" />}
-                        {role === 'creator' && <Pencil className="w-4 h-4" />}
-                        {role === 'learner' && (
+                        {role === 'ultra' && <Crown className="w-4 h-4" />}
+                        {role === 'pro' && <Pencil className="w-4 h-4" />}
+                        {role === 'plus' && <Pencil className="w-4 h-4" />}
+                        {role === 'user' && (
                           <GraduationCap className="w-4 h-4" />
                         )}
                       </>
@@ -400,14 +415,38 @@ function AdminUsers() {
 
             <div className="bg-card border border-border rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
+                <div className="p-2 rounded-lg bg-purple-500/20">
+                  <Crown className="w-4 h-4 text-purple-500" />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-foreground">
+                {stats.ultra}
+              </p>
+              <p className="text-sm text-muted-foreground">Ultra</p>
+            </div>
+
+            <div className="bg-card border border-border rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
                 <div className="p-2 rounded-lg bg-emerald-500/20">
                   <Pencil className="w-4 h-4 text-emerald-500" />
                 </div>
               </div>
               <p className="text-2xl font-bold text-foreground">
-                {stats.creators}
+                {stats.pro}
               </p>
-              <p className="text-sm text-muted-foreground">Creators</p>
+              <p className="text-sm text-muted-foreground">Pro</p>
+            </div>
+
+            <div className="bg-card border border-border rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="p-2 rounded-lg bg-blue-500/20">
+                  <Pencil className="w-4 h-4 text-blue-500" />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-foreground">
+                {stats.plus}
+              </p>
+              <p className="text-sm text-muted-foreground">Plus</p>
             </div>
 
             <div className="bg-card border border-border rounded-xl p-4">
@@ -417,9 +456,9 @@ function AdminUsers() {
                 </div>
               </div>
               <p className="text-2xl font-bold text-foreground">
-                {stats.learners}
+                {stats.users}
               </p>
-              <p className="text-sm text-muted-foreground">Learners</p>
+              <p className="text-sm text-muted-foreground">Users</p>
             </div>
 
             <div className="bg-card border border-border rounded-xl p-4">
@@ -476,9 +515,13 @@ function AdminUsers() {
                   ? 'All Roles'
                   : roleFilter === 'admin'
                     ? 'Admins'
-                    : roleFilter === 'creator'
-                      ? 'Creators'
-                      : 'Learners'}
+                    : roleFilter === 'ultra'
+                      ? 'Ultra'
+                      : roleFilter === 'pro'
+                        ? 'Pro'
+                        : roleFilter === 'plus'
+                          ? 'Plus'
+                          : 'Users'}
               </span>
               <ChevronDown className="w-4 h-4" />
             </button>
@@ -491,7 +534,7 @@ function AdminUsers() {
                   exit={{ opacity: 0, y: -10 }}
                   className="absolute top-full mt-2 left-0 w-40 bg-card border border-border rounded-lg shadow-lg py-2 z-10"
                 >
-                  {(['all', 'admin', 'creator', 'learner'] as const).map(
+                  {(['all', 'admin', 'ultra', 'pro', 'plus', 'user'] as const).map(
                     (role) => (
                       <button
                         key={role}
@@ -506,8 +549,10 @@ function AdminUsers() {
                         )}
                       >
                         {role === 'admin' && <Crown className="w-4 h-4" />}
-                        {role === 'creator' && <Pencil className="w-4 h-4" />}
-                        {role === 'learner' && (
+                        {role === 'ultra' && <Crown className="w-4 h-4" />}
+                        {role === 'pro' && <Pencil className="w-4 h-4" />}
+                        {role === 'plus' && <Pencil className="w-4 h-4" />}
+                        {role === 'user' && (
                           <GraduationCap className="w-4 h-4" />
                         )}
                         {role === 'all' && <Users className="w-4 h-4" />}
@@ -515,9 +560,13 @@ function AdminUsers() {
                           ? 'All Roles'
                           : role === 'admin'
                             ? 'Admins'
-                            : role === 'creator'
-                              ? 'Creators'
-                              : 'Learners'}
+                            : role === 'ultra'
+                              ? 'Ultra'
+                              : role === 'pro'
+                                ? 'Pro'
+                                : role === 'plus'
+                                  ? 'Plus'
+                                  : 'Users'}
                       </button>
                     ),
                   )}

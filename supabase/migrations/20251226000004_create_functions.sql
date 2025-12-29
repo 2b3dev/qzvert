@@ -14,7 +14,7 @@ AS $$
   SELECT role FROM public.profiles WHERE id = (SELECT auth.uid())
 $$;
 
--- Check if user can create content (creator or admin)
+-- Check if user can create content (plus, pro, ultra or admin)
 CREATE OR REPLACE FUNCTION can_create_content()
 RETURNS boolean
 LANGUAGE sql
@@ -24,7 +24,7 @@ AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.profiles
     WHERE id = (SELECT auth.uid())
-    AND role IN ('creator', 'admin')
+    AND role IN ('plus', 'pro', 'ultra', 'admin')
   )
 $$;
 

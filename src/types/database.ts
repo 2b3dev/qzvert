@@ -2,7 +2,7 @@
 export type ActivityStatus = 'draft' | 'private_group' | 'link' | 'public'
 
 // Profile types (must be defined before Database interface)
-export type UserRole = 'learner' | 'creator' | 'admin'
+export type UserRole = 'user' | 'plus' | 'pro' | 'ultra' | 'admin'
 
 // JSON types for metadata fields
 export type JsonValue = string | number | boolean | null | JsonObject | JsonArray
