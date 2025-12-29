@@ -158,6 +158,7 @@
 @layer base {
   body {
     @apply m-0 bg-background text-foreground;
+    font-family: var(--font-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transition:

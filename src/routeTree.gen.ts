@@ -24,7 +24,10 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
+import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminReportsRouteImport } from './routes/admin/reports'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
+import { Route as AdminActivitiesRouteImport } from './routes/admin/activities'
 import { Route as ActivityResultsRouteImport } from './routes/activity/results'
 import { Route as ActivityMeRouteImport } from './routes/activity/me'
 import { Route as ActivityPlayIdRouteImport } from './routes/activity/play.$id'
@@ -107,9 +110,24 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/admin/users',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/admin/settings',
+  path: '/admin/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminReportsRoute = AdminReportsRouteImport.update({
   id: '/admin/reports',
   path: '/admin/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/admin/analytics',
+  path: '/admin/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminActivitiesRoute = AdminActivitiesRouteImport.update({
+  id: '/admin/activities',
+  path: '/admin/activities',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ActivityResultsRoute = ActivityResultsRouteImport.update({
@@ -159,7 +177,10 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/activity/me': typeof ActivityMeRoute
   '/activity/results': typeof ActivityResultsRoute
+  '/admin/activities': typeof AdminActivitiesRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin': typeof AdminIndexRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
@@ -183,7 +204,10 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/activity/me': typeof ActivityMeRoute
   '/activity/results': typeof ActivityResultsRoute
+  '/admin/activities': typeof AdminActivitiesRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin': typeof AdminIndexRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
@@ -208,7 +232,10 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/activity/me': typeof ActivityMeRoute
   '/activity/results': typeof ActivityResultsRoute
+  '/admin/activities': typeof AdminActivitiesRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/': typeof AdminIndexRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
@@ -234,7 +261,10 @@ export interface FileRouteTypes {
     | '/terms'
     | '/activity/me'
     | '/activity/results'
+    | '/admin/activities'
+    | '/admin/analytics'
     | '/admin/reports'
+    | '/admin/settings'
     | '/admin/users'
     | '/admin'
     | '/activity/play/$id'
@@ -258,7 +288,10 @@ export interface FileRouteTypes {
     | '/terms'
     | '/activity/me'
     | '/activity/results'
+    | '/admin/activities'
+    | '/admin/analytics'
     | '/admin/reports'
+    | '/admin/settings'
     | '/admin/users'
     | '/admin'
     | '/activity/play/$id'
@@ -282,7 +315,10 @@ export interface FileRouteTypes {
     | '/terms'
     | '/activity/me'
     | '/activity/results'
+    | '/admin/activities'
+    | '/admin/analytics'
     | '/admin/reports'
+    | '/admin/settings'
     | '/admin/users'
     | '/admin/'
     | '/activity/play/$id'
@@ -307,7 +343,10 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   ActivityMeRoute: typeof ActivityMeRoute
   ActivityResultsRoute: typeof ActivityResultsRoute
+  AdminActivitiesRoute: typeof AdminActivitiesRoute
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminReportsRoute: typeof AdminReportsRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
   ActivityPlayIdRoute: typeof ActivityPlayIdRoute
@@ -423,11 +462,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/admin/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/reports': {
       id: '/admin/reports'
       path: '/admin/reports'
       fullPath: '/admin/reports'
       preLoaderRoute: typeof AdminReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/admin/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/activities': {
+      id: '/admin/activities'
+      path: '/admin/activities'
+      fullPath: '/admin/activities'
+      preLoaderRoute: typeof AdminActivitiesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/activity/results': {
@@ -491,7 +551,10 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   ActivityMeRoute: ActivityMeRoute,
   ActivityResultsRoute: ActivityResultsRoute,
+  AdminActivitiesRoute: AdminActivitiesRoute,
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminReportsRoute: AdminReportsRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
   ActivityPlayIdRoute: ActivityPlayIdRoute,

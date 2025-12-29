@@ -1,16 +1,17 @@
-import { Link, createFileRoute, redirect } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import {
   ArrowUpRight,
-  BookOpen,
   CheckCircle,
   Clock,
   Eye,
   FileText,
-  Flag,
   Loader2,
+  Lock,
+  Mail,
   Play,
   Radio,
   RefreshCw,
+  Shield,
   Sparkles,
   TrendingUp,
   Trophy,
@@ -20,19 +21,17 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { AdminLayout } from '../../components/layouts/AdminLayout'
+import { Button } from '../../components/ui/button'
+import { Input } from '../../components/ui/input'
 import { supabase } from '../../lib/supabase'
 import { cn } from '../../lib/utils'
+import type { ReportStatus } from '../../server/reports'
 import {
   checkAdminAccess,
   getAdminDashboardStats,
   getReportStats,
-  getReports,
 } from '../../server/reports'
-import type {
-  ReportReason,
-  ReportStatus,
-  ReportWithContent,
-} from '../../server/reports'
+import { useAuthStore } from '../../stores/auth-store'
 
 interface DashboardStats {
   users: {
@@ -74,26 +73,17 @@ interface DashboardStats {
       display_name: string | null
     } | null
   }>
+  recentUsers: Array<{
+    id: string
+    display_name: string | null
+    avatar_url: string | null
+    created_at: string
+  }>
 }
 
 export const Route = createFileRoute('/admin/')({
-  beforeLoad: async () => {
-    const { isAdmin } = await checkAdminAccess()
-    if (!isAdmin) {
-      throw redirect({ to: '/' })
-    }
-  },
   component: AdminDashboard,
 })
-
-const reasonLabels: Record<ReportReason, string> = {
-  inappropriate: 'Inappropriate',
-  spam: 'Spam',
-  copyright: 'Copyright',
-  misinformation: 'Misinformation',
-  harassment: 'Harassment',
-  other: 'Other',
-}
 
 const statusColors: Record<ReportStatus, string> = {
   pending: 'bg-amber-500/20 text-amber-500',
@@ -109,8 +99,147 @@ const statusIcons: Record<ReportStatus, React.ReactNode> = {
   dismissed: <XCircle className="w-4 h-4" />,
 }
 
+// Admin Login Form Component
+function AdminLoginForm() {
+  const { signInWithEmail, signInWithGoogle } = useAuthStore()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+
+    if (!email || !password) {
+      setError('Please enter email and password')
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      const { error: authError } = await signInWithEmail(email, password)
+      if (authError) {
+        if (authError.message.includes('Invalid login')) {
+          setError('Email or password is incorrect')
+        } else {
+          setError(authError.message)
+        }
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleGoogleSignIn = async () => {
+    setError(null)
+    const { error: authError } = await signInWithGoogle('/admin')
+    if (authError) {
+      setError(authError.message)
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="bg-card border border-border rounded-2xl p-8 shadow-lg">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <Shield className="w-8 h-8 text-primary" />
+            </div>
+            <h1 className="text-2xl font-bold text-foreground">Admin Login</h1>
+          </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Email
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="email"
+                  placeholder="admin@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            {error && (
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+                {error}
+              </div>
+            )}
+
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <Shield className="w-4 h-4" />
+                  Login to Admin
+                </>
+              )}
+            </Button>
+          </form>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Access Denied Component
+function AccessDenied() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="text-center">
+        <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-6">
+          <XCircle className="w-10 h-10 text-destructive" />
+        </div>
+        <h1 className="text-2xl font-bold text-foreground mb-2">
+          ไม่มีสิทธิ์เข้าถึง
+        </h1>
+        <p className="text-muted-foreground mb-6">
+          บัญชีของคุณไม่มีสิทธิ์เข้าถึงหน้า Admin
+        </p>
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+        >
+          กลับหน้าหลัก
+        </Link>
+      </div>
+    </div>
+  )
+}
+
 function AdminDashboard() {
-  const [reports, setReports] = useState<Array<ReportWithContent>>([])
+  const { user, isLoading: authLoading, isInitialized } = useAuthStore()
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(
+    null,
+  )
+  const [dashboardLoading, setDashboardLoading] = useState(true)
   const [stats, setStats] = useState<{
     pending: number
     reviewed: number
@@ -122,17 +251,25 @@ function AdminDashboard() {
     resolved: 0,
     dismissed: 0,
   })
-  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(
-    null,
-  )
-  const [loading, setLoading] = useState(true)
-  const [dashboardLoading, setDashboardLoading] = useState(true)
 
   // Live mode state
   const [liveMode, setLiveMode] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+
+  // Check admin access when user changes
+  useEffect(() => {
+    const checkAccess = async () => {
+      if (!user) {
+        setIsAdmin(null)
+        return
+      }
+      const { isAdmin: adminStatus } = await checkAdminAccess()
+      setIsAdmin(adminStatus)
+    }
+    checkAccess()
+  }, [user])
 
   // Fetch dashboard stats function (memoized for reuse)
   const fetchDashboardStats = useCallback(async (showLoading = true) => {
@@ -150,8 +287,8 @@ function AdminDashboard() {
     }
   }, [])
 
-  // Fetch reports and stats function (memoized for reuse)
-  const fetchReportsAndStats = useCallback(async () => {
+  // Fetch report stats function
+  const fetchReportStats = useCallback(async () => {
     try {
       const statsData = await getReportStats()
       setStats(statsData.byStatus)
@@ -160,10 +297,13 @@ function AdminDashboard() {
     }
   }, [])
 
-  // Fetch dashboard stats on mount
+  // Fetch dashboard stats on mount (only if admin)
   useEffect(() => {
-    fetchDashboardStats()
-  }, [fetchDashboardStats])
+    if (isAdmin) {
+      fetchDashboardStats()
+      fetchReportStats()
+    }
+  }, [isAdmin, fetchDashboardStats, fetchReportStats])
 
   // Live mode: Supabase Realtime subscription
   useEffect(() => {
@@ -195,8 +335,7 @@ function AdminDashboard() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'reports' },
         () => {
-          fetchDashboardStats(false)
-          fetchReportsAndStats()
+          fetchReportStats()
         },
       )
       .subscribe()
@@ -209,37 +348,34 @@ function AdminDashboard() {
         channelRef.current = null
       }
     }
-  }, [liveMode, fetchDashboardStats, fetchReportsAndStats])
+  }, [liveMode, fetchDashboardStats, fetchReportStats])
 
-  // Fetch reports and stats
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true)
-      try {
-        const [reportsData, statsData] = await Promise.all([
-          getReports({ data: {} }),
-          getReportStats(),
-        ])
-        setReports(reportsData.reports)
-        setStats(statsData.byStatus)
-      } catch (error) {
-        console.error('Failed to fetch admin data:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
+  // Show loading while auth is initializing or loading
+  if (!isInitialized || authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
 
-    fetchData()
-  }, [])
+  // Show login form if not logged in
+  if (!user) {
+    return <AdminLoginForm />
+  }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('th-TH', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
+  // Show access denied if not admin
+  if (isAdmin === false) {
+    return <AccessDenied />
+  }
+
+  // Show loading while checking admin status
+  if (isAdmin === null) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    )
   }
 
   // Header actions for Live mode toggle & refresh
@@ -377,129 +513,103 @@ function AdminDashboard() {
               </div>
             </div>
 
-            {/* Activity Types & Reports Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Activity Types */}
-              <div className="bg-card border border-border rounded-xl p-6">
-                <h3 className="text-sm font-medium text-muted-foreground mb-4">
-                  Activity Types
+            {/* Report Stats */}
+            <div className="bg-card border border-border rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Report Status
                 </h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/20">
-                        <Sparkles className="w-4 h-4 text-primary" />
-                      </div>
-                      <span className="text-foreground">Quizzes</span>
-                    </div>
-                    <span className="text-xl font-bold text-foreground">
-                      {dashboardStats?.activities.byType.quiz || 0}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-orange-500/20">
-                        <BookOpen className="w-4 h-4 text-orange-500" />
-                      </div>
-                      <span className="text-foreground">Quests</span>
-                    </div>
-                    <span className="text-xl font-bold text-foreground">
-                      {dashboardStats?.activities.byType.quest || 0}
-                    </span>
-                  </div>
-                </div>
+                <Link
+                  to="/admin/reports"
+                  search={{}}
+                  className="text-xs text-primary hover:underline flex items-center gap-1"
+                >
+                  View all <ArrowUpRight className="w-3 h-3" />
+                </Link>
               </div>
-
-              {/* Report Stats */}
-              <div className="bg-card border border-border rounded-xl p-6 lg:col-span-2">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    Report Status
-                  </h3>
+              <div className="grid grid-cols-4 gap-3">
+                {[
+                  {
+                    label: 'Pending',
+                    value: stats.pending,
+                    status: 'pending' as ReportStatus,
+                  },
+                  {
+                    label: 'Reviewed',
+                    value: stats.reviewed,
+                    status: 'reviewed' as ReportStatus,
+                  },
+                  {
+                    label: 'Resolved',
+                    value: stats.resolved,
+                    status: 'resolved' as ReportStatus,
+                  },
+                  {
+                    label: 'Dismissed',
+                    value: stats.dismissed,
+                    status: 'dismissed' as ReportStatus,
+                  },
+                ].map((stat) => (
                   <Link
+                    key={stat.status}
                     to="/admin/reports"
-                    search={{}}
+                    search={{ status: stat.status }}
+                    className="p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors text-center"
+                  >
+                    <div
+                      className={cn(
+                        'p-1.5 rounded-lg mx-auto w-fit mb-2',
+                        statusColors[stat.status],
+                      )}
+                    >
+                      {statusIcons[stat.status]}
+                    </div>
+                    <p className="text-lg font-bold text-foreground">
+                      {stat.value}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {stat.label}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Top 5 Activities, Recent Activities, Recent Users */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Top 5 Activities */}
+              <div className="bg-card border border-border rounded-xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-amber-500" />
+                    <h3 className="text-lg font-semibold text-foreground">
+                      Top 5 Activities
+                    </h3>
+                  </div>
+                  <Link
+                    to="/admin/activities"
                     className="text-xs text-primary hover:underline flex items-center gap-1"
                   >
                     View all <ArrowUpRight className="w-3 h-3" />
                   </Link>
-                </div>
-                <div className="grid grid-cols-4 gap-3">
-                  {[
-                    {
-                      label: 'Pending',
-                      value: stats.pending,
-                      status: 'pending' as ReportStatus,
-                    },
-                    {
-                      label: 'Reviewed',
-                      value: stats.reviewed,
-                      status: 'reviewed' as ReportStatus,
-                    },
-                    {
-                      label: 'Resolved',
-                      value: stats.resolved,
-                      status: 'resolved' as ReportStatus,
-                    },
-                    {
-                      label: 'Dismissed',
-                      value: stats.dismissed,
-                      status: 'dismissed' as ReportStatus,
-                    },
-                  ].map((stat) => (
-                    <Link
-                      key={stat.status}
-                      to="/admin/reports"
-                      search={{ status: stat.status }}
-                      className="p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors text-center"
-                    >
-                      <div
-                        className={cn(
-                          'p-1.5 rounded-lg mx-auto w-fit mb-2',
-                          statusColors[stat.status],
-                        )}
-                      >
-                        {statusIcons[stat.status]}
-                      </div>
-                      <p className="text-lg font-bold text-foreground">
-                        {stat.value}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {stat.label}
-                      </p>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Top & Recent Activities */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Top Activities */}
-              <div className="bg-card border border-border rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Trophy className="w-5 h-5 text-amber-500" />
-                  <h3 className="text-lg font-semibold text-foreground">
-                    Top Activities
-                  </h3>
                 </div>
                 {dashboardStats?.topActivities.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">
                     No activities yet
                   </p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {dashboardStats?.topActivities.map((activity, index) => (
                       <a
                         key={activity.id}
                         href={`/activity/play/${activity.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors"
+                        className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/30 transition-colors"
                       >
                         <span
                           className={cn(
-                            'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold',
+                            'w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0',
                             index === 0
                               ? 'bg-amber-500 text-white'
                               : index === 1
@@ -511,36 +621,14 @@ function AdminDashboard() {
                         >
                           {index + 1}
                         </span>
-                        {activity.thumbnail ? (
-                          <img
-                            src={activity.thumbnail}
-                            alt=""
-                            className="w-10 h-10 rounded-lg object-cover"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                            <FileText className="w-5 h-5 text-muted-foreground" />
-                          </div>
-                        )}
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-foreground truncate text-sm">
                             {activity.title}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {activity.profiles?.display_name || 'Anonymous'} •{' '}
                             {activity.play_count} plays
                           </p>
                         </div>
-                        <span
-                          className={cn(
-                            'text-xs px-2 py-0.5 rounded-full',
-                            activity.type === 'quiz'
-                              ? 'bg-primary/20 text-primary'
-                              : 'bg-orange-500/20 text-orange-500',
-                          )}
-                        >
-                          {activity.type}
-                        </span>
                       </a>
                     ))}
                   </div>
@@ -549,124 +637,125 @@ function AdminDashboard() {
 
               {/* Recent Activities */}
               <div className="bg-card border border-border rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Clock className="w-5 h-5 text-blue-500" />
-                  <h3 className="text-lg font-semibold text-foreground">
-                    Recent Activities
-                  </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-blue-500" />
+                    <h3 className="text-lg font-semibold text-foreground">
+                      Recent Activities
+                    </h3>
+                  </div>
+                  <Link
+                    to="/admin/activities"
+                    className="text-xs text-primary hover:underline flex items-center gap-1"
+                  >
+                    View all <ArrowUpRight className="w-3 h-3" />
+                  </Link>
                 </div>
                 {dashboardStats?.recentActivities.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">
                     No activities yet
                   </p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {dashboardStats?.recentActivities.map((activity) => (
                       <a
                         key={activity.id}
                         href={`/activity/play/${activity.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors"
+                        className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/30 transition-colors"
                       >
-                        {activity.thumbnail ? (
-                          <img
-                            src={activity.thumbnail}
-                            alt=""
-                            className="w-10 h-10 rounded-lg object-cover"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                            <FileText className="w-5 h-5 text-muted-foreground" />
-                          </div>
-                        )}
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-foreground truncate text-sm">
                             {activity.title}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {activity.profiles?.display_name || 'Anonymous'} •{' '}
                             {new Date(activity.created_at).toLocaleDateString(
                               'th-TH',
                               { day: 'numeric', month: 'short' },
                             )}{' '}
-                            • {activity.play_count} plays
+                            {new Date(activity.created_at).toLocaleTimeString(
+                              'th-TH',
+                              { hour: '2-digit', minute: '2-digit' },
+                            )}
                           </p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={cn(
-                              'text-xs px-2 py-0.5 rounded-full',
-                              activity.status === 'public'
-                                ? 'bg-green-500/20 text-green-500'
-                                : activity.status === 'draft'
-                                  ? 'bg-gray-500/20 text-gray-400'
-                                  : 'bg-blue-500/20 text-blue-500',
-                            )}
-                          >
-                            {activity.status}
-                          </span>
-                        </div>
+                        <span
+                          className={cn(
+                            'text-xs px-2 py-0.5 rounded-full shrink-0',
+                            activity.status === 'public'
+                              ? 'bg-green-500/20 text-green-500'
+                              : activity.status === 'draft'
+                                ? 'bg-gray-500/20 text-gray-400'
+                                : 'bg-blue-500/20 text-blue-500',
+                          )}
+                        >
+                          {activity.status}
+                        </span>
                       </a>
                     ))}
                   </div>
                 )}
               </div>
-            </div>
 
-            {/* Recent Reports Preview */}
-            <div className="bg-card border border-border rounded-xl p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Flag className="w-5 h-5 text-destructive" />
-                  <h3 className="text-lg font-semibold text-foreground">
-                    Recent Reports
-                  </h3>
+              {/* Recent Users */}
+              <div className="bg-card border border-border rounded-xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-5 h-5 text-green-500" />
+                    <h3 className="text-lg font-semibold text-foreground">
+                      Recent Users
+                    </h3>
+                  </div>
+                  <Link
+                    to="/admin/users"
+                    className="text-xs text-primary hover:underline flex items-center gap-1"
+                  >
+                    View all <ArrowUpRight className="w-3 h-3" />
+                  </Link>
                 </div>
-                <Link
-                  to="/admin/reports"
-                  search={{}}
-                  className="text-sm text-primary hover:underline flex items-center gap-1"
-                >
-                  View all <ArrowUpRight className="w-4 h-4" />
-                </Link>
-              </div>
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : reports.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  No reports yet
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {reports.slice(0, 3).map((report) => (
-                    <div
-                      key={report.id}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-muted/30"
-                    >
+                {dashboardStats?.recentUsers.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    No users yet
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {dashboardStats?.recentUsers.map((user) => (
                       <div
-                        className={cn(
-                          'p-1.5 rounded-lg',
-                          statusColors[report.status],
-                        )}
+                        key={user.id}
+                        className="flex items-center gap-2 p-2 rounded-lg"
                       >
-                        {statusIcons[report.status]}
+                        {user.avatar_url ? (
+                          <img
+                            src={user.avatar_url}
+                            alt=""
+                            className="w-8 h-8 rounded-full object-cover shrink-0"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                            <Users className="w-4 h-4 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-foreground truncate text-sm">
+                            {user.display_name || 'Anonymous'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(user.created_at).toLocaleDateString(
+                              'th-TH',
+                              { day: 'numeric', month: 'short' },
+                            )}{' '}
+                            {new Date(user.created_at).toLocaleTimeString(
+                              'th-TH',
+                              { hour: '2-digit', minute: '2-digit' },
+                            )}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-foreground truncate text-sm">
-                          {report.content?.title || 'Unknown Activity'}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {reasonLabels[report.reason]} •{' '}
-                          {formatDate(report.created_at)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </>
         )}

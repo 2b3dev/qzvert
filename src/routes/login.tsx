@@ -10,7 +10,7 @@ import IconApp from '@/components/icon/icon-app'
 import { cn } from '../lib/utils'
 
 export const Route = createFileRoute('/login')({
-  component: LoginPage
+  component: LoginPage,
 })
 
 function LoginPage() {

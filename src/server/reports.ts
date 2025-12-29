@@ -474,43 +474,65 @@ export const getAdminDashboardStats = createServerFn({ method: 'GET' }).handler(
       .eq('type', 'quest')
 
     // Get recent activities (last 5)
-    const { data: recentActivities } = await supabase
+    const { data: recentActivitiesRaw } = await supabase
       .from('activities')
-      .select(
-        `
-        id,
-        title,
-        thumbnail,
-        type,
-        status,
-        play_count,
-        created_at,
-        profiles (
-          display_name,
-          avatar_url
-        )
-      `,
-      )
+      .select('id, title, thumbnail, type, status, play_count, created_at, user_id')
       .order('created_at', { ascending: false })
       .limit(5)
 
+    // Fetch profiles for recent activities
+    const recentUserIds = [...new Set((recentActivitiesRaw || []).map(a => a.user_id).filter((id): id is string => id !== null))]
+    const { data: recentProfiles } = recentUserIds.length > 0
+      ? await supabase
+          .from('profiles')
+          .select('id, display_name, avatar_url')
+          .in('id', recentUserIds)
+      : { data: [] }
+
+    const recentProfilesMap = new Map((recentProfiles || []).map(p => [p.id, p]))
+    const recentActivities = (recentActivitiesRaw || []).map(a => ({
+      id: a.id,
+      title: a.title,
+      thumbnail: a.thumbnail,
+      type: a.type,
+      status: a.status,
+      play_count: a.play_count,
+      created_at: a.created_at,
+      profiles: a.user_id ? recentProfilesMap.get(a.user_id) || null : null,
+    }))
+
     // Get top activities by play count
-    const { data: topActivities } = await supabase
+    const { data: topActivitiesRaw } = await supabase
       .from('activities')
-      .select(
-        `
-        id,
-        title,
-        thumbnail,
-        type,
-        play_count,
-        profiles (
-          display_name
-        )
-      `,
-      )
+      .select('id, title, thumbnail, type, play_count, user_id')
       .eq('status', 'public')
       .order('play_count', { ascending: false })
+      .limit(5)
+
+    // Fetch profiles for top activities
+    const topUserIds = [...new Set((topActivitiesRaw || []).map(a => a.user_id).filter((id): id is string => id !== null))]
+    const { data: topProfiles } = topUserIds.length > 0
+      ? await supabase
+          .from('profiles')
+          .select('id, display_name')
+          .in('id', topUserIds)
+      : { data: [] }
+
+    const topProfilesMap = new Map((topProfiles || []).map(p => [p.id, p]))
+    const topActivities = (topActivitiesRaw || []).map(a => ({
+      id: a.id,
+      title: a.title,
+      thumbnail: a.thumbnail,
+      type: a.type,
+      play_count: a.play_count,
+      profiles: a.user_id ? topProfilesMap.get(a.user_id) || null : null,
+    }))
+
+    // Get recent users (last 5)
+    const { data: recentUsers } = await supabase
+      .from('profiles')
+      .select('id, display_name, avatar_url, created_at')
+      .order('created_at', { ascending: false })
       .limit(5)
 
     return {
@@ -532,6 +554,7 @@ export const getAdminDashboardStats = createServerFn({ method: 'GET' }).handler(
       },
       recentActivities: recentActivities || [],
       topActivities: topActivities || [],
+      recentUsers: recentUsers || [],
     }
   },
 )

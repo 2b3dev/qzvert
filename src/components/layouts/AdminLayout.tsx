@@ -1,19 +1,24 @@
-import { useState, useEffect, type ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
-import { motion, AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
-  Flag,
-  Shield,
-  LayoutDashboard,
-  Users,
-  FileText,
-  Settings,
   BarChart3,
-  Menu,
-  X,
   ChevronDown,
+  FileText,
+  Flag,
+  Home,
+  LayoutDashboard,
   LogOut,
+  Menu,
+  Settings,
+  Shield,
+  Users,
+  X,
 } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { useEffect, useState } from 'react'
+import { cn } from '../../lib/utils'
+import { useAuthStore } from '../../stores/auth-store'
+import { useProfileStore } from '../../stores/profile-store'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,14 +27,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
-import { cn } from '../../lib/utils'
-import { useAuthStore } from '../../stores/auth-store'
-import { useProfileStore } from '../../stores/profile-store'
 
 interface AdminLayoutProps {
   children: ReactNode
   title: string
-  activeItem: 'dashboard' | 'reports' | 'users' | 'activities' | 'analytics' | 'settings'
+  activeItem:
+    | 'dashboard'
+    | 'reports'
+    | 'users'
+    | 'activities'
+    | 'analytics'
+    | 'settings'
   /** Optional badge count for reports in sidebar */
   pendingReportsCount?: number
   /** Optional custom header actions (right side of header) */
@@ -44,16 +52,43 @@ type SidebarItem = {
   disabled?: boolean
 }
 
-const sidebarItems: SidebarItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
-  { id: 'reports', label: 'Reports', icon: Flag, href: '/admin/reports' },
+const sidebarItems: Array<SidebarItem> = [
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    icon: LayoutDashboard,
+    href: '/admin',
+  },
+  {
+    id: 'analytics',
+    label: 'Analytics',
+    icon: BarChart3,
+    href: '/admin/analytics',
+  },
   { id: 'users', label: 'Users', icon: Users, href: '/admin/users' },
-  { id: 'activities', label: 'Activities', icon: FileText, disabled: true },
-  { id: 'analytics', label: 'Analytics', icon: BarChart3, disabled: true },
-  { id: 'settings', label: 'Settings', icon: Settings, disabled: true },
+  {
+    id: 'activities',
+    label: 'Activities',
+    icon: FileText,
+    href: '/admin/activities',
+  },
+
+  {
+    id: 'reports',
+    label: 'Problem Reports',
+    icon: Flag,
+    href: '/admin/reports',
+  },
+  { id: 'settings', label: 'Settings', icon: Settings, href: '/admin/settings' },
 ]
 
-export function AdminLayout({ children, title, activeItem, pendingReportsCount, headerActions }: AdminLayoutProps) {
+export function AdminLayout({
+  children,
+  title,
+  activeItem,
+  pendingReportsCount,
+  headerActions,
+}: AdminLayoutProps) {
   const { user, signOut } = useAuthStore()
   const { profile, fetchProfile } = useProfileStore()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -84,7 +119,7 @@ export function AdminLayout({ children, title, activeItem, pendingReportsCount, 
       <aside
         className={cn(
           'fixed lg:static inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transform transition-transform duration-300 ease-in-out lg:translate-x-0',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
         <div className="flex flex-col h-full">
@@ -106,7 +141,7 @@ export function AdminLayout({ children, title, activeItem, pendingReportsCount, 
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            {sidebarItems.map((item) => (
+            {sidebarItems.map((item) =>
               item.disabled ? (
                 <div
                   key={item.id}
@@ -114,35 +149,41 @@ export function AdminLayout({ children, title, activeItem, pendingReportsCount, 
                 >
                   <item.icon className="w-5 h-5" />
                   <span>{item.label}</span>
-                  <span className="ml-auto text-xs bg-muted px-1.5 py-0.5 rounded">Soon</span>
+                  <span className="ml-auto text-xs bg-muted px-1.5 py-0.5 rounded">
+                    Soon
+                  </span>
                 </div>
               ) : (
                 <Link
                   key={item.id}
-                  to={item.href!}
+                  to={item.href}
                   onClick={() => setSidebarOpen(false)}
                   className={cn(
                     'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all',
                     activeItem === item.id
                       ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent',
                   )}
                 >
                   <item.icon className="w-5 h-5" />
                   <span>{item.label}</span>
-                  {item.id === 'reports' && pendingReportsCount !== undefined && pendingReportsCount > 0 && (
-                    <span className={cn(
-                      'ml-auto px-1.5 py-0.5 rounded-full text-xs font-medium',
-                      activeItem === 'reports'
-                        ? 'bg-primary-foreground/20 text-primary-foreground'
-                        : 'bg-amber-500/20 text-amber-500'
-                    )}>
-                      {pendingReportsCount}
-                    </span>
-                  )}
+                  {item.id === 'reports' &&
+                    pendingReportsCount !== undefined &&
+                    pendingReportsCount > 0 && (
+                      <span
+                        className={cn(
+                          'ml-auto px-1.5 py-0.5 rounded-full text-xs font-medium',
+                          activeItem === 'reports'
+                            ? 'bg-primary-foreground/20 text-primary-foreground'
+                            : 'bg-amber-500/20 text-amber-500',
+                        )}
+                      >
+                        {pendingReportsCount}
+                      </span>
+                    )}
                 </Link>
-              )
-            ))}
+              ),
+            )}
           </nav>
 
           {/* Sidebar Footer - User Info */}
@@ -159,7 +200,9 @@ export function AdminLayout({ children, title, activeItem, pendingReportsCount, 
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                       <span className="text-sm font-medium text-primary">
-                        {(profile?.display_name || user?.email || 'A')[0].toUpperCase()}
+                        {(profile?.display_name ||
+                          user?.email ||
+                          'A')[0].toUpperCase()}
                       </span>
                     </div>
                   )}
@@ -178,7 +221,19 @@ export function AdminLayout({ children, title, activeItem, pendingReportsCount, 
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                  <Link
+                    to="/"
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <Home className="w-4 h-4" />
+                    Go to Home
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/profile"
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
                     <Settings className="w-4 h-4" />
                     User Settings
                   </Link>
@@ -212,16 +267,12 @@ export function AdminLayout({ children, title, activeItem, pendingReportsCount, 
               <h1 className="text-lg font-semibold text-foreground">{title}</h1>
             </div>
             {headerActions && (
-              <div className="flex items-center gap-3">
-                {headerActions}
-              </div>
+              <div className="flex items-center gap-3">{headerActions}</div>
             )}
           </div>
         </header>
 
-        <div className="p-4 sm:p-6">
-          {children}
-        </div>
+        <div className="p-4 sm:p-6">{children}</div>
       </main>
     </div>
   )

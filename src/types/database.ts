@@ -365,6 +365,33 @@ export interface Database {
           }
         ]
       }
+      system_settings: {
+        Row: {
+          id: string
+          key: string
+          value: JsonValue
+          description: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          key: string
+          value: JsonValue
+          description?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          key?: string
+          value?: JsonValue
+          description?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

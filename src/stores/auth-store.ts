@@ -13,7 +13,7 @@ interface AuthState {
   hydrateAuth: (user: User | null, session: Session | null) => void
   signInWithEmail: (email: string, password: string) => Promise<{ error: Error | null }>
   signUpWithEmail: (email: string, password: string) => Promise<{ error: Error | null }>
-  signInWithGoogle: () => Promise<{ error: Error | null }>
+  signInWithGoogle: (redirectPath?: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
   setUser: (user: User | null) => void
   setSession: (session: Session | null) => void
@@ -104,12 +104,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  signInWithGoogle: async () => {
+  signInWithGoogle: async (redirectPath = '/') => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`
+          redirectTo: `${window.location.origin}${redirectPath}`
         }
       })
       if (error) throw error

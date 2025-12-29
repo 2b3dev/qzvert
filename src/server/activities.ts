@@ -18,7 +18,11 @@ const getSupabaseFromCookies = () => {
 
 // Get current user session from cookies (for SSR hydration)
 export const getAuthSession = createServerFn({ method: 'GET' }).handler(
-  async (): Promise<{ user: User | null; session: Session | null }> => {
+  async (): Promise<{
+    user: User | null
+    session: Session | null
+    profile: { role: string } | null
+  }> => {
     const supabase = getSupabaseFromCookies()
 
     const {
@@ -28,7 +32,18 @@ export const getAuthSession = createServerFn({ method: 'GET' }).handler(
       data: { session },
     } = await supabase.auth.getSession()
 
-    return { user, session }
+    // Fetch profile with role if user exists
+    let profile: { role: string } | null = null
+    if (user) {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+      profile = profileData
+    }
+
+    return { user, session, profile }
   },
 )
 

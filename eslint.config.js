@@ -10,6 +10,7 @@ export default [
   {
     rules: {
       '@typescript-eslint/no-unnecessary-condition': 'off',
+      'import/order': 'off',
     },
   },
 ]

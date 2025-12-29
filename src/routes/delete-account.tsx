@@ -4,7 +4,6 @@ import {
   AlertTriangle,
   ArrowLeft,
   Calendar,
-  CheckCircle2,
   Clock,
   Loader2,
   Mail,
@@ -18,7 +17,7 @@ import { toast } from 'sonner'
 import { DefaultLayout } from '../components/layouts/DefaultLayout'
 import { Button } from '../components/ui/button'
 import { useTranslation } from '../hooks/useTranslation'
-import { PRIVACY_EMAIL } from '../lib/utils'
+import { CONTACT_EMAIL } from '../lib/utils'
 import { softDeleteAccount } from '../server/account'
 import { useAuthStore } from '../stores/auth-store'
 
@@ -64,7 +63,7 @@ function DeleteAccountPage() {
       toast.error(
         error instanceof Error
           ? error.message
-          : t('deleteAccount.error.generic')
+          : t('deleteAccount.error.generic'),
       )
     } finally {
       setIsSubmitting(false)
@@ -122,7 +121,8 @@ function DeleteAccountPage() {
                   <div className="flex items-center justify-center gap-2 p-4 rounded-lg bg-muted mb-6">
                     <Calendar className="w-5 h-5 text-destructive" />
                     <span className="font-medium">
-                      {t('deleteAccount.success.permanentDate')}: {formattedDate}
+                      {t('deleteAccount.success.permanentDate')}:{' '}
+                      {formattedDate}
                     </span>
                   </div>
                 )}
@@ -341,9 +341,9 @@ function DeleteAccountPage() {
                 {t('deleteAccount.alternative.text')}
               </p>
               <Button variant="outline" size="sm" asChild>
-                <a href={`mailto:${PRIVACY_EMAIL}`}>
+                <a href={`mailto:${CONTACT_EMAIL}`}>
                   <Mail className="w-4 h-4" />
-                  {PRIVACY_EMAIL}
+                  {CONTACT_EMAIL}
                 </a>
               </Button>
             </motion.div>

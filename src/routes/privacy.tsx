@@ -15,7 +15,7 @@ import {
 import { DefaultLayout } from '../components/layouts/DefaultLayout'
 import { Button } from '../components/ui/button'
 import { useTranslation } from '../hooks/useTranslation'
-import { PRIVACY_EMAIL } from '../lib/utils'
+import { CONTACT_EMAIL } from '../lib/utils'
 
 export const Route = createFileRoute('/privacy')({ component: PrivacyPage })
 
@@ -296,9 +296,9 @@ function PrivacyPage() {
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>
-                    <a href={`mailto:${PRIVACY_EMAIL}`}>
+                    <a href={`mailto:${CONTACT_EMAIL}`}>
                       <FileText className="w-4 h-4" />
-                      {PRIVACY_EMAIL}
+                      {CONTACT_EMAIL}
                     </a>
                   </Button>
                 </div>

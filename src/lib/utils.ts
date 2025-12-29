@@ -5,6 +5,5 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-// Contact emails from environment variables
+// Contact email from environment variable
 export const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || 'support@qzvert.com'
-export const PRIVACY_EMAIL = import.meta.env.VITE_PRIVACY_EMAIL || 'privacy@qzvert.com'
