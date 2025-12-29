@@ -171,24 +171,29 @@ function AdminReports() {
     >
       <div className="space-y-6">
             {/* Filter Bar */}
-            <div className="flex items-center justify-between">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="flex items-center justify-between"
+            >
               <div className="relative">
                 <button
                   onClick={() => setShowFilterMenu(!showFilterMenu)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-card hover:bg-accent transition-colors"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm hover:bg-accent/50 transition-all duration-200"
                 >
                   <Filter className="w-4 h-4" />
-                  <span>{statusFilter === 'all' ? 'All Reports' : statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}</span>
+                  <span className="font-medium">{statusFilter === 'all' ? 'All Reports' : statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}</span>
                   <ChevronDown className="w-4 h-4" />
                 </button>
 
                 <AnimatePresence>
                   {showFilterMenu && (
                     <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="absolute top-full mt-2 left-0 w-48 bg-card border border-border rounded-lg shadow-lg py-2 z-10"
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      className="absolute top-full mt-2 left-0 w-48 bg-card/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-xl py-2 z-10"
                     >
                       <button
                         onClick={() => {
@@ -196,11 +201,11 @@ function AdminReports() {
                           setShowFilterMenu(false)
                         }}
                         className={cn(
-                          'w-full px-4 py-2 text-left text-sm hover:bg-accent transition-colors',
-                          statusFilter === 'all' && 'text-primary'
+                          'w-full px-4 py-2.5 text-left text-sm hover:bg-accent/50 transition-all duration-200',
+                          statusFilter === 'all' && 'text-primary bg-primary/10'
                         )}
                       >
-                        All Reports
+                        <span className="font-medium">All Reports</span>
                       </button>
                       {(['pending', 'reviewed', 'resolved', 'dismissed'] as ReportStatus[]).map((status) => (
                         <button
@@ -210,12 +215,12 @@ function AdminReports() {
                             setShowFilterMenu(false)
                           }}
                           className={cn(
-                            'w-full px-4 py-2 text-left text-sm hover:bg-accent transition-colors flex items-center gap-2',
-                            statusFilter === status && 'text-primary'
+                            'w-full px-4 py-2.5 text-left text-sm hover:bg-accent/50 transition-all duration-200 flex items-center gap-2',
+                            statusFilter === status && 'text-primary bg-primary/10'
                           )}
                         >
                           {statusIcons[status]}
-                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                          <span className="font-medium">{status.charAt(0).toUpperCase() + status.slice(1)}</span>
                         </button>
                       ))}
                     </motion.div>
@@ -223,10 +228,10 @@ function AdminReports() {
                 </AnimatePresence>
               </div>
 
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground font-medium">
                 {reports.length} report{reports.length !== 1 && 's'}
               </p>
-            </div>
+            </motion.div>
 
             {/* Reports List */}
             {loading ? (
@@ -234,35 +239,44 @@ function AdminReports() {
                 <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
               </div>
             ) : reports.length === 0 ? (
-              <div className="text-center py-16">
-                <Flag className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="text-center py-16 bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl"
+              >
+                <div className="p-4 rounded-2xl bg-linear-to-br from-rose-500/20 to-pink-500/20 w-fit mx-auto mb-4">
+                  <Flag className="w-12 h-12 text-rose-500" />
+                </div>
                 <p className="text-lg text-muted-foreground">No reports found</p>
-              </div>
+              </motion.div>
             ) : (
               <div className="space-y-4">
-                {reports.map((report) => (
+                {reports.map((report, index) => (
                   <motion.div
                     key={report.id}
                     layout
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-card border border-border rounded-xl overflow-hidden"
+                    transition={{ delay: 0.1 + index * 0.05 }}
+                    className="group relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden hover:border-rose-500/30 transition-all duration-300"
                   >
-                    <div className="p-4">
+                    <div className="absolute -top-20 -right-20 w-40 h-40 bg-rose-500/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="relative p-5">
                       <div className="flex items-start justify-between gap-4">
                         {/* Report Info */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className={cn('p-1.5 rounded-lg', statusColors[report.status])}>
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className={cn('p-2 rounded-xl', statusColors[report.status])}>
                               {statusIcons[report.status]}
                             </div>
-                            <span className={cn('text-sm font-medium', statusColors[report.status].split(' ')[1])}>
+                            <span className={cn('text-sm font-semibold', statusColors[report.status].split(' ')[1])}>
                               {report.status.charAt(0).toUpperCase() + report.status.slice(1)}
                             </span>
                             <span className="text-muted-foreground">•</span>
-                            <div className="flex items-center gap-1 text-muted-foreground">
+                            <div className="flex items-center gap-1.5 text-muted-foreground">
                               {reasonIcons[report.reason]}
-                              <span className="text-sm">{reasonLabels[report.reason]}</span>
+                              <span className="text-sm font-medium">{reasonLabels[report.reason]}</span>
                             </div>
                           </div>
 
@@ -271,11 +285,11 @@ function AdminReports() {
                               <img
                                 src={report.content.thumbnail}
                                 alt=""
-                                className="w-16 h-12 rounded-lg object-cover"
+                                className="w-16 h-12 rounded-xl object-cover ring-2 ring-border/50"
                               />
                             )}
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-foreground truncate">
+                              <p className="font-semibold text-foreground truncate">
                                 {report.content?.title || 'Unknown Activity'}
                               </p>
                               <p className="text-sm text-muted-foreground">
@@ -285,7 +299,7 @@ function AdminReports() {
                           </div>
 
                           {report.additional_info && (
-                            <div className="bg-muted/30 rounded-lg p-3 mb-3">
+                            <div className="bg-muted/30 rounded-xl p-3 mb-3 hover:bg-muted/50 transition-colors">
                               <p className="text-sm text-muted-foreground flex items-start gap-2">
                                 <MessageSquare className="w-4 h-4 mt-0.5 shrink-0" />
                                 {report.additional_info}
@@ -294,7 +308,7 @@ function AdminReports() {
                           )}
 
                           {report.admin_notes && (
-                            <div className="bg-primary/10 rounded-lg p-3">
+                            <div className="bg-primary/10 rounded-xl p-3">
                               <p className="text-sm text-primary flex items-start gap-2">
                                 <Shield className="w-4 h-4 mt-0.5 shrink-0" />
                                 <span><strong>Admin notes:</strong> {report.admin_notes}</span>
@@ -309,7 +323,7 @@ function AdminReports() {
                             href={`/activity/play/${report.content_id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border hover:bg-accent text-sm transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border/50 bg-card/50 hover:bg-accent/50 text-sm transition-all duration-200 font-medium"
                           >
                             <ExternalLink className="w-4 h-4" />
                             View
@@ -317,6 +331,7 @@ function AdminReports() {
                           <Button
                             size="sm"
                             variant="outline"
+                            className="rounded-xl"
                             onClick={() => {
                               setSelectedReport(report)
                               setAdminNotes(report.admin_notes || '')
@@ -341,7 +356,7 @@ function AdminReports() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setSelectedReport(null)}
-                className="fixed inset-0 bg-black/50 z-50"
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
               />
               <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -349,15 +364,15 @@ function AdminReports() {
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
                 className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md"
               >
-                <div className="bg-card border border-border rounded-xl shadow-2xl overflow-hidden mx-4">
-                  <div className="p-4 border-b border-border">
+                <div className="bg-card/95 backdrop-blur-xl border border-border/50 rounded-2xl shadow-2xl overflow-hidden mx-4">
+                  <div className="p-5 border-b border-border/50 bg-linear-to-r from-rose-500/10 to-pink-500/10">
                     <h3 className="text-lg font-semibold text-foreground">Update Report Status</h3>
                     <p className="text-sm text-muted-foreground mt-1">
                       {selectedReport.content?.title || 'Unknown Activity'}
                     </p>
                   </div>
 
-                  <div className="p-4 space-y-4">
+                  <div className="p-5 space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-2">
                         Admin Notes (optional)
@@ -366,7 +381,7 @@ function AdminReports() {
                         value={adminNotes}
                         onChange={(e) => setAdminNotes(e.target.value)}
                         placeholder="Add notes about this report..."
-                        className="w-full px-3 py-2 rounded-lg border border-border bg-secondary/30 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                        className="w-full px-4 py-3 rounded-xl border border-border/50 bg-card/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none transition-all"
                         rows={3}
                       />
                     </div>
@@ -383,7 +398,7 @@ function AdminReports() {
                             size="sm"
                             onClick={() => handleStatusUpdate(selectedReport.id, status)}
                             disabled={updatingStatus === selectedReport.id}
-                            className="justify-start"
+                            className="justify-start rounded-xl"
                           >
                             {updatingStatus === selectedReport.id ? (
                               <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -397,8 +412,8 @@ function AdminReports() {
                     </div>
                   </div>
 
-                  <div className="flex justify-end gap-2 p-4 border-t border-border bg-muted/30">
-                    <Button variant="ghost" onClick={() => setSelectedReport(null)}>
+                  <div className="flex justify-end gap-2 p-5 border-t border-border/50 bg-muted/30">
+                    <Button variant="ghost" onClick={() => setSelectedReport(null)} className="rounded-xl">
                       Cancel
                     </Button>
                   </div>

@@ -439,66 +439,110 @@ function AdminActivities() {
         {/* Stats Cards */}
         {stats && (
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-            <div className="bg-card border border-border rounded-xl p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="p-2 rounded-lg bg-purple-500/20">
-                  <FileText className="w-4 h-4 text-purple-500" />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="group relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5 overflow-hidden hover:border-purple-500/30 transition-all duration-300"
+            >
+              <div className="absolute inset-0 bg-linear-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute -top-12 -right-12 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-colors" />
+              <div className="relative">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2.5 rounded-xl bg-linear-to-br from-purple-500 to-pink-500 shadow-lg shadow-purple-500/20">
+                    <FileText className="w-5 h-5 text-white" />
+                  </div>
                 </div>
+                <p className="text-3xl font-bold text-foreground">{stats.total}</p>
+                <p className="text-sm text-muted-foreground mt-1">Total Activities</p>
               </div>
-              <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-              <p className="text-sm text-muted-foreground">Total Activities</p>
-            </div>
+            </motion.div>
 
-            <div className="bg-card border border-border rounded-xl p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="p-2 rounded-lg bg-green-500/20">
-                  <Sparkles className="w-4 h-4 text-green-500" />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="group relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5 overflow-hidden hover:border-emerald-500/30 transition-all duration-300"
+            >
+              <div className="absolute inset-0 bg-linear-to-br from-emerald-500/5 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute -top-12 -right-12 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-colors" />
+              <div className="relative">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2.5 rounded-xl bg-linear-to-br from-emerald-500 to-teal-500 shadow-lg shadow-emerald-500/20">
+                    <Sparkles className="w-5 h-5 text-white" />
+                  </div>
                 </div>
+                <p className="text-3xl font-bold text-foreground">{stats.public}</p>
+                <p className="text-sm text-muted-foreground mt-1">Public</p>
               </div>
-              <p className="text-2xl font-bold text-foreground">
-                {stats.public}
-              </p>
-              <p className="text-sm text-muted-foreground">Public</p>
-            </div>
+            </motion.div>
 
-            <div className="bg-card border border-border rounded-xl p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="p-2 rounded-lg bg-gray-500/20">
-                  <Pencil className="w-4 h-4 text-gray-500" />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="group relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5 overflow-hidden hover:border-gray-500/30 transition-all duration-300"
+            >
+              <div className="absolute inset-0 bg-linear-to-br from-gray-500/5 to-slate-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute -top-12 -right-12 w-24 h-24 bg-gray-500/10 rounded-full blur-2xl group-hover:bg-gray-500/20 transition-colors" />
+              <div className="relative">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2.5 rounded-xl bg-linear-to-br from-gray-500 to-slate-600 shadow-lg shadow-gray-500/20">
+                    <Pencil className="w-5 h-5 text-white" />
+                  </div>
                 </div>
+                <p className="text-3xl font-bold text-foreground">{stats.draft}</p>
+                <p className="text-sm text-muted-foreground mt-1">Drafts</p>
               </div>
-              <p className="text-2xl font-bold text-foreground">{stats.draft}</p>
-              <p className="text-sm text-muted-foreground">Drafts</p>
-            </div>
+            </motion.div>
 
-            <div className="bg-card border border-border rounded-xl p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="p-2 rounded-lg bg-emerald-500/20">
-                  <TrendingUp className="w-4 h-4 text-emerald-500" />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="group relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5 overflow-hidden hover:border-amber-500/30 transition-all duration-300"
+            >
+              <div className="absolute inset-0 bg-linear-to-br from-amber-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute -top-12 -right-12 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-colors" />
+              <div className="relative">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2.5 rounded-xl bg-linear-to-br from-amber-500 to-orange-500 shadow-lg shadow-amber-500/20">
+                    <TrendingUp className="w-5 h-5 text-white" />
+                  </div>
                 </div>
+                <p className="text-3xl font-bold text-foreground">{stats.thisWeek}</p>
+                <p className="text-sm text-muted-foreground mt-1">This Week</p>
               </div>
-              <p className="text-2xl font-bold text-foreground">
-                {stats.thisWeek}
-              </p>
-              <p className="text-sm text-muted-foreground">This Week</p>
-            </div>
+            </motion.div>
 
-            <div className="bg-card border border-border rounded-xl p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="p-2 rounded-lg bg-blue-500/20">
-                  <Calendar className="w-4 h-4 text-blue-500" />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="group relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5 overflow-hidden hover:border-blue-500/30 transition-all duration-300"
+            >
+              <div className="absolute inset-0 bg-linear-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute -top-12 -right-12 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-colors" />
+              <div className="relative">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2.5 rounded-xl bg-linear-to-br from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/20">
+                    <Calendar className="w-5 h-5 text-white" />
+                  </div>
                 </div>
+                <p className="text-3xl font-bold text-foreground">{stats.thisMonth}</p>
+                <p className="text-sm text-muted-foreground mt-1">This Month</p>
               </div>
-              <p className="text-2xl font-bold text-foreground">
-                {stats.thisMonth}
-              </p>
-              <p className="text-sm text-muted-foreground">This Month</p>
-            </div>
+            </motion.div>
           </div>
         )}
 
         {/* Filter Bar */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="flex flex-col sm:flex-row items-start sm:items-center gap-3"
+        >
           {/* Search */}
           <div className="relative flex-1 w-full sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -509,7 +553,7 @@ function AdminActivities() {
                 setSearchQuery(e.target.value)
                 setPageIndex(0)
               }}
-              className="pl-9"
+              className="pl-9 bg-card/50 backdrop-blur-sm border-border/50 rounded-xl focus:border-primary/50"
             />
           </div>
 
@@ -520,10 +564,10 @@ function AdminActivities() {
                 setShowFilterMenu(!showFilterMenu)
                 setShowTypeMenu(false)
               }}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-card hover:bg-accent transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm hover:bg-accent/50 transition-all duration-200"
             >
               <Filter className="w-4 h-4" />
-              <span>
+              <span className="font-medium">
                 {statusFilter === 'all'
                   ? 'All Status'
                   : statusFilter === 'private_group'
@@ -536,10 +580,10 @@ function AdminActivities() {
             <AnimatePresence>
               {showFilterMenu && (
                 <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="absolute top-full mt-2 left-0 w-40 bg-card border border-border rounded-lg shadow-lg py-2 z-10"
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  className="absolute top-full mt-2 left-0 w-44 bg-card/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-xl py-2 z-10"
                 >
                   {(
                     ['all', 'public', 'draft', 'private_group', 'link'] as const
@@ -552,8 +596,8 @@ function AdminActivities() {
                         setPageIndex(0)
                       }}
                       className={cn(
-                        'w-full px-4 py-2 text-left text-sm hover:bg-accent transition-colors flex items-center gap-2',
-                        statusFilter === status && 'text-primary',
+                        'w-full px-4 py-2.5 text-left text-sm hover:bg-accent/50 transition-all duration-200 flex items-center gap-2',
+                        statusFilter === status && 'text-primary bg-primary/10',
                       )}
                     >
                       {status === 'all' && <FileText className="w-4 h-4" />}
@@ -563,11 +607,13 @@ function AdminActivities() {
                         <Users className="w-4 h-4" />
                       )}
                       {status === 'link' && <ExternalLink className="w-4 h-4" />}
-                      {status === 'all'
-                        ? 'All Status'
-                        : status === 'private_group'
-                          ? 'Private'
-                          : status}
+                      <span className="font-medium">
+                        {status === 'all'
+                          ? 'All Status'
+                          : status === 'private_group'
+                            ? 'Private'
+                            : status}
+                      </span>
                     </button>
                   ))}
                 </motion.div>
@@ -582,14 +628,14 @@ function AdminActivities() {
                 setShowTypeMenu(!showTypeMenu)
                 setShowFilterMenu(false)
               }}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-card hover:bg-accent transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm hover:bg-accent/50 transition-all duration-200"
             >
               {typeFilter === 'all' ? (
                 <FileText className="w-4 h-4" />
               ) : (
                 getTypeIcon(typeFilter)
               )}
-              <span className="capitalize">
+              <span className="capitalize font-medium">
                 {typeFilter === 'all' ? 'All Types' : typeFilter}
               </span>
               <ChevronDown className="w-4 h-4" />
@@ -598,10 +644,10 @@ function AdminActivities() {
             <AnimatePresence>
               {showTypeMenu && (
                 <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="absolute top-full mt-2 left-0 w-40 bg-card border border-border rounded-lg shadow-lg py-2 z-10"
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  className="absolute top-full mt-2 left-0 w-44 bg-card/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-xl py-2 z-10"
                 >
                   {(
                     ['all', 'quiz', 'quest', 'lesson'] as const
@@ -614,8 +660,8 @@ function AdminActivities() {
                         setPageIndex(0)
                       }}
                       className={cn(
-                        'w-full px-4 py-2 text-left text-sm hover:bg-accent transition-colors flex items-center gap-2',
-                        typeFilter === type && 'text-primary',
+                        'w-full px-4 py-2.5 text-left text-sm hover:bg-accent/50 transition-all duration-200 flex items-center gap-2',
+                        typeFilter === type && 'text-primary bg-primary/10',
                       )}
                     >
                       {type === 'all' ? (
@@ -623,7 +669,7 @@ function AdminActivities() {
                       ) : (
                         getTypeIcon(type)
                       )}
-                      <span className="capitalize">
+                      <span className="capitalize font-medium">
                         {type === 'all' ? 'All Types' : type}
                       </span>
                     </button>
@@ -633,10 +679,10 @@ function AdminActivities() {
             </AnimatePresence>
           </div>
 
-          <p className="text-sm text-muted-foreground ml-auto">
+          <p className="text-sm text-muted-foreground ml-auto font-medium">
             {totalActivities} activit{totalActivities !== 1 ? 'ies' : 'y'}
           </p>
-        </div>
+        </motion.div>
 
         {/* Activities Table */}
         <PaginatedTable
