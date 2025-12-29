@@ -450,27 +450,23 @@ function AdminDashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="group relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5 overflow-hidden hover:border-blue-500/30 transition-all duration-300"
+                className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5"
               >
-                <div className="absolute inset-0 bg-linear-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="absolute -top-12 -right-12 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-colors" />
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="p-2.5 rounded-xl bg-linear-to-br from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/20">
-                      <Users className="w-5 h-5 text-white" />
-                    </div>
-                    {dashboardStats && dashboardStats.users.thisWeek > 0 && (
-                      <span className="flex items-center gap-1 text-xs font-medium text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full">
-                        <TrendingUp className="w-3 h-3" />+
-                        {dashboardStats.users.thisWeek}
-                      </span>
-                    )}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2.5 rounded-xl bg-blue-500">
+                    <Users className="w-5 h-5 text-white" />
                   </div>
-                  <p className="text-3xl font-bold text-foreground">
-                    {dashboardStats?.users.total || 0}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">Total Users</p>
+                  {dashboardStats && dashboardStats.users.thisWeek > 0 && (
+                    <span className="flex items-center gap-1 text-xs font-medium text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full">
+                      <TrendingUp className="w-3 h-3" />+
+                      {dashboardStats.users.thisWeek}
+                    </span>
+                  )}
                 </div>
+                <p className="text-3xl font-bold text-foreground">
+                  {dashboardStats?.users.total || 0}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">Total Users</p>
               </motion.div>
 
               {/* Total Activities */}
@@ -478,29 +474,25 @@ function AdminDashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="group relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5 overflow-hidden hover:border-purple-500/30 transition-all duration-300"
+                className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5"
               >
-                <div className="absolute inset-0 bg-linear-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="absolute -top-12 -right-12 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-colors" />
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="p-2.5 rounded-xl bg-linear-to-br from-purple-500 to-pink-500 shadow-lg shadow-purple-500/20">
-                      <FileText className="w-5 h-5 text-white" />
-                    </div>
-                    {dashboardStats && dashboardStats.activities.thisWeek > 0 && (
-                      <span className="flex items-center gap-1 text-xs font-medium text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full">
-                        <TrendingUp className="w-3 h-3" />+
-                        {dashboardStats.activities.thisWeek}
-                      </span>
-                    )}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2.5 rounded-xl bg-purple-500">
+                    <FileText className="w-5 h-5 text-white" />
                   </div>
-                  <p className="text-3xl font-bold text-foreground">
-                    {dashboardStats?.activities.total || 0}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Total Activities
-                  </p>
+                  {dashboardStats && dashboardStats.activities.thisWeek > 0 && (
+                    <span className="flex items-center gap-1 text-xs font-medium text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full">
+                      <TrendingUp className="w-3 h-3" />+
+                      {dashboardStats.activities.thisWeek}
+                    </span>
+                  )}
                 </div>
+                <p className="text-3xl font-bold text-foreground">
+                  {dashboardStats?.activities.total || 0}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Total Activities
+                </p>
               </motion.div>
 
               {/* Public Activities */}
@@ -508,23 +500,19 @@ function AdminDashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="group relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5 overflow-hidden hover:border-emerald-500/30 transition-all duration-300"
+                className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5"
               >
-                <div className="absolute inset-0 bg-linear-to-br from-emerald-500/5 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="absolute -top-12 -right-12 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-colors" />
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="p-2.5 rounded-xl bg-linear-to-br from-emerald-500 to-teal-500 shadow-lg shadow-emerald-500/20">
-                      <Sparkles className="w-5 h-5 text-white" />
-                    </div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2.5 rounded-xl bg-emerald-500">
+                    <Sparkles className="w-5 h-5 text-white" />
                   </div>
-                  <p className="text-3xl font-bold text-foreground">
-                    {dashboardStats?.activities.public || 0}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Public Activities
-                  </p>
                 </div>
+                <p className="text-3xl font-bold text-foreground">
+                  {dashboardStats?.activities.public || 0}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Public Activities
+                </p>
               </motion.div>
 
               {/* Total Plays */}
@@ -532,21 +520,17 @@ function AdminDashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="group relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5 overflow-hidden hover:border-amber-500/30 transition-all duration-300"
+                className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5"
               >
-                <div className="absolute inset-0 bg-linear-to-br from-amber-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="absolute -top-12 -right-12 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-colors" />
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="p-2.5 rounded-xl bg-linear-to-br from-amber-500 to-orange-500 shadow-lg shadow-amber-500/20">
-                      <Play className="w-5 h-5 text-white" />
-                    </div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2.5 rounded-xl bg-amber-500">
+                    <Play className="w-5 h-5 text-white" />
                   </div>
-                  <p className="text-3xl font-bold text-foreground">
-                    {dashboardStats?.plays.total.toLocaleString() || 0}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">Total Plays</p>
                 </div>
+                <p className="text-3xl font-bold text-foreground">
+                  {dashboardStats?.plays.total.toLocaleString() || 0}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">Total Plays</p>
               </motion.div>
             </div>
 
@@ -575,37 +559,37 @@ function AdminDashboard() {
                     label: 'Pending',
                     value: stats.pending,
                     status: 'pending' as ReportStatus,
-                    gradient: 'from-amber-500 to-orange-500',
+                    color: 'bg-amber-500',
                   },
                   {
                     label: 'Reviewed',
                     value: stats.reviewed,
                     status: 'reviewed' as ReportStatus,
-                    gradient: 'from-blue-500 to-cyan-500',
+                    color: 'bg-blue-500',
                   },
                   {
                     label: 'Resolved',
                     value: stats.resolved,
                     status: 'resolved' as ReportStatus,
-                    gradient: 'from-emerald-500 to-teal-500',
+                    color: 'bg-emerald-500',
                   },
                   {
                     label: 'Dismissed',
                     value: stats.dismissed,
                     status: 'dismissed' as ReportStatus,
-                    gradient: 'from-gray-500 to-slate-500',
+                    color: 'bg-gray-500',
                   },
                 ].map((stat) => (
                   <Link
                     key={stat.status}
                     to="/admin/reports"
                     search={{ status: stat.status }}
-                    className="group p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-all duration-200 text-center border border-transparent hover:border-border/50"
+                    className="p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-all duration-200 text-center border border-transparent hover:border-border/50"
                   >
                     <div
                       className={cn(
-                        'p-2 rounded-xl mx-auto w-fit mb-2 bg-linear-to-br shadow-lg transition-transform group-hover:scale-110',
-                        stat.gradient,
+                        'p-2 rounded-xl mx-auto w-fit mb-2',
+                        stat.color,
                       )}
                     >
                       <div className="text-white">{statusIcons[stat.status]}</div>
@@ -628,67 +612,64 @@ function AdminDashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
-                className="group relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6 overflow-hidden hover:border-amber-500/30 transition-all duration-300"
+                className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6"
               >
-                <div className="absolute -top-20 -right-20 w-40 h-40 bg-amber-500/5 rounded-full blur-3xl group-hover:bg-amber-500/10 transition-colors" />
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2 rounded-xl bg-linear-to-br from-amber-500 to-orange-500 shadow-lg shadow-amber-500/20">
-                        <Trophy className="w-4 h-4 text-white" />
-                      </div>
-                      <h3 className="text-base font-semibold text-foreground">
-                        Top 5 Activities
-                      </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-xl bg-amber-500">
+                      <Trophy className="w-4 h-4 text-white" />
                     </div>
-                    <Link
-                      to="/admin/activities"
-                      className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-medium transition-colors"
-                    >
-                      View all <ArrowUpRight className="w-3 h-3" />
-                    </Link>
+                    <h3 className="text-base font-semibold text-foreground">
+                      Top 5 Activities
+                    </h3>
                   </div>
-                  {dashboardStats?.topActivities.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-8">
-                      No activities yet
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {dashboardStats?.topActivities.map((activity, index) => (
-                        <a
-                          key={activity.id}
-                          href={`/activity/play/${activity.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-muted/50 transition-all duration-200"
-                        >
-                          <span
-                            className={cn(
-                              'w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 shadow-lg',
-                              index === 0
-                                ? 'bg-linear-to-br from-amber-400 to-amber-600 text-white'
-                                : index === 1
-                                  ? 'bg-linear-to-br from-gray-300 to-gray-500 text-white'
-                                  : index === 2
-                                    ? 'bg-linear-to-br from-amber-600 to-amber-800 text-white'
-                                    : 'bg-muted text-muted-foreground',
-                            )}
-                          >
-                            {index + 1}
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-foreground truncate text-sm">
-                              {activity.title}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {activity.play_count} plays
-                            </p>
-                          </div>
-                        </a>
-                      ))}
-                    </div>
-                  )}
+                  <Link
+                    to="/admin/activities"
+                    className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-medium transition-colors"
+                  >
+                    View all <ArrowUpRight className="w-3 h-3" />
+                  </Link>
                 </div>
+                {dashboardStats?.topActivities.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    No activities yet
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {dashboardStats?.topActivities.map((activity, index) => (
+                      <a
+                        key={activity.id}
+                        href={`/activity/play/${activity.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-muted/50 transition-all duration-200"
+                      >
+                        <span
+                          className={cn(
+                            'w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold shrink-0',
+                            index === 0
+                              ? 'bg-amber-500 text-white'
+                              : index === 1
+                                ? 'bg-gray-400 text-white'
+                                : index === 2
+                                  ? 'bg-amber-700 text-white'
+                                  : 'bg-muted text-muted-foreground',
+                          )}
+                        >
+                          {index + 1}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-foreground truncate text-sm">
+                            {activity.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {activity.play_count} plays
+                          </p>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                )}
               </motion.div>
 
               {/* Recent Activities */}
@@ -696,72 +677,69 @@ function AdminDashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7 }}
-                className="group relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6 overflow-hidden hover:border-blue-500/30 transition-all duration-300"
+                className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6"
               >
-                <div className="absolute -top-20 -right-20 w-40 h-40 bg-blue-500/5 rounded-full blur-3xl group-hover:bg-blue-500/10 transition-colors" />
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2 rounded-xl bg-linear-to-br from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/20">
-                        <Clock className="w-4 h-4 text-white" />
-                      </div>
-                      <h3 className="text-base font-semibold text-foreground">
-                        Recent Activities
-                      </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-xl bg-blue-500">
+                      <Clock className="w-4 h-4 text-white" />
                     </div>
-                    <Link
-                      to="/admin/activities"
-                      className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-medium transition-colors"
-                    >
-                      View all <ArrowUpRight className="w-3 h-3" />
-                    </Link>
+                    <h3 className="text-base font-semibold text-foreground">
+                      Recent Activities
+                    </h3>
                   </div>
-                  {dashboardStats?.recentActivities.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-8">
-                      No activities yet
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {dashboardStats?.recentActivities.map((activity) => (
-                        <a
-                          key={activity.id}
-                          href={`/activity/play/${activity.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-muted/50 transition-all duration-200"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-foreground truncate text-sm">
-                              {activity.title}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(activity.created_at).toLocaleDateString(
-                                'th-TH',
-                                { day: 'numeric', month: 'short' },
-                              )}{' '}
-                              {new Date(activity.created_at).toLocaleTimeString(
-                                'th-TH',
-                                { hour: '2-digit', minute: '2-digit' },
-                              )}
-                            </p>
-                          </div>
-                          <span
-                            className={cn(
-                              'text-xs px-2.5 py-1 rounded-lg shrink-0 font-medium',
-                              activity.status === 'public'
-                                ? 'bg-emerald-500/20 text-emerald-500'
-                                : activity.status === 'draft'
-                                  ? 'bg-gray-500/20 text-gray-400'
-                                  : 'bg-blue-500/20 text-blue-500',
-                            )}
-                          >
-                            {activity.status}
-                          </span>
-                        </a>
-                      ))}
-                    </div>
-                  )}
+                  <Link
+                    to="/admin/activities"
+                    className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-medium transition-colors"
+                  >
+                    View all <ArrowUpRight className="w-3 h-3" />
+                  </Link>
                 </div>
+                {dashboardStats?.recentActivities.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    No activities yet
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {dashboardStats?.recentActivities.map((activity) => (
+                      <a
+                        key={activity.id}
+                        href={`/activity/play/${activity.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-muted/50 transition-all duration-200"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-foreground truncate text-sm">
+                            {activity.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(activity.created_at).toLocaleDateString(
+                              'th-TH',
+                              { day: 'numeric', month: 'short' },
+                            )}{' '}
+                            {new Date(activity.created_at).toLocaleTimeString(
+                              'th-TH',
+                              { hour: '2-digit', minute: '2-digit' },
+                            )}
+                          </p>
+                        </div>
+                        <span
+                          className={cn(
+                            'text-xs px-2.5 py-1 rounded-lg shrink-0 font-medium',
+                            activity.status === 'public'
+                              ? 'bg-emerald-500/20 text-emerald-500'
+                              : activity.status === 'draft'
+                                ? 'bg-gray-500/20 text-gray-400'
+                                : 'bg-blue-500/20 text-blue-500',
+                          )}
+                        >
+                          {activity.status}
+                        </span>
+                      </a>
+                    ))}
+                  </div>
+                )}
               </motion.div>
 
               {/* Recent Users */}
@@ -769,68 +747,65 @@ function AdminDashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 }}
-                className="group relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6 overflow-hidden hover:border-emerald-500/30 transition-all duration-300"
+                className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6"
               >
-                <div className="absolute -top-20 -right-20 w-40 h-40 bg-emerald-500/5 rounded-full blur-3xl group-hover:bg-emerald-500/10 transition-colors" />
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2 rounded-xl bg-linear-to-br from-emerald-500 to-teal-500 shadow-lg shadow-emerald-500/20">
-                        <Users className="w-4 h-4 text-white" />
-                      </div>
-                      <h3 className="text-base font-semibold text-foreground">
-                        Recent Users
-                      </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-xl bg-emerald-500">
+                      <Users className="w-4 h-4 text-white" />
                     </div>
-                    <Link
-                      to="/admin/users"
-                      className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-medium transition-colors"
-                    >
-                      View all <ArrowUpRight className="w-3 h-3" />
-                    </Link>
+                    <h3 className="text-base font-semibold text-foreground">
+                      Recent Users
+                    </h3>
                   </div>
-                  {dashboardStats?.recentUsers.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-8">
-                      No users yet
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {dashboardStats?.recentUsers.map((user) => (
-                        <div
-                          key={user.id}
-                          className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-muted/50 transition-all duration-200"
-                        >
-                          {user.avatar_url ? (
-                            <img
-                              src={user.avatar_url}
-                              alt=""
-                              className="w-9 h-9 rounded-xl object-cover shrink-0 ring-2 ring-border/50"
-                            />
-                          ) : (
-                            <div className="w-9 h-9 rounded-xl bg-linear-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center shrink-0 ring-2 ring-border/50">
-                              <Users className="w-4 h-4 text-emerald-500" />
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-foreground truncate text-sm">
-                              {user.display_name || 'Anonymous'}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(user.created_at).toLocaleDateString(
-                                'th-TH',
-                                { day: 'numeric', month: 'short' },
-                              )}{' '}
-                              {new Date(user.created_at).toLocaleTimeString(
-                                'th-TH',
-                                { hour: '2-digit', minute: '2-digit' },
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <Link
+                    to="/admin/users"
+                    className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-medium transition-colors"
+                  >
+                    View all <ArrowUpRight className="w-3 h-3" />
+                  </Link>
                 </div>
+                {dashboardStats?.recentUsers.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    No users yet
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {dashboardStats?.recentUsers.map((user) => (
+                      <div
+                        key={user.id}
+                        className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-muted/50 transition-all duration-200"
+                      >
+                        {user.avatar_url ? (
+                          <img
+                            src={user.avatar_url}
+                            alt=""
+                            className="w-9 h-9 rounded-xl object-cover shrink-0 ring-2 ring-border/50"
+                          />
+                        ) : (
+                          <div className="w-9 h-9 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0 ring-2 ring-border/50">
+                            <Users className="w-4 h-4 text-emerald-500" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-foreground truncate text-sm">
+                            {user.display_name || 'Anonymous'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(user.created_at).toLocaleDateString(
+                              'th-TH',
+                              { day: 'numeric', month: 'short' },
+                            )}{' '}
+                            {new Date(user.created_at).toLocaleTimeString(
+                              'th-TH',
+                              { hour: '2-digit', minute: '2-digit' },
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             </div>
           </>

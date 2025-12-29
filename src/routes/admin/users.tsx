@@ -394,76 +394,60 @@ function AdminUsers() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="group relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5 overflow-hidden hover:border-blue-500/30 transition-all duration-300"
+              className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5"
             >
-              <div className="absolute inset-0 bg-linear-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="absolute -top-12 -right-12 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-colors" />
-              <div className="relative">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2.5 rounded-xl bg-linear-to-br from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/20">
-                    <Users className="w-5 h-5 text-white" />
-                  </div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2.5 rounded-xl bg-blue-500">
+                  <Users className="w-5 h-5 text-white" />
                 </div>
-                <p className="text-3xl font-bold text-foreground">{stats.total}</p>
-                <p className="text-sm text-muted-foreground mt-1">Total Users</p>
               </div>
+              <p className="text-3xl font-bold text-foreground">{stats.total}</p>
+              <p className="text-sm text-muted-foreground mt-1">Total Users</p>
             </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="group relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5 overflow-hidden hover:border-amber-500/30 transition-all duration-300"
+              className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5"
             >
-              <div className="absolute inset-0 bg-linear-to-br from-amber-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="absolute -top-12 -right-12 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-colors" />
-              <div className="relative">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2.5 rounded-xl bg-linear-to-br from-amber-500 to-orange-500 shadow-lg shadow-amber-500/20">
-                    <Crown className="w-5 h-5 text-white" />
-                  </div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2.5 rounded-xl bg-amber-500">
+                  <Crown className="w-5 h-5 text-white" />
                 </div>
-                <p className="text-3xl font-bold text-foreground">{stats.admins}</p>
-                <p className="text-sm text-muted-foreground mt-1">Admins</p>
               </div>
+              <p className="text-3xl font-bold text-foreground">{stats.admins}</p>
+              <p className="text-sm text-muted-foreground mt-1">Admins</p>
             </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="group relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5 overflow-hidden hover:border-emerald-500/30 transition-all duration-300"
+              className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5"
             >
-              <div className="absolute inset-0 bg-linear-to-br from-emerald-500/5 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="absolute -top-12 -right-12 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-colors" />
-              <div className="relative">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2.5 rounded-xl bg-linear-to-br from-emerald-500 to-teal-500 shadow-lg shadow-emerald-500/20">
-                    <TrendingUp className="w-5 h-5 text-white" />
-                  </div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2.5 rounded-xl bg-emerald-500">
+                  <TrendingUp className="w-5 h-5 text-white" />
                 </div>
-                <p className="text-3xl font-bold text-foreground">{stats.thisWeek}</p>
-                <p className="text-sm text-muted-foreground mt-1">This Week</p>
               </div>
+              <p className="text-3xl font-bold text-foreground">{stats.thisWeek}</p>
+              <p className="text-sm text-muted-foreground mt-1">This Week</p>
             </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="group relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5 overflow-hidden hover:border-purple-500/30 transition-all duration-300"
+              className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5"
             >
-              <div className="absolute inset-0 bg-linear-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="absolute -top-12 -right-12 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-colors" />
-              <div className="relative">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2.5 rounded-xl bg-linear-to-br from-purple-500 to-pink-500 shadow-lg shadow-purple-500/20">
-                    <Calendar className="w-5 h-5 text-white" />
-                  </div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2.5 rounded-xl bg-purple-500">
+                  <Calendar className="w-5 h-5 text-white" />
                 </div>
-                <p className="text-3xl font-bold text-foreground">{stats.thisMonth}</p>
-                <p className="text-sm text-muted-foreground mt-1">This Month</p>
               </div>
+              <p className="text-3xl font-bold text-foreground">{stats.thisMonth}</p>
+              <p className="text-sm text-muted-foreground mt-1">This Month</p>
             </motion.div>
           </div>
         )}
@@ -479,16 +463,16 @@ function AdminUsers() {
             <h3 className="text-sm font-semibold text-foreground mb-4">Role Distribution</h3>
             <div className="grid grid-cols-5 gap-3">
               {[
-                { label: 'Ultra', value: stats.ultra, gradient: 'from-purple-500 to-violet-500', icon: Crown },
-                { label: 'Pro', value: stats.pro, gradient: 'from-emerald-500 to-teal-500', icon: Sparkles },
-                { label: 'Plus', value: stats.plus, gradient: 'from-blue-500 to-cyan-500', icon: Pencil },
-                { label: 'Users', value: stats.users, gradient: 'from-gray-500 to-slate-500', icon: GraduationCap },
+                { label: 'Ultra', value: stats.ultra, color: 'bg-purple-500', icon: Crown },
+                { label: 'Pro', value: stats.pro, color: 'bg-emerald-500', icon: Sparkles },
+                { label: 'Plus', value: stats.plus, color: 'bg-blue-500', icon: Pencil },
+                { label: 'Users', value: stats.users, color: 'bg-gray-500', icon: GraduationCap },
               ].map((role) => (
                 <div
                   key={role.label}
-                  className="group p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-all duration-200 text-center border border-transparent hover:border-border/50"
+                  className="p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-all duration-200 text-center border border-transparent hover:border-border/50"
                 >
-                  <div className={`p-2 rounded-xl mx-auto w-fit mb-2 bg-linear-to-br ${role.gradient} shadow-lg transition-transform group-hover:scale-110`}>
+                  <div className={`p-2 rounded-xl mx-auto w-fit mb-2 ${role.color}`}>
                     <role.icon className="w-4 h-4 text-white" />
                   </div>
                   <p className="text-xl font-bold text-foreground">{role.value}</p>

@@ -245,7 +245,7 @@ function AdminReports() {
                 transition={{ delay: 0.2 }}
                 className="text-center py-16 bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl"
               >
-                <div className="p-4 rounded-2xl bg-linear-to-br from-rose-500/20 to-pink-500/20 w-fit mx-auto mb-4">
+                <div className="p-4 rounded-2xl bg-rose-500/20 w-fit mx-auto mb-4">
                   <Flag className="w-12 h-12 text-rose-500" />
                 </div>
                 <p className="text-lg text-muted-foreground">No reports found</p>
@@ -259,10 +259,9 @@ function AdminReports() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 + index * 0.05 }}
-                    className="group relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden hover:border-rose-500/30 transition-all duration-300"
+                    className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden"
                   >
-                    <div className="absolute -top-20 -right-20 w-40 h-40 bg-rose-500/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="relative p-5">
+                    <div className="p-5">
                       <div className="flex items-start justify-between gap-4">
                         {/* Report Info */}
                         <div className="flex-1 min-w-0">
@@ -365,7 +364,7 @@ function AdminReports() {
                 className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md"
               >
                 <div className="bg-card/95 backdrop-blur-xl border border-border/50 rounded-2xl shadow-2xl overflow-hidden mx-4">
-                  <div className="p-5 border-b border-border/50 bg-linear-to-r from-rose-500/10 to-pink-500/10">
+                  <div className="p-5 border-b border-border/50 bg-rose-500/10">
                     <h3 className="text-lg font-semibold text-foreground">Update Report Status</h3>
                     <p className="text-sm text-muted-foreground mt-1">
                       {selectedReport.content?.title || 'Unknown Activity'}

@@ -52,7 +52,7 @@ type SidebarItem = {
   icon: typeof LayoutDashboard
   href?: string
   disabled?: boolean
-  gradient?: string
+  color?: string
 }
 
 const sidebarItems: Array<SidebarItem> = [
@@ -61,49 +61,49 @@ const sidebarItems: Array<SidebarItem> = [
     label: 'Dashboard',
     icon: LayoutDashboard,
     href: '/admin',
-    gradient: 'from-violet-500 to-purple-500',
+    color: 'bg-violet-500',
   },
   {
     id: 'analytics',
     label: 'Analytics',
     icon: BarChart3,
     href: '/admin/analytics',
-    gradient: 'from-blue-500 to-cyan-500',
+    color: 'bg-blue-500',
   },
   {
     id: 'users',
     label: 'Users',
     icon: Users,
     href: '/admin/users',
-    gradient: 'from-emerald-500 to-teal-500',
+    color: 'bg-emerald-500',
   },
   {
     id: 'activities',
     label: 'Activities',
     icon: FileText,
     href: '/admin/activities',
-    gradient: 'from-orange-500 to-amber-500',
+    color: 'bg-orange-500',
   },
   {
     id: 'reports',
     label: 'Problem Reports',
     icon: Flag,
     href: '/admin/reports',
-    gradient: 'from-rose-500 to-pink-500',
+    color: 'bg-rose-500',
   },
   {
     id: 'usages',
     label: 'Usages',
     icon: HardDrive,
     href: '/admin/usages',
-    gradient: 'from-amber-500 to-orange-500',
+    color: 'bg-amber-500',
   },
   {
     id: 'settings',
     label: 'Settings',
     icon: Settings,
     href: '/admin/settings',
-    gradient: 'from-slate-500 to-gray-500',
+    color: 'bg-slate-500',
   },
 ]
 
@@ -126,13 +126,7 @@ export function AdminLayout({
   }, [user?.id, profile, fetchProfile])
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-background via-background to-violet-950/20 flex">
-      {/* Background Effects */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 w-[600px] h-[600px] bg-primary/3 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
-      </div>
+    <div className="min-h-screen bg-background flex">
 
       {/* Mobile sidebar overlay */}
       <AnimatePresence>
@@ -199,14 +193,10 @@ export function AdminLayout({
                   className={cn(
                     'group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200',
                     activeItem === item.id
-                      ? `bg-linear-to-r ${item.gradient} text-white shadow-lg`
+                      ? `${item.color} text-white`
                       : 'text-muted-foreground hover:text-foreground hover:bg-accent/50',
                   )}
                 >
-                  {/* Active glow effect */}
-                  {activeItem === item.id && (
-                    <div className={`absolute inset-0 rounded-xl bg-linear-to-r ${item.gradient} blur-xl opacity-30 -z-10`} />
-                  )}
                   <item.icon className={cn(
                     'w-5 h-5 transition-transform duration-200',
                     activeItem !== item.id && 'group-hover:scale-110',

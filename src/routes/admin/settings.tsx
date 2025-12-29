@@ -124,18 +124,16 @@ function AdminSettings() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="group relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6 overflow-hidden hover:border-violet-500/30 transition-all duration-300"
+          className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6"
         >
-          <div className="absolute -top-20 -right-20 w-40 h-40 bg-violet-500/5 rounded-full blur-3xl group-hover:bg-violet-500/10 transition-colors" />
-          <div className="relative">
-            <div className="flex items-center gap-2 mb-6">
-              <div className="p-2 rounded-xl bg-linear-to-br from-violet-500 to-purple-500 shadow-lg shadow-violet-500/20">
-                <Settings className="w-4 h-4 text-white" />
-              </div>
-              <h2 className="text-lg font-semibold text-foreground">
-                General Settings
-              </h2>
+          <div className="flex items-center gap-2 mb-6">
+            <div className="p-2 rounded-xl bg-violet-500">
+              <Settings className="w-4 h-4 text-white" />
             </div>
+            <h2 className="text-lg font-semibold text-foreground">
+              General Settings
+            </h2>
+          </div>
 
             <div className="space-y-4">
               <div>
@@ -193,7 +191,6 @@ function AdminSettings() {
                 </div>
               )}
             </div>
-          </div>
         </motion.div>
 
         {/* Limits Settings */}
@@ -201,16 +198,14 @@ function AdminSettings() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="group relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6 overflow-hidden hover:border-blue-500/30 transition-all duration-300"
+          className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6"
         >
-          <div className="absolute -top-20 -right-20 w-40 h-40 bg-blue-500/5 rounded-full blur-3xl group-hover:bg-blue-500/10 transition-colors" />
-          <div className="relative">
-            <div className="flex items-center gap-2 mb-6">
-              <div className="p-2 rounded-xl bg-linear-to-br from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/20">
-                <Server className="w-4 h-4 text-white" />
-              </div>
-              <h2 className="text-lg font-semibold text-foreground">Limits</h2>
+          <div className="flex items-center gap-2 mb-6">
+            <div className="p-2 rounded-xl bg-blue-500">
+              <Server className="w-4 h-4 text-white" />
             </div>
+            <h2 className="text-lg font-semibold text-foreground">Limits</h2>
+          </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
@@ -261,7 +256,6 @@ function AdminSettings() {
                 />
               </div>
             </div>
-          </div>
         </motion.div>
 
         {/* AI Settings */}
@@ -269,18 +263,16 @@ function AdminSettings() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="group relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6 overflow-hidden hover:border-purple-500/30 transition-all duration-300"
+          className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6"
         >
-          <div className="absolute -top-20 -right-20 w-40 h-40 bg-purple-500/5 rounded-full blur-3xl group-hover:bg-purple-500/10 transition-colors" />
-          <div className="relative">
-            <div className="flex items-center gap-2 mb-6">
-              <div className="p-2 rounded-xl bg-linear-to-br from-purple-500 to-pink-500 shadow-lg shadow-purple-500/20">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
-              <h2 className="text-lg font-semibold text-foreground">
-                AI Settings
-              </h2>
+          <div className="flex items-center gap-2 mb-6">
+            <div className="p-2 rounded-xl bg-purple-500">
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
+            <h2 className="text-lg font-semibold text-foreground">
+              AI Settings
+            </h2>
+          </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -316,7 +308,6 @@ function AdminSettings() {
                 />
               </div>
             </div>
-          </div>
         </motion.div>
 
         {/* Feature Toggles */}
@@ -324,16 +315,14 @@ function AdminSettings() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="group relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6 overflow-hidden hover:border-emerald-500/30 transition-all duration-300"
+          className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6"
         >
-          <div className="absolute -top-20 -right-20 w-40 h-40 bg-emerald-500/5 rounded-full blur-3xl group-hover:bg-emerald-500/10 transition-colors" />
-          <div className="relative">
-            <div className="flex items-center gap-2 mb-6">
-              <div className="p-2 rounded-xl bg-linear-to-br from-emerald-500 to-teal-500 shadow-lg shadow-emerald-500/20">
-                <ToggleRight className="w-4 h-4 text-white" />
-              </div>
-              <h2 className="text-lg font-semibold text-foreground">Features</h2>
+          <div className="flex items-center gap-2 mb-6">
+            <div className="p-2 rounded-xl bg-emerald-500">
+              <ToggleRight className="w-4 h-4 text-white" />
             </div>
+            <h2 className="text-lg font-semibold text-foreground">Features</h2>
+          </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between py-3 px-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
@@ -353,7 +342,6 @@ function AdminSettings() {
                 />
               </div>
             </div>
-          </div>
         </motion.div>
 
         {/* Save Button */}
