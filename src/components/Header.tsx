@@ -7,7 +7,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from '../hooks/useTranslation'
 import { Route } from '../routes/__root'
 import { useAuthStore } from '../stores/auth-store'
-import { useLanguageStore } from '../stores/language-store'
 import { useProfileStore } from '../stores/profile-store'
 
 export default function Header() {
@@ -25,8 +24,7 @@ export default function Header() {
   const { profile, fetchProfile } = useProfileStore()
 
   // Language & Translation
-  const { language, toggleLanguage } = useLanguageStore()
-  const { t } = useTranslation()
+  const { language, toggleLanguage, t } = useTranslation()
 
   // Fetch profile when user is available
   useEffect(() => {

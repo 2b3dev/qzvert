@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { useLanguageStore } from '../stores/language-store'
+import { Route as RootRoute } from '../routes/__root'
 import thTranslations from '../locales/th.json'
 import enTranslations from '../locales/en.json'
 
@@ -19,7 +20,11 @@ function get(obj: Record<string, unknown>, path: string): string {
 }
 
 export function useTranslation() {
-  const { language, setLanguage, toggleLanguage } = useLanguageStore()
+  const { language: storeLanguage, isHydrated, setLanguage, toggleLanguage } = useLanguageStore()
+
+  // Use SSR loader data until store is hydrated to prevent flash
+  const loaderData = RootRoute.useLoaderData()
+  const language = isHydrated ? storeLanguage : (loaderData?.language ?? storeLanguage)
 
   const t = useCallback(
     (key: string, params?: Record<string, string | number>): string => {
