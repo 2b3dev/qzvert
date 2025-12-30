@@ -1,6 +1,7 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import {
+  Calculator,
   Loader2,
   Save,
   Server,
@@ -16,8 +17,13 @@ import { Input } from '../../components/ui/input'
 import { cn } from '../../lib/utils'
 import {
   checkAdminAccess,
+  GEMINI_FREE_TIER,
+  GEMINI_PRICING,
+  getGeminiPricingSettings,
   getSystemSettings,
+  saveGeminiPricingSettings,
   updateSystemSettings,
+  type GeminiPricingSettings,
   type SystemSettings,
 } from '../../server/admin-settings'
 
@@ -66,12 +72,33 @@ function AdminSettings() {
   const [saving, setSaving] = useState(false)
   const [settings, setSettings] = useState<SystemSettings | null>(null)
 
+  // AI Pricing Settings state
+  const [pricingSettings, setPricingSettings] =
+    useState<GeminiPricingSettings | null>(null)
+  const [savingPricing, setSavingPricing] = useState(false)
+  const [calcInputPrice, setCalcInputPrice] = useState<string>(
+    GEMINI_PRICING['gemini-2.0-flash'].input.toString(),
+  )
+  const [calcOutputPrice, setCalcOutputPrice] = useState<string>(
+    GEMINI_PRICING['gemini-2.0-flash'].output.toString(),
+  )
+  const [calcFreeTierQuota, setCalcFreeTierQuota] = useState<string>(
+    GEMINI_FREE_TIER.requestsPerDay.toString(),
+  )
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
       try {
-        const settingsData = await getSystemSettings()
+        const [settingsData, pricingData] = await Promise.all([
+          getSystemSettings(),
+          getGeminiPricingSettings(),
+        ])
         setSettings(settingsData)
+        setPricingSettings(pricingData)
+        setCalcInputPrice(pricingData.inputPrice.toString())
+        setCalcOutputPrice(pricingData.outputPrice.toString())
+        setCalcFreeTierQuota(pricingData.freeTierQuota.toString())
       } catch (error) {
         console.error('Failed to fetch settings:', error)
         toast.error('Failed to load settings')
@@ -96,6 +123,32 @@ function AdminSettings() {
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleSavePricing = async () => {
+    setSavingPricing(true)
+    try {
+      const newPricing = {
+        inputPrice: parseFloat(calcInputPrice) || 0,
+        outputPrice: parseFloat(calcOutputPrice) || 0,
+        freeTierQuota: parseFloat(calcFreeTierQuota) || 0,
+      }
+      await saveGeminiPricingSettings({ data: newPricing })
+      setPricingSettings(newPricing)
+      toast.success('Pricing settings saved')
+    } catch (error) {
+      console.error('Failed to save pricing settings:', error)
+      toast.error('Failed to save pricing settings')
+    } finally {
+      setSavingPricing(false)
+    }
+  }
+
+  const resetPricingToDefaults = () => {
+    setCalcInputPrice(GEMINI_PRICING['gemini-2.0-flash'].input.toString())
+    setCalcOutputPrice(GEMINI_PRICING['gemini-2.0-flash'].output.toString())
+    setCalcFreeTierQuota(GEMINI_FREE_TIER.requestsPerDay.toString())
+    toast.success('Reset to default values (not saved yet)')
   }
 
   const updateSetting = <K extends keyof SystemSettings>(
@@ -310,6 +363,116 @@ function AdminSettings() {
             </div>
         </motion.div>
 
+        {/* AI Pricing Settings */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500">
+                <Calculator className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">
+                  AI Pricing
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Gemini API cost calculation settings
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={resetPricingToDefaults}
+                className="px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              >
+                Reset to defaults
+              </button>
+              <Button
+                onClick={handleSavePricing}
+                disabled={savingPricing}
+                size="sm"
+                className="rounded-lg"
+              >
+                {savingPricing ? (
+                  <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                ) : (
+                  <Save className="w-3 h-3 mr-1" />
+                )}
+                Save
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">
+                Input Price ($/1M tokens)
+              </label>
+              <Input
+                type="number"
+                step="0.01"
+                min={0}
+                value={calcInputPrice}
+                onChange={(e) => setCalcInputPrice(e.target.value)}
+                className="bg-card/50 border-border/50 rounded-xl"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Default: ${GEMINI_PRICING['gemini-2.0-flash'].input}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">
+                Output Price ($/1M tokens)
+              </label>
+              <Input
+                type="number"
+                step="0.01"
+                min={0}
+                value={calcOutputPrice}
+                onChange={(e) => setCalcOutputPrice(e.target.value)}
+                className="bg-card/50 border-border/50 rounded-xl"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Default: ${GEMINI_PRICING['gemini-2.0-flash'].output}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">
+                Free Tier Quota (req/day)
+              </label>
+              <Input
+                type="number"
+                min={0}
+                value={calcFreeTierQuota}
+                onChange={(e) => setCalcFreeTierQuota(e.target.value)}
+                className="bg-card/50 border-border/50 rounded-xl"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Default: {GEMINI_FREE_TIER.requestsPerDay.toLocaleString()}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 p-3 rounded-xl bg-muted/30 text-sm text-muted-foreground">
+            <p>
+              These settings are used for cost estimation calculations in the{' '}
+              <a
+                href="/admin/usages"
+                className="text-primary hover:underline"
+              >
+                Usages
+              </a>{' '}
+              page. They don't affect actual API billing.
+            </p>
+          </div>
+        </motion.div>
+
         {/* Feature Toggles */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -324,24 +487,24 @@ function AdminSettings() {
             <h2 className="text-lg font-semibold text-foreground">Features</h2>
           </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between py-3 px-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
-                <div>
-                  <p className="font-medium text-foreground">
-                    Enable AI Generation
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Allow AI-powered content generation
-                  </p>
-                </div>
-                <Toggle
-                  checked={settings?.enableAIGeneration ?? true}
-                  onChange={(checked) =>
-                    updateSetting('enableAIGeneration', checked)
-                  }
-                />
+          <div className="space-y-2">
+            <div className="flex items-center justify-between py-3 px-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
+              <div>
+                <p className="font-medium text-foreground">
+                  Enable AI Generation
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Allow AI-powered content generation
+                </p>
               </div>
+              <Toggle
+                checked={settings?.enableAIGeneration ?? true}
+                onChange={(checked) =>
+                  updateSetting('enableAIGeneration', checked)
+                }
+              />
             </div>
+          </div>
         </motion.div>
 
         {/* Save Button */}

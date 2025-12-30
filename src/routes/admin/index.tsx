@@ -32,6 +32,7 @@ import {
   getAdminDashboardStats,
   getReportStats,
 } from '../../server/reports'
+import { getCurrentMonthAIUsage } from '../../server/admin-settings'
 import { useAuthStore } from '../../stores/auth-store'
 
 interface DashboardStats {
@@ -252,6 +253,11 @@ function AdminDashboard() {
     resolved: 0,
     dismissed: 0,
   })
+  const [aiUsage, setAiUsage] = useState<{
+    requests: number
+    tokens: number
+    monthName: string
+  } | null>(null)
 
   // Live mode state
   const [liveMode, setLiveMode] = useState(false)
@@ -298,13 +304,24 @@ function AdminDashboard() {
     }
   }, [])
 
+  // Fetch AI usage stats function
+  const fetchAIUsage = useCallback(async () => {
+    try {
+      const usage = await getCurrentMonthAIUsage()
+      setAiUsage(usage)
+    } catch (error) {
+      console.error('Failed to fetch AI usage:', error)
+    }
+  }, [])
+
   // Fetch dashboard stats on mount (only if admin)
   useEffect(() => {
     if (isAdmin) {
       fetchDashboardStats()
       fetchReportStats()
+      fetchAIUsage()
     }
-  }, [isAdmin, fetchDashboardStats, fetchReportStats])
+  }, [isAdmin, fetchDashboardStats, fetchReportStats, fetchAIUsage])
 
   // Live mode: Supabase Realtime subscription
   useEffect(() => {
@@ -534,76 +551,133 @@ function AdminDashboard() {
               </motion.div>
             </div>
 
-            {/* Report Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-foreground">
-                  Report Status
-                </h3>
-                <Link
-                  to="/admin/reports"
-                  search={{}}
-                  className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-medium transition-colors"
-                >
-                  View all <ArrowUpRight className="w-3 h-3" />
-                </Link>
-              </div>
-              <div className="grid grid-cols-4 gap-3">
-                {[
-                  {
-                    label: 'Pending',
-                    value: stats.pending,
-                    status: 'pending' as ReportStatus,
-                    color: 'bg-amber-500',
-                  },
-                  {
-                    label: 'Reviewed',
-                    value: stats.reviewed,
-                    status: 'reviewed' as ReportStatus,
-                    color: 'bg-blue-500',
-                  },
-                  {
-                    label: 'Resolved',
-                    value: stats.resolved,
-                    status: 'resolved' as ReportStatus,
-                    color: 'bg-emerald-500',
-                  },
-                  {
-                    label: 'Dismissed',
-                    value: stats.dismissed,
-                    status: 'dismissed' as ReportStatus,
-                    color: 'bg-gray-500',
-                  },
-                ].map((stat) => (
+            {/* Report Stats & Gemini Usage */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Report Stats */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Report Status
+                  </h3>
                   <Link
-                    key={stat.status}
                     to="/admin/reports"
-                    search={{ status: stat.status }}
-                    className="p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-all duration-200 text-center border border-transparent hover:border-border/50"
+                    search={{}}
+                    className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-medium transition-colors"
                   >
-                    <div
-                      className={cn(
-                        'p-2 rounded-xl mx-auto w-fit mb-2',
-                        stat.color,
-                      )}
-                    >
-                      <div className="text-white">{statusIcons[stat.status]}</div>
-                    </div>
-                    <p className="text-xl font-bold text-foreground">
-                      {stat.value}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {stat.label}
-                    </p>
+                    View all <ArrowUpRight className="w-3 h-3" />
                   </Link>
-                ))}
-              </div>
-            </motion.div>
+                </div>
+                <div className="grid grid-cols-4 gap-3">
+                  {[
+                    {
+                      label: 'Pending',
+                      value: stats.pending,
+                      status: 'pending' as ReportStatus,
+                      color: 'bg-amber-500',
+                    },
+                    {
+                      label: 'Reviewed',
+                      value: stats.reviewed,
+                      status: 'reviewed' as ReportStatus,
+                      color: 'bg-blue-500',
+                    },
+                    {
+                      label: 'Resolved',
+                      value: stats.resolved,
+                      status: 'resolved' as ReportStatus,
+                      color: 'bg-emerald-500',
+                    },
+                    {
+                      label: 'Dismissed',
+                      value: stats.dismissed,
+                      status: 'dismissed' as ReportStatus,
+                      color: 'bg-gray-500',
+                    },
+                  ].map((stat) => (
+                    <Link
+                      key={stat.status}
+                      to="/admin/reports"
+                      search={{ status: stat.status }}
+                      className="p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-all duration-200 text-center border border-transparent hover:border-border/50"
+                    >
+                      <div
+                        className={cn(
+                          'p-2 rounded-xl mx-auto w-fit mb-2',
+                          stat.color,
+                        )}
+                      >
+                        <div className="text-white">
+                          {statusIcons[stat.status]}
+                        </div>
+                      </div>
+                      <p className="text-xl font-bold text-foreground">
+                        {stat.value}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {stat.label}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              </motion.div>
+
+              {/* Gemini Usage */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.55 }}
+                className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500">
+                      <Sparkles className="w-3.5 h-3.5 text-white" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-foreground">
+                      Gemini Usage
+                    </h3>
+                    {aiUsage && (
+                      <span className="text-xs text-muted-foreground">
+                        ({aiUsage.monthName})
+                      </span>
+                    )}
+                  </div>
+                  <Link
+                    to="/admin/usages"
+                    className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-medium transition-colors"
+                  >
+                    View details <ArrowUpRight className="w-3 h-3" />
+                  </Link>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                    <p className="text-2xl font-bold text-foreground">
+                      {aiUsage?.requests.toLocaleString() || 0}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Requests
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                    <p className="text-2xl font-bold text-foreground">
+                      {aiUsage
+                        ? aiUsage.tokens >= 1_000_000
+                          ? `${(aiUsage.tokens / 1_000_000).toFixed(1)}M`
+                          : aiUsage.tokens >= 1_000
+                            ? `${(aiUsage.tokens / 1_000).toFixed(1)}K`
+                            : aiUsage.tokens.toLocaleString()
+                        : 0}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">Tokens</p>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
 
             {/* Top 5 Activities, Recent Activities, Recent Users */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

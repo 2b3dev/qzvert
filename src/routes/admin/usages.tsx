@@ -23,8 +23,10 @@ import {
   getAIUsageStats,
   getDailyAIUsageChart,
   getDatabaseStats,
+  getGeminiPricingSettings,
   getStorageStats,
   getTodayAIUsage,
+  saveGeminiPricingSettings,
   type DatabaseStats,
   type StorageStats,
 } from '../../server/admin-settings'
@@ -86,6 +88,7 @@ function AdminUsages() {
   const [showCostCalculator, setShowCostCalculator] = useState(false)
   const [showRequests, setShowRequests] = useState(true)
   const [showTokens, setShowTokens] = useState(true)
+  const [savingSettings, setSavingSettings] = useState(false)
 
   // Convert selectedPeriod to chart time range
   const getChartTimeRange = (): AIUsageTimeRange => {
@@ -154,20 +157,31 @@ function AdminUsages() {
     const fetchData = async () => {
       setLoading(true)
       try {
-        const [storageData, dbData, aiData, todayData, chartResult] =
-          await Promise.all([
-            getStorageStats(),
-            getDatabaseStats(),
-            getAIUsageStats({ data: { days: 30 } }),
-            getTodayAIUsage(),
-            getDailyAIUsageChart({ data: { timeRange: 'week' } }), // Default to week (7d)
-          ])
+        const [
+          storageData,
+          dbData,
+          aiData,
+          todayData,
+          chartResult,
+          pricingSettings,
+        ] = await Promise.all([
+          getStorageStats(),
+          getDatabaseStats(),
+          getAIUsageStats({ data: { days: 30 } }),
+          getTodayAIUsage(),
+          getDailyAIUsageChart({ data: { timeRange: 'week' } }), // Default to week (7d)
+          getGeminiPricingSettings(),
+        ])
         setStorageStats(storageData)
         setDbStats(dbData)
         setAiStats(aiData)
         setTodayUsage(todayData)
         setChartData(chartResult.data)
         setChartSummary(chartResult.summary)
+        // Load pricing settings from DB
+        setCalcInputPrice(pricingSettings.inputPrice.toString())
+        setCalcOutputPrice(pricingSettings.outputPrice.toString())
+        setCalcFreeTierQuota(pricingSettings.freeTierQuota.toString())
       } catch (error) {
         console.error('Failed to fetch usage data:', error)
         toast.error('Failed to load usage data')
@@ -445,24 +459,31 @@ function AdminUsages() {
                               Pricing Settings
                             </p>
                             <button
-                              onClick={() => {
-                                setCalcInputPrice(
-                                  GEMINI_PRICING[
-                                    'gemini-2.0-flash'
-                                  ].input.toString(),
-                                )
-                                setCalcOutputPrice(
-                                  GEMINI_PRICING[
-                                    'gemini-2.0-flash'
-                                  ].output.toString(),
-                                )
-                                setCalcFreeTierQuota(
-                                  GEMINI_FREE_TIER.requestsPerDay.toString(),
-                                )
+                              onClick={async () => {
+                                setSavingSettings(true)
+                                try {
+                                  await saveGeminiPricingSettings({
+                                    data: {
+                                      inputPrice:
+                                        parseFloat(calcInputPrice) || 0,
+                                      outputPrice:
+                                        parseFloat(calcOutputPrice) || 0,
+                                      freeTierQuota:
+                                        parseFloat(calcFreeTierQuota) || 0,
+                                    },
+                                  })
+                                  toast.success('Settings saved')
+                                } catch (error) {
+                                  console.error('Failed to save settings:', error)
+                                  toast.error('Failed to save settings')
+                                } finally {
+                                  setSavingSettings(false)
+                                }
                               }}
-                              className="px-2 py-0.5 rounded bg-muted hover:bg-muted/80 text-foreground text-[10px] transition-colors"
+                              disabled={savingSettings}
+                              className="px-2 py-0.5 rounded bg-purple-500 hover:bg-purple-600 text-white text-[10px] transition-colors disabled:opacity-50"
                             >
-                              Reset
+                              {savingSettings ? 'Saving...' : 'Save'}
                             </button>
                           </div>
                           <div className="grid grid-cols-3 gap-2">

@@ -970,3 +970,158 @@ export const clearOldAIUsageLogs = createServerFn({ method: 'POST' })
       return { success: true, deletedCount: count || 0 }
     },
   )
+
+// Get current month AI usage stats (admin only) - for dashboard overview
+export const getCurrentMonthAIUsage = createServerFn({ method: 'GET' }).handler(
+  async (): Promise<{
+    requests: number
+    tokens: number
+    monthName: string
+  }> => {
+    const supabase = getSupabaseFromCookies()
+
+    // Verify admin
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+    if (userError || !user) {
+      throw new Error('Authentication required')
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.role !== 'admin') {
+      throw new Error('Admin access required')
+    }
+
+    // Get first day of current month
+    const now = new Date()
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    firstDayOfMonth.setUTCHours(0, 0, 0, 0)
+
+    // Fetch all logs from current month
+    const { data: logs, error } = await supabase
+      .from('ai_usage_logs')
+      .select('total_tokens')
+      .gte('created_at', firstDayOfMonth.toISOString())
+
+    if (error) {
+      console.error('Failed to fetch current month AI usage:', error)
+      throw new Error('Failed to fetch usage data')
+    }
+
+    const totalTokens =
+      logs?.reduce((sum, log) => sum + (log.total_tokens || 0), 0) || 0
+
+    return {
+      requests: logs?.length || 0,
+      tokens: totalTokens,
+      monthName: now.toLocaleDateString('en-US', {
+        month: 'short',
+        year: 'numeric',
+      }),
+    }
+  },
+)
+
+// ============================================
+// Admin Settings (Pricing Configuration)
+// ============================================
+
+export interface GeminiPricingSettings {
+  inputPrice: number
+  outputPrice: number
+  freeTierQuota: number
+}
+
+// Get Gemini pricing settings from DB (admin only)
+export const getGeminiPricingSettings = createServerFn({
+  method: 'GET',
+}).handler(async (): Promise<GeminiPricingSettings> => {
+  const supabase = getSupabaseFromCookies()
+
+  // Verify admin
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+  if (userError || !user) {
+    throw new Error('Authentication required')
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.role !== 'admin') {
+    throw new Error('Admin access required')
+  }
+
+  // Get settings from system_settings table
+  const { data: settings, error } = await supabase
+    .from('system_settings')
+    .select('value')
+    .eq('key', 'gemini_pricing')
+    .single()
+
+  if (error || !settings) {
+    // Return defaults if not found
+    return {
+      inputPrice: GEMINI_PRICING['gemini-2.0-flash'].input,
+      outputPrice: GEMINI_PRICING['gemini-2.0-flash'].output,
+      freeTierQuota: GEMINI_FREE_TIER.requestsPerDay,
+    }
+  }
+
+  return settings.value as GeminiPricingSettings
+})
+
+// Save Gemini pricing settings to DB (admin only)
+export const saveGeminiPricingSettings = createServerFn({ method: 'POST' })
+  .inputValidator((data: GeminiPricingSettings) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    const supabase = getSupabaseFromCookies()
+
+    // Verify admin
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+    if (userError || !user) {
+      throw new Error('Authentication required')
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.role !== 'admin') {
+      throw new Error('Admin access required')
+    }
+
+    // Upsert settings to system_settings table
+    const { error } = await supabase.from('system_settings').upsert(
+      {
+        key: 'gemini_pricing',
+        value: data,
+        description: 'Gemini API pricing configuration for cost calculation',
+      },
+      { onConflict: 'key' },
+    )
+
+    if (error) {
+      console.error('Failed to save pricing settings:', error)
+      throw new Error('Failed to save settings')
+    }
+
+    return { success: true }
+  })
