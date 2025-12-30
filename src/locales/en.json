@@ -196,6 +196,7 @@
     "title": "Create Activity",
     "subtitle": "Choose the type of activity you want to create",
     "sidebar": {
+      "home": "Home",
       "learningContent": "Learning Content",
       "organization": "Organization",
       "mediaAssets": "Media & Assets",

@@ -10,6 +10,7 @@ import {
   FolderOpen,
   GitBranch,
   GraduationCap,
+  Home,
   Image,
   Languages,
   LayoutTemplate,
@@ -201,7 +202,7 @@ const sidebarSections: SidebarSection[] = [
 
 interface CreateSidebarProps {
   activeCreator: CreatorType | null
-  onSelectCreator: (type: CreatorType) => void
+  onSelectCreator: (type: CreatorType | null) => void
   isCollapsed: boolean
   onToggleCollapse: () => void
   isMobileOpen: boolean
@@ -278,8 +279,40 @@ export function CreateSidebar({
         </button>
       </div>
 
+      {/* Home Button */}
+      <div className="px-2 pt-4 pb-2">
+        <motion.button
+          whileHover={{ scale: 1.02, x: isCollapsed ? 0 : 4 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => {
+            onSelectCreator(null)
+            onCloseMobile()
+          }}
+          className={cn(
+            'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
+            isCollapsed && 'justify-center px-2',
+            activeCreator === null
+              ? 'bg-primary/10 text-primary border-l-2 border-primary'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+          )}
+          title={isCollapsed ? t('create.sidebar.home') : undefined}
+        >
+          <Home
+            className={cn(
+              'w-5 h-5 flex-shrink-0',
+              activeCreator === null && 'text-primary',
+            )}
+          />
+          {!isCollapsed && (
+            <span className="flex-1 text-left text-sm font-medium">
+              {t('create.sidebar.home')}
+            </span>
+          )}
+        </motion.button>
+      </div>
+
       {/* Sections */}
-      <div className="flex-1 overflow-y-auto py-4 px-2">
+      <div className="flex-1 overflow-y-auto py-2 px-2">
         {sidebarSections.map((section) => (
           <div key={section.id} className="mb-6">
             {/* Section title */}
