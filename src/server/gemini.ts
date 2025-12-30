@@ -51,13 +51,57 @@ function cleanAndParseJSON(textContent: string): unknown {
   // 5. Fix broken strings with unescaped backslashes
   cleanedContent = cleanedContent.replace(/\\(?!["\\/bfnrtu])/g, '\\\\')
 
-  // 6. Try to extract valid JSON if there's extra content
+  // 6. Fix unquoted property names (e.g., key: -> "key":)
+  // Match property names at the start of lines or after { or ,
+  cleanedContent = cleanedContent.replace(
+    /([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g,
+    '$1"$2":',
+  )
+
+  // 7. Fix single quotes used instead of double quotes for property names
+  cleanedContent = cleanedContent.replace(
+    /([{,]\s*)'([^']+)'\s*:/g,
+    '$1"$2":',
+  )
+
+  // 8. Fix single quotes used for string values
+  // Be careful not to break apostrophes in text
+  cleanedContent = cleanedContent.replace(
+    /:\s*'([^']*)'/g,
+    ': "$1"',
+  )
+
+  // 9. Try to extract valid JSON if there's extra content
   const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/)
   if (jsonMatch) {
     cleanedContent = jsonMatch[0]
   }
 
-  return JSON.parse(cleanedContent)
+  // First attempt: try to parse directly
+  try {
+    return JSON.parse(cleanedContent)
+  } catch (firstError) {
+    // Second attempt: try more aggressive fixes
+
+    // Fix multi-line strings by joining them
+    cleanedContent = cleanedContent.replace(/"\s*\n\s*/g, ' ')
+
+    // Remove any BOM or zero-width characters
+    cleanedContent = cleanedContent.replace(/[\uFEFF\u200B-\u200D\u2060]/g, '')
+
+    // Try parsing again
+    try {
+      return JSON.parse(cleanedContent)
+    } catch (secondError) {
+      // Third attempt: try to use a more lenient approach
+      // Replace problematic unicode quotes with regular quotes
+      cleanedContent = cleanedContent
+        .replace(/[""]/g, '"')
+        .replace(/['']/g, "'")
+
+      return JSON.parse(cleanedContent)
+    }
+  }
 }
 
 // Helper function to delay
@@ -390,6 +434,7 @@ Rules:
             topK: 40,
             topP: 0.95,
             maxOutputTokens: 8192,
+            responseMimeType: 'application/json',
           },
         }),
       })

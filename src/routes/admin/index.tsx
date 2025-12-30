@@ -373,7 +373,8 @@ function AdminDashboard() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'activities' },
-        () => {
+        (payload) => {
+          console.log('[Realtime] activities changed:', payload)
           fetchDashboardStats(false, statsPeriodRef.current)
         },
       )
@@ -384,7 +385,24 @@ function AdminDashboard() {
           fetchReportStats()
         },
       )
-      .subscribe()
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'ai_usage_logs' },
+        (payload) => {
+          console.log('[Realtime] ai_usage_logs changed:', payload)
+          fetchAIUsage()
+        },
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('[Realtime] Subscribed to admin dashboard changes')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('[Realtime] Failed to subscribe - check if Realtime is enabled for tables')
+          toast.error('Live mode connection failed', {
+            description: 'Please check if Realtime is enabled in Supabase',
+          })
+        }
+      })
 
     channelRef.current = channel
 
@@ -394,7 +412,7 @@ function AdminDashboard() {
         channelRef.current = null
       }
     }
-  }, [liveMode, fetchDashboardStats, fetchReportStats])
+  }, [liveMode, fetchDashboardStats, fetchReportStats, fetchAIUsage])
 
   // Show loading while auth is initializing or loading
   if (!isInitialized || authLoading) {
