@@ -3,8 +3,6 @@ import { motion } from 'framer-motion'
 import {
   AlertTriangle,
   BarChart3,
-  CheckCircle,
-  ChevronDown,
   Cpu,
   Database,
   ExternalLink,
@@ -17,20 +15,20 @@ import {
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { AdminLayout } from '../../components/layouts/AdminLayout'
+import { cn } from '../../lib/utils'
 import {
   checkAdminAccess,
+  GEMINI_FREE_TIER,
+  GEMINI_PRICING,
   getAIUsageStats,
   getDailyAIUsageChart,
   getDatabaseStats,
   getStorageStats,
   getTodayAIUsage,
-  GEMINI_FREE_TIER,
-  GEMINI_PRICING,
   type DatabaseStats,
   type StorageStats,
 } from '../../server/admin-settings'
 import type { AIUsageStats, AIUsageTimeRange } from '../../types/database'
-import { cn } from '../../lib/utils'
 
 export const Route = createFileRoute('/admin/usages')({
   beforeLoad: async () => {
@@ -73,11 +71,21 @@ function AdminUsages() {
   const [chartLoading, setChartLoading] = useState(false)
 
   // Cost calculator state - editable pricing parameters
-  const [calcInputPrice, setCalcInputPrice] = useState<string>(GEMINI_PRICING['gemini-2.0-flash'].input.toString())
-  const [calcOutputPrice, setCalcOutputPrice] = useState<string>(GEMINI_PRICING['gemini-2.0-flash'].output.toString())
-  const [calcFreeTierQuota, setCalcFreeTierQuota] = useState<string>(GEMINI_FREE_TIER.requestsPerDay.toString())
-  const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '365d' | 'total'>('7d')
+  const [calcInputPrice, setCalcInputPrice] = useState<string>(
+    GEMINI_PRICING['gemini-2.0-flash'].input.toString(),
+  )
+  const [calcOutputPrice, setCalcOutputPrice] = useState<string>(
+    GEMINI_PRICING['gemini-2.0-flash'].output.toString(),
+  )
+  const [calcFreeTierQuota, setCalcFreeTierQuota] = useState<string>(
+    GEMINI_FREE_TIER.requestsPerDay.toString(),
+  )
+  const [selectedPeriod, setSelectedPeriod] = useState<
+    '7d' | '30d' | '365d' | 'total'
+  >('7d')
   const [showCostCalculator, setShowCostCalculator] = useState(false)
+  const [showRequests, setShowRequests] = useState(true)
+  const [showTokens, setShowTokens] = useState(true)
 
   // Convert selectedPeriod to chart time range
   const getChartTimeRange = (): AIUsageTimeRange => {
@@ -94,7 +102,7 @@ function AdminUsages() {
     days: number,
     inputPrice: number,
     outputPrice: number,
-    freeTierQuota: number
+    freeTierQuota: number,
   ) => {
     // Calculate daily averages
     const avgInputTokensPerDay = inputTokens / Math.max(days, 1)
@@ -113,7 +121,9 @@ function AdminUsages() {
     const paidInputTokensPerDay = paidRequestsPerDay * avgInputPerRequest
     const paidOutputTokensPerDay = paidRequestsPerDay * avgOutputPerRequest
 
-    const dailyCost = (paidInputTokensPerDay / 1_000_000) * inputPrice + (paidOutputTokensPerDay / 1_000_000) * outputPrice
+    const dailyCost =
+      (paidInputTokensPerDay / 1_000_000) * inputPrice +
+      (paidOutputTokensPerDay / 1_000_000) * outputPrice
 
     // Calculate total cost with free tier deduction
     // Total paid requests = total requests - (free tier quota × number of days)
@@ -122,7 +132,9 @@ function AdminUsages() {
     const paidRatio = requests > 0 ? totalPaidRequests / requests : 0
     const totalPaidInputTokens = inputTokens * paidRatio
     const totalPaidOutputTokens = outputTokens * paidRatio
-    const totalCost = (totalPaidInputTokens / 1_000_000) * inputPrice + (totalPaidOutputTokens / 1_000_000) * outputPrice
+    const totalCost =
+      (totalPaidInputTokens / 1_000_000) * inputPrice +
+      (totalPaidOutputTokens / 1_000_000) * outputPrice
 
     return {
       avgRequestsPerDay,
@@ -142,13 +154,14 @@ function AdminUsages() {
     const fetchData = async () => {
       setLoading(true)
       try {
-        const [storageData, dbData, aiData, todayData, chartResult] = await Promise.all([
-          getStorageStats(),
-          getDatabaseStats(),
-          getAIUsageStats({ data: { days: 30 } }),
-          getTodayAIUsage(),
-          getDailyAIUsageChart({ data: { timeRange: 'week' } }), // Default to week (7d)
-        ])
+        const [storageData, dbData, aiData, todayData, chartResult] =
+          await Promise.all([
+            getStorageStats(),
+            getDatabaseStats(),
+            getAIUsageStats({ data: { days: 30 } }),
+            getTodayAIUsage(),
+            getDailyAIUsageChart({ data: { timeRange: 'week' } }), // Default to week (7d)
+          ])
         setStorageStats(storageData)
         setDbStats(dbData)
         setAiStats(aiData)
@@ -199,7 +212,8 @@ function AdminUsages() {
 
   // Get Supabase project URL from env
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
-  const projectRef = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1] || ''
+  const projectRef =
+    supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1] || ''
   const dashboardUrl = projectRef
     ? `https://supabase.com/dashboard/project/${projectRef}`
     : 'https://supabase.com/dashboard'
@@ -207,43 +221,6 @@ function AdminUsages() {
   return (
     <AdminLayout title="Usages" activeItem="usages">
       <div className="space-y-6 max-w-4xl">
-        {/* Supabase Dashboard Link */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-emerald-500">
-                <Cpu className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-foreground">
-                  Server Usage
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Database, Storage and more
-                </p>
-              </div>
-            </div>
-            <a
-              href={dashboardUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 font-medium transition-colors"
-            >
-              <span>Open Supabase Dashboard</span>
-              <ExternalLink className="w-4 h-4" />
-            </a>
-          </div>
-          <p className="mt-4 text-sm text-muted-foreground">
-            View detailed server metrics including CPU usage, memory
-            consumption, database connections, and API request statistics in the
-            Supabase Dashboard.
-          </p>
-        </motion.div>
-
         {/* Gemini API Usage */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -304,7 +281,10 @@ function AdminUsages() {
                     </span>
                   ) : (
                     <span className="text-xs text-muted-foreground">
-                      {(todayUsage.requestsLimit - todayUsage.requests).toLocaleString()} remaining
+                      {(
+                        todayUsage.requestsLimit - todayUsage.requests
+                      ).toLocaleString()}{' '}
+                      remaining
                     </span>
                   )}
                   {todayUsage.isFreeTier ? (
@@ -336,7 +316,8 @@ function AdminUsages() {
                   />
                 </div>
                 <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
-                  {todayUsage.requests.toLocaleString()} / {todayUsage.requestsLimit.toLocaleString()}
+                  {todayUsage.requests.toLocaleString()} /{' '}
+                  {todayUsage.requestsLimit.toLocaleString()}
                 </span>
               </div>
             </div>
@@ -542,23 +523,38 @@ function AdminUsages() {
                 <BarChart3 className="w-4 h-4 text-purple-500" />
                 Usage History
               </h3>
-              {chartSummary && (
-                <div className="flex items-center gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded bg-purple-500" />
-                    <span className="text-muted-foreground">Requests</span>
+              <div className="flex items-center gap-4 text-sm">
+                {/* Requests checkbox */}
+                <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={showRequests}
+                    onChange={(e) => setShowRequests(e.target.checked)}
+                    className="w-3.5 h-3.5 rounded border-border accent-purple-500"
+                  />
+                  <span className="text-muted-foreground">Requests</span>
+                  {chartSummary && (
                     <span className="font-medium">
                       {chartSummary.totalRequests.toLocaleString()}
                     </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">Tokens</span>
+                  )}
+                </label>
+                {/* Tokens checkbox */}
+                <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={showTokens}
+                    onChange={(e) => setShowTokens(e.target.checked)}
+                    className="w-3.5 h-3.5 rounded border-border accent-cyan-500"
+                  />
+                  <span className="text-muted-foreground">Tokens</span>
+                  {chartSummary && (
                     <span className="font-medium">
                       {(chartSummary.totalTokens / 1000).toFixed(1)}K
                     </span>
-                  </div>
-                </div>
-              )}
+                  )}
+                </label>
+              </div>
             </div>
 
             {/* Chart */}
@@ -567,14 +563,19 @@ function AdminUsages() {
                 <div className="absolute inset-0 flex items-center justify-center">
                   <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                 </div>
-              ) : chartData.length > 0 ? (
+              ) : chartData.length > 0 && (showRequests || showTokens) ? (
                 <div className="h-full flex items-end gap-1">
                   {chartData.map((day, index) => {
                     const maxRequests = Math.max(
                       ...chartData.map((d) => d.requests),
                       1,
                     )
-                    const barHeight = (day.requests / maxRequests) * 100
+                    const maxTokens = Math.max(
+                      ...chartData.map((d) => d.tokens),
+                      1,
+                    )
+                    const requestsHeight = (day.requests / maxRequests) * 100
+                    const tokensHeight = (day.tokens / maxTokens) * 100
 
                     return (
                       <div
@@ -598,24 +599,43 @@ function AdminUsages() {
                             <p className="text-purple-500">
                               {day.requests} requests
                             </p>
-                            <p className="text-muted-foreground">
+                            <p className="text-cyan-500">
                               {(day.tokens / 1000).toFixed(1)}K tokens
                             </p>
                           </div>
                         </div>
 
-                        {/* Bar */}
-                        <div className="w-full flex flex-col justify-end h-32">
-                          {barHeight > 0 ? (
-                            <div
-                              className="w-full bg-purple-500 rounded-t transition-all"
-                              style={{
-                                height: `${barHeight}%`,
-                                minHeight: '2px',
-                              }}
-                            />
-                          ) : (
-                            <div className="w-full h-0.5 bg-muted rounded" />
+                        {/* Dual Bars */}
+                        <div className="w-full flex items-end justify-center gap-0.5 h-32">
+                          {showRequests && (
+                            <div className="flex-1 flex flex-col justify-end h-full max-w-[45%]">
+                              {requestsHeight > 0 ? (
+                                <div
+                                  className="w-full bg-purple-500 rounded-t transition-all"
+                                  style={{
+                                    height: `${requestsHeight}%`,
+                                    minHeight: '2px',
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-full h-0.5 bg-muted rounded" />
+                              )}
+                            </div>
+                          )}
+                          {showTokens && (
+                            <div className="flex-1 flex flex-col justify-end h-full max-w-[45%]">
+                              {tokensHeight > 0 ? (
+                                <div
+                                  className="w-full bg-cyan-500 rounded-t transition-all"
+                                  style={{
+                                    height: `${tokensHeight}%`,
+                                    minHeight: '2px',
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-full h-0.5 bg-muted rounded" />
+                              )}
+                            </div>
                           )}
                         </div>
 
@@ -641,108 +661,149 @@ function AdminUsages() {
                     )
                   })}
                 </div>
-              ) : (
+              ) : chartData.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-muted-foreground">
                   No usage data for this period
+                </div>
+              ) : (
+                <div className="h-full flex items-center justify-center text-muted-foreground">
+                  Select at least one metric to display
                 </div>
               )}
             </div>
           </div>
         </motion.div>
-
-        {/* System Info */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Storage Stats */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <div className="p-2 rounded-xl bg-amber-500">
-                <HardDrive className="w-4 h-4 text-white" />
+        {/* Supabase Dashboard Link */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-xl bg-emerald-500">
+                <Cpu className="w-4 h-4 text-white" />
               </div>
-              <h2 className="text-lg font-semibold text-foreground">Storage</h2>
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">
+                  Server Usage
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Database, Storage and more
+                </p>
+              </div>
             </div>
-
-            {storageStats && (
-              <div className="space-y-3">
-                <div className="flex justify-between py-2 px-3 rounded-lg bg-muted/30">
-                  <span className="text-muted-foreground">Thumbnails</span>
-                  <span className="font-medium text-foreground">
-                    {storageStats.thumbnailsCount} files (
-                    {storageStats.thumbnailsSizeMB} MB)
-                  </span>
+            <a
+              href={dashboardUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 font-medium transition-colors"
+            >
+              <span>Open Supabase Dashboard</span>
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          </div>
+          <p className="mt-4 text-sm text-muted-foreground mb-6">
+            View detailed server metrics including CPU usage, memory
+            consumption, database connections, and API request statistics in the
+            Supabase Dashboard.
+          </p>
+          {/* System Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Storage Stats */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6"
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 rounded-xl bg-amber-500">
+                  <HardDrive className="w-4 h-4 text-white" />
                 </div>
-                <div className="flex justify-between py-2 px-3 rounded-lg bg-muted/30">
-                  <span className="text-muted-foreground">Total Used</span>
-                  <span className="font-medium text-foreground">
-                    {storageStats.totalStorageMB} MB
-                  </span>
-                </div>
+                <h2 className="text-lg font-semibold text-foreground">
+                  Storage
+                </h2>
               </div>
-            )}
-          </motion.div>
 
-          {/* Database Stats */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <div className="p-2 rounded-xl bg-blue-500">
-                <Database className="w-4 h-4 text-white" />
-              </div>
-              <h2 className="text-lg font-semibold text-foreground">
-                Database
-              </h2>
-            </div>
+              {storageStats && (
+                <div className="space-y-3">
+                  <div className="flex justify-between py-2 px-3 rounded-lg bg-muted/30">
+                    <span className="text-muted-foreground">Thumbnails</span>
+                    <span className="font-medium text-foreground">
+                      {storageStats.thumbnailsCount} files (
+                      {storageStats.thumbnailsSizeMB} MB)
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-2 px-3 rounded-lg bg-muted/30">
+                    <span className="text-muted-foreground">Total Used</span>
+                    <span className="font-medium text-foreground">
+                      {storageStats.totalStorageMB} MB
+                    </span>
+                  </div>
+                </div>
+              )}
+            </motion.div>
 
-            {dbStats && (
-              <div className="space-y-2">
-                <div className="flex justify-between py-2 px-3 rounded-lg bg-muted/30">
-                  <span className="text-muted-foreground">Profiles</span>
-                  <span className="font-medium text-foreground">
-                    {dbStats.profilesCount.toLocaleString()}
-                  </span>
+            {/* Database Stats */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6"
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 rounded-xl bg-blue-500">
+                  <Database className="w-4 h-4 text-white" />
                 </div>
-                <div className="flex justify-between py-2 px-3 rounded-lg bg-muted/30">
-                  <span className="text-muted-foreground">Activities</span>
-                  <span className="font-medium text-foreground">
-                    {dbStats.activitiesCount.toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex justify-between py-2 px-3 rounded-lg bg-muted/30">
-                  <span className="text-muted-foreground">Stages</span>
-                  <span className="font-medium text-foreground">
-                    {dbStats.stagesCount.toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex justify-between py-2 px-3 rounded-lg bg-muted/30">
-                  <span className="text-muted-foreground">Questions</span>
-                  <span className="font-medium text-foreground">
-                    {dbStats.questionsCount.toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex justify-between py-2 px-3 rounded-lg bg-muted/30">
-                  <span className="text-muted-foreground">Reports</span>
-                  <span className="font-medium text-foreground">
-                    {dbStats.reportsCount.toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex justify-between py-2 px-3 rounded-lg bg-muted/30">
-                  <span className="text-muted-foreground">Play Records</span>
-                  <span className="font-medium text-foreground">
-                    {dbStats.playRecordsCount.toLocaleString()}
-                  </span>
-                </div>
+                <h2 className="text-lg font-semibold text-foreground">
+                  Database
+                </h2>
               </div>
-            )}
-          </motion.div>
-        </div>
+
+              {dbStats && (
+                <div className="space-y-2">
+                  <div className="flex justify-between py-2 px-3 rounded-lg bg-muted/30">
+                    <span className="text-muted-foreground">Profiles</span>
+                    <span className="font-medium text-foreground">
+                      {dbStats.profilesCount.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-2 px-3 rounded-lg bg-muted/30">
+                    <span className="text-muted-foreground">Activities</span>
+                    <span className="font-medium text-foreground">
+                      {dbStats.activitiesCount.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-2 px-3 rounded-lg bg-muted/30">
+                    <span className="text-muted-foreground">Stages</span>
+                    <span className="font-medium text-foreground">
+                      {dbStats.stagesCount.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-2 px-3 rounded-lg bg-muted/30">
+                    <span className="text-muted-foreground">Questions</span>
+                    <span className="font-medium text-foreground">
+                      {dbStats.questionsCount.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-2 px-3 rounded-lg bg-muted/30">
+                    <span className="text-muted-foreground">Reports</span>
+                    <span className="font-medium text-foreground">
+                      {dbStats.reportsCount.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-2 px-3 rounded-lg bg-muted/30">
+                    <span className="text-muted-foreground">Play Records</span>
+                    <span className="font-medium text-foreground">
+                      {dbStats.playRecordsCount.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        </motion.div>
       </div>
     </AdminLayout>
   )
