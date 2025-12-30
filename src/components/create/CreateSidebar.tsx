@@ -1,5 +1,3 @@
-import { useDraggable } from '@dnd-kit/core'
-import { CSS } from '@dnd-kit/utilities'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   BookOpen,
@@ -12,13 +10,14 @@ import {
   FolderOpen,
   GitBranch,
   GraduationCap,
-  GripVertical,
   Home,
   Image,
   Languages,
   LayoutTemplate,
   Map,
   MessageSquare,
+  Minus,
+  Plus,
   Presentation,
   School,
   Sparkles,
@@ -51,7 +50,7 @@ export type CreatorType =
   | 'slides'
   | 'cover'
 
-interface SidebarItem {
+interface SidebarItemType {
   id: CreatorType
   labelKey: string
   icon: LucideIcon
@@ -64,7 +63,7 @@ interface SidebarSection {
   titleKey: string
   icon: LucideIcon
   color: string
-  items: SidebarItem[]
+  items: SidebarItemType[]
 }
 
 const sidebarSections: SidebarSection[] = [
@@ -211,6 +210,9 @@ interface CreateSidebarProps {
   isMobileOpen: boolean
   onCloseMobile: () => void
   isQuickStartEditMode?: boolean
+  quickStartItems?: CreatorType[]
+  onAddToQuickStart?: (type: CreatorType) => void
+  onRemoveFromQuickStart?: (type: CreatorType) => void
 }
 
 export function CreateSidebar({
@@ -221,6 +223,9 @@ export function CreateSidebar({
   isMobileOpen,
   onCloseMobile,
   isQuickStartEditMode = false,
+  quickStartItems = [],
+  onAddToQuickStart,
+  onRemoveFromQuickStart,
 }: CreateSidebarProps) {
   const { t } = useTranslation()
 
@@ -333,7 +338,7 @@ export function CreateSidebar({
             {/* Section items */}
             <div className="space-y-1">
               {section.items.map((item) => (
-                <DraggableSidebarItem
+                <SidebarItem
                   key={item.id}
                   item={item}
                   isCollapsed={isCollapsed}
@@ -348,6 +353,9 @@ export function CreateSidebar({
                   getBadgeText={getBadgeText}
                   t={t}
                   isQuickStartEditMode={isQuickStartEditMode}
+                  isInQuickStart={quickStartItems.includes(item.id)}
+                  onAddToQuickStart={onAddToQuickStart}
+                  onRemoveFromQuickStart={onRemoveFromQuickStart}
                 />
               ))}
             </div>
@@ -502,9 +510,9 @@ export function getCreatorIcon(type: CreatorType): LucideIcon {
   return GraduationCap
 }
 
-// Draggable sidebar item component
-interface DraggableSidebarItemProps {
-  item: SidebarItem
+// Sidebar item component with +/- buttons for edit mode
+interface SidebarItemComponentProps {
+  item: SidebarItemType
   isCollapsed: boolean
   isActive: boolean
   onSelect: () => void
@@ -512,9 +520,12 @@ interface DraggableSidebarItemProps {
   getBadgeText: (badge?: 'new' | 'beta' | 'coming') => string
   t: (key: string) => string
   isQuickStartEditMode?: boolean
+  isInQuickStart?: boolean
+  onAddToQuickStart?: (type: CreatorType) => void
+  onRemoveFromQuickStart?: (type: CreatorType) => void
 }
 
-export function DraggableSidebarItem({
+function SidebarItem({
   item,
   isCollapsed,
   isActive,
@@ -523,66 +534,38 @@ export function DraggableSidebarItem({
   getBadgeText,
   t,
   isQuickStartEditMode = false,
-}: DraggableSidebarItemProps) {
-  const canDrag = item.available && isQuickStartEditMode
+  isInQuickStart = false,
+  onAddToQuickStart,
+  onRemoveFromQuickStart,
+}: SidebarItemComponentProps) {
   const isClickDisabled = !item.available || isQuickStartEditMode
-
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({
-      id: `sidebar-${item.id}`,
-      disabled: !canDrag,
-      data: {
-        type: 'sidebar-item',
-        creatorType: item.id,
-        icon: item.icon,
-      },
-    })
-
-  const style = transform
-    ? {
-        transform: CSS.Translate.toString(transform),
-        zIndex: isDragging ? 50 : undefined,
-        opacity: isDragging ? 0.8 : 1,
-      }
-    : undefined
+  const canModifyQuickStart = item.available && isQuickStartEditMode
 
   return (
-    <div ref={setNodeRef} style={style} className="relative">
+    <div className="relative flex items-center gap-1">
       <motion.button
         whileHover={isClickDisabled ? {} : { scale: 1.02, x: isCollapsed ? 0 : 4 }}
         whileTap={isClickDisabled ? {} : { scale: 0.98 }}
         onClick={onSelect}
         disabled={isClickDisabled}
         className={cn(
-          'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
+          'flex-1 flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
           isCollapsed && 'justify-center px-2',
           isActive && !isQuickStartEditMode
             ? 'bg-primary/10 text-primary border-l-2 border-primary'
             : isClickDisabled
               ? 'text-muted-foreground/50 cursor-not-allowed'
               : 'text-muted-foreground hover:text-foreground hover:bg-muted',
-          isDragging && 'shadow-lg ring-2 ring-primary/50',
-          isQuickStartEditMode && canDrag && 'ring-1 ring-primary/30',
         )}
         title={isCollapsed ? t(item.labelKey) : undefined}
       >
-        {/* Drag handle - only show in edit mode */}
-        {!isCollapsed && canDrag && (
-          <div
-            {...attributes}
-            {...listeners}
-            className="cursor-grab active:cursor-grabbing text-primary hover:text-primary/80 -ml-1"
-          >
-            <GripVertical className="w-4 h-4" />
-          </div>
-        )}
         <item.icon
           className={cn('w-5 h-5 shrink-0', isActive && 'text-primary')}
         />
         {!isCollapsed && (
           <>
             <span className="flex-1 text-left text-sm">{t(item.labelKey)}</span>
-            {item.badge && (
+            {item.badge && !isQuickStartEditMode && (
               <span
                 className={cn(
                   'text-[10px] px-1.5 py-0.5 rounded-full font-medium',
@@ -595,9 +578,40 @@ export function DraggableSidebarItem({
           </>
         )}
       </motion.button>
+
+      {/* Add/Remove button in edit mode */}
+      {!isCollapsed && canModifyQuickStart && (
+        <motion.button
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            if (isInQuickStart) {
+              onRemoveFromQuickStart?.(item.id)
+            } else {
+              onAddToQuickStart?.(item.id)
+            }
+          }}
+          className={cn(
+            'p-0.5 rounded-full transition-all cursor-pointer',
+            isInQuickStart
+              ? 'bg-destructive text-destructive-foreground hover:bg-destructive/80'
+              : 'bg-primary text-primary-foreground hover:bg-primary/80',
+          )}
+          title={isInQuickStart ? t('common.remove') : t('common.add')}
+        >
+          {isInQuickStart ? (
+            <Minus className="w-3.5 h-3.5" />
+          ) : (
+            <Plus className="w-3.5 h-3.5" />
+          )}
+        </motion.button>
+      )}
     </div>
   )
 }
 
 export { sidebarSections }
-export type { SidebarItem }
+export type { SidebarItemType as SidebarItem }

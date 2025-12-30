@@ -37,7 +37,9 @@
       "Bash(netstat:*)",
       "Bash(findstr:*)",
       "Bash(taskkill /PID 268364 /F)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(timeout 10 pnpm dev:*)",
+      "Bash(cd:*)"
     ]
   }
 }

@@ -1,14 +1,16 @@
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
-  pointerWithin,
-  rectIntersection,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  closestCenter,
   useSensor,
   useSensors,
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { arrayMove } from '@dnd-kit/sortable'
 import { createFileRoute } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -46,7 +48,7 @@ import { useTranslation } from '../hooks/useTranslation'
 import type { CreatorType } from '../components/create'
 
 const QUICK_START_STORAGE_KEY = 'qzvert-quick-start-items'
-const MAX_QUICK_START_ITEMS = 6
+const MAX_QUICK_START_ITEMS = 12
 
 export const Route = createFileRoute('/create')({ component: CreatePage })
 
@@ -56,120 +58,68 @@ function CreatePage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
-  const [isDraggingOverQuickStart, setIsDraggingOverQuickStart] =
-    useState(false)
   const [isQuickStartEditMode, setIsQuickStartEditMode] = useState(false)
 
   // Quick Start items with localStorage persistence
-  const [quickStartItems, setQuickStartItems] = useState<CreatorType[]>(() => {
-    if (typeof window === 'undefined') return DEFAULT_QUICK_START_ITEMS
+  const [quickStartItems, setQuickStartItems] = useState<CreatorType[]>(DEFAULT_QUICK_START_ITEMS)
+  const [isHydrated, setIsHydrated] = useState(false)
+
+  // Load from localStorage after hydration to avoid SSR mismatch
+  useEffect(() => {
     const stored = localStorage.getItem(QUICK_START_STORAGE_KEY)
     if (stored) {
       try {
-        return JSON.parse(stored)
+        setQuickStartItems(JSON.parse(stored))
       } catch {
-        return DEFAULT_QUICK_START_ITEMS
+        // Keep default items on parse error
       }
     }
-    return DEFAULT_QUICK_START_ITEMS
-  })
+    setIsHydrated(true)
+  }, [])
 
-  // Save to localStorage when quickStartItems changes
+  // Save to localStorage when quickStartItems changes (only after hydration)
   useEffect(() => {
-    localStorage.setItem(
-      QUICK_START_STORAGE_KEY,
-      JSON.stringify(quickStartItems),
-    )
-  }, [quickStartItems])
+    if (isHydrated) {
+      localStorage.setItem(
+        QUICK_START_STORAGE_KEY,
+        JSON.stringify(quickStartItems),
+      )
+    }
+  }, [quickStartItems, isHydrated])
 
-  // Drag sensors
+  // Drag sensors - use multiple sensors for better UX
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(MouseSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 5,
       },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 150,
+        tolerance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
     }),
   )
 
-  // Handle drag start
+  // Handle drag start (only for quick start reordering)
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveDragId(event.active.id as string)
   }, [])
 
-  // Custom collision detection - prioritize quick start items, then dropzone
-  const collisionDetection = useCallback(
-    (args: Parameters<typeof rectIntersection>[0]) => {
-      // First check for intersections with quick start items
-      const pointerCollisions = pointerWithin(args)
-      if (pointerCollisions.length > 0) {
-        // Prioritize quick- items for sorting
-        const quickItem = pointerCollisions.find((c) =>
-          String(c.id).startsWith('quick-'),
-        )
-        if (quickItem) return [quickItem]
-        return pointerCollisions
-      }
-      // Fall back to rect intersection
-      return rectIntersection(args)
-    },
-    [],
-  )
-
-  // Handle drag over
-  const handleDragOver = useCallback(
-    (event: { over: { id: string | number } | null }) => {
-      const overId = event.over?.id ? String(event.over.id) : null
-      // Show drop target when over dropzone OR any quick- item
-      setIsDraggingOverQuickStart(
-        overId === 'quick-start-dropzone' || (overId?.startsWith('quick-') ?? false),
-      )
-    },
-    [],
-  )
-
-  // Handle drag end
+  // Handle drag end (only for quick start reordering)
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event
       setActiveDragId(null)
-      setIsDraggingOverQuickStart(false)
 
       if (!over) return
 
       const activeId = active.id as string
       const overId = over.id as string
-
-      // Dropping sidebar item to quick start (on dropzone or on any quick item)
-      if (activeId.startsWith('sidebar-')) {
-        const isDropOnQuickStart =
-          overId === 'quick-start-dropzone' || overId.startsWith('quick-')
-
-        if (isDropOnQuickStart) {
-          const creatorType = activeId.replace('sidebar-', '') as CreatorType
-          if (
-            !quickStartItems.includes(creatorType) &&
-            quickStartItems.length < MAX_QUICK_START_ITEMS
-          ) {
-            // If dropping on a specific quick item, insert at that position
-            if (overId.startsWith('quick-')) {
-              const overIndex = quickStartItems.findIndex(
-                (item) => `quick-${item}` === overId,
-              )
-              if (overIndex !== -1) {
-                setQuickStartItems((prev) => {
-                  const newItems = [...prev]
-                  newItems.splice(overIndex, 0, creatorType)
-                  return newItems
-                })
-                return
-              }
-            }
-            // Otherwise add at end
-            setQuickStartItems((prev) => [...prev, creatorType])
-          }
-        }
-        return
-      }
 
       // Reordering within quick start
       if (activeId.startsWith('quick-') && overId.startsWith('quick-')) {
@@ -188,49 +138,44 @@ function CreatePage() {
     [quickStartItems],
   )
 
-  // Get drag overlay content
+  // Add item to quick start (from sidebar + button)
+  const handleAddToQuickStart = useCallback(
+    (type: CreatorType) => {
+      if (!quickStartItems.includes(type) && quickStartItems.length < MAX_QUICK_START_ITEMS) {
+        setQuickStartItems((prev) => [...prev, type])
+      }
+    },
+    [quickStartItems],
+  )
+
+  // Remove item from quick start (from sidebar - button or quick start X button)
+  const handleRemoveFromQuickStart = useCallback(
+    (type: CreatorType) => {
+      setQuickStartItems((prev) => prev.filter((item) => item !== type))
+    },
+    [],
+  )
+
+  // Get drag overlay content (only for quick start items)
   const getDragOverlayContent = () => {
-    if (!activeDragId) return null
+    if (!activeDragId || !activeDragId.startsWith('quick-')) return null
 
-    if (activeDragId.startsWith('sidebar-')) {
-      const creatorType = activeDragId.replace('sidebar-', '') as CreatorType
-      const Icon = getCreatorIcon(creatorType)
-      const gradients = creatorGradients[creatorType]
+    const creatorType = activeDragId.replace('quick-', '') as CreatorType
+    const Icon = getCreatorIcon(creatorType)
+    const gradients = creatorGradients[creatorType]
 
-      return (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-primary shadow-lg">
-          <div
-            className={`w-8 h-8 rounded-lg bg-linear-to-br ${gradients.gradient} flex items-center justify-center`}
-          >
-            <Icon className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-medium text-sm">
-            {t(`create.types.${creatorType}.name`)}
-          </span>
+    return (
+      <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border border-primary shadow-lg">
+        <div
+          className={`w-12 h-12 rounded-xl bg-linear-to-br ${gradients.gradient} flex items-center justify-center`}
+        >
+          <Icon className="w-6 h-6 text-white" />
         </div>
-      )
-    }
-
-    if (activeDragId.startsWith('quick-')) {
-      const creatorType = activeDragId.replace('quick-', '') as CreatorType
-      const Icon = getCreatorIcon(creatorType)
-      const gradients = creatorGradients[creatorType]
-
-      return (
-        <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border border-primary shadow-lg">
-          <div
-            className={`w-12 h-12 rounded-xl bg-linear-to-br ${gradients.gradient} flex items-center justify-center`}
-          >
-            <Icon className="w-6 h-6 text-white" />
-          </div>
-          <span className="font-medium text-sm">
-            {t(`create.types.${creatorType}.name`)}
-          </span>
-        </div>
-      )
-    }
-
-    return null
+        <span className="font-medium text-sm">
+          {t(`create.types.${creatorType}.name`)}
+        </span>
+      </div>
+    )
   }
 
   const renderCreator = () => {
@@ -241,7 +186,6 @@ function CreatePage() {
           userName={undefined}
           quickStartItems={quickStartItems}
           onQuickStartChange={setQuickStartItems}
-          isDropTarget={isDraggingOverQuickStart}
           isEditMode={isQuickStartEditMode}
           onToggleEditMode={() => setIsQuickStartEditMode((prev) => !prev)}
         />
@@ -426,7 +370,6 @@ function CreatePage() {
             userName={undefined}
             quickStartItems={quickStartItems}
             onQuickStartChange={setQuickStartItems}
-            isDropTarget={isDraggingOverQuickStart}
             isEditMode={isQuickStartEditMode}
             onToggleEditMode={() => setIsQuickStartEditMode((prev) => !prev)}
           />
@@ -438,9 +381,8 @@ function CreatePage() {
     <DefaultLayout>
       <DndContext
         sensors={sensors}
-        collisionDetection={collisionDetection}
+        collisionDetection={closestCenter}
         onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
         <div className="min-h-screen bg-linear-to-b from-background via-muted/30 to-background">
@@ -467,6 +409,9 @@ function CreatePage() {
               isMobileOpen={mobileMenuOpen}
               onCloseMobile={() => setMobileMenuOpen(false)}
               isQuickStartEditMode={isQuickStartEditMode}
+              quickStartItems={quickStartItems}
+              onAddToQuickStart={handleAddToQuickStart}
+              onRemoveFromQuickStart={handleRemoveFromQuickStart}
             />
 
             {/* Main Content */}

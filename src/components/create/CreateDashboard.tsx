@@ -1,4 +1,3 @@
-import { useDroppable } from '@dnd-kit/core'
 import {
   SortableContext,
   rectSortingStrategy,
@@ -12,14 +11,13 @@ import {
   Check,
   Clock,
   FolderOpen,
-  GripVertical,
   Image,
   LayoutTemplate,
   Pencil,
-  Plus,
   Sparkles,
   X,
 } from 'lucide-react'
+import { type CSSProperties } from 'react'
 import { useTranslation } from '../../hooks/useTranslation'
 import { cn } from '../../lib/utils'
 import {
@@ -43,7 +41,7 @@ export const DEFAULT_QUICK_START_ITEMS: CreatorType[] = [
   'aiTutor',
 ]
 
-const MAX_QUICK_START_ITEMS = 6
+const MAX_QUICK_START_ITEMS = 12
 
 // Sortable Quick Start Item
 interface SortableQuickItemProps {
@@ -68,26 +66,30 @@ function SortableQuickItem({
     transform,
     transition,
     isDragging,
+    isSorting,
   } = useSortable({ id: `quick-${id}`, disabled: !isEditMode })
 
-  const style = {
+  const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: transition || 'transform 200ms cubic-bezier(0.25, 1, 0.5, 1)',
+    zIndex: isDragging ? 50 : undefined,
+    opacity: isDragging ? 0.5 : 1,
   }
 
   const Icon = getCreatorIcon(id)
   const gradients = creatorGradients[id]
 
   return (
-    <motion.div
+    <div
       ref={setNodeRef}
       style={style}
-      whileHover={{ scale: isEditMode ? 1 : 1.03, y: isEditMode ? 0 : -2 }}
-      whileTap={{ scale: isEditMode ? 1 : 0.98 }}
+      {...(isEditMode ? { ...attributes, ...listeners } : {})}
       className={cn(
-        'group relative overflow-hidden rounded-xl p-4 bg-card border border-border hover:border-primary/50 transition-all duration-300',
-        isDragging && 'opacity-50 shadow-lg ring-2 ring-primary/50 z-50',
-        isEditMode && 'ring-2 ring-primary/30 animate-pulse',
+        'group relative overflow-hidden rounded-xl p-4 bg-card border border-border hover:border-primary/50 transition-colors duration-200',
+        isDragging && 'shadow-2xl ring-2 ring-primary scale-105',
+        isSorting && !isDragging && 'transition-transform duration-200',
+        isEditMode && !isDragging && 'ring-2 ring-primary/30',
+        isEditMode && 'cursor-grab active:cursor-grabbing',
       )}
     >
       {/* Remove button - only show in edit mode */}
@@ -104,17 +106,6 @@ function SortableQuickItem({
         </button>
       )}
 
-      {/* Drag handle - only show in edit mode */}
-      {isEditMode && (
-        <div
-          {...attributes}
-          {...listeners}
-          className="absolute top-1 left-1 p-1 cursor-grab active:cursor-grabbing text-primary hover:text-primary/80 transition-opacity"
-        >
-          <GripVertical className="w-4 h-4" />
-        </div>
-      )}
-
       <div
         className={`absolute inset-0 bg-linear-to-br ${gradients.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}
       />
@@ -123,8 +114,8 @@ function SortableQuickItem({
         onClick={isEditMode ? undefined : onSelect}
         disabled={isEditMode}
         className={cn(
-          'relative flex flex-col items-center gap-3 w-full',
-          isEditMode && 'cursor-default',
+          'relative flex flex-col items-center gap-3 w-full transition-transform duration-200',
+          isEditMode ? 'cursor-default pointer-events-none' : 'hover:scale-105 active:scale-95',
         )}
       >
         <div
@@ -136,7 +127,7 @@ function SortableQuickItem({
           {t(`create.types.${id}.name`)}
         </span>
       </button>
-    </motion.div>
+    </div>
   )
 }
 
@@ -192,7 +183,6 @@ interface CreateDashboardProps {
   userName?: string
   quickStartItems: CreatorType[]
   onQuickStartChange: (items: CreatorType[]) => void
-  isDropTarget?: boolean
   isEditMode: boolean
   onToggleEditMode: () => void
 }
@@ -202,23 +192,14 @@ export function CreateDashboard({
   userName,
   quickStartItems,
   onQuickStartChange,
-  isDropTarget,
   isEditMode,
   onToggleEditMode,
 }: CreateDashboardProps) {
   const { t } = useTranslation()
 
-  const { setNodeRef, isOver } = useDroppable({
-    id: 'quick-start-dropzone',
-    disabled: !isEditMode,
-  })
-
   const handleRemoveItem = (itemToRemove: CreatorType) => {
     onQuickStartChange(quickStartItems.filter((item) => item !== itemToRemove))
   }
-
-  const canAddMore = quickStartItems.length < MAX_QUICK_START_ITEMS
-  const showDropTarget = isEditMode && (isOver || isDropTarget)
 
   const container = {
     hidden: { opacity: 0 },
@@ -291,13 +272,9 @@ export function CreateDashboard({
           </p>
         )}
         <div
-          ref={setNodeRef}
           className={cn(
             'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 p-4 -m-4 rounded-xl transition-all duration-300',
-            showDropTarget &&
-              canAddMore &&
-              'bg-primary/5 ring-2 ring-primary/30 ring-dashed',
-            showDropTarget && !canAddMore && 'bg-destructive/5 ring-2 ring-destructive/30 ring-dashed',
+            isEditMode && 'bg-muted/30',
           )}
         >
           <SortableContext
@@ -315,35 +292,6 @@ export function CreateDashboard({
               />
             ))}
           </SortableContext>
-
-          {/* Drop hint when dragging in edit mode */}
-          {showDropTarget && canAddMore && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center justify-center rounded-xl border-2 border-dashed border-primary/50 bg-primary/5 p-4 min-h-[120px]"
-            >
-              <div className="flex flex-col items-center gap-2 text-primary">
-                <Plus className="w-8 h-8" />
-                <span className="text-sm font-medium">
-                  {t('create.dashboard.dropHere')}
-                </span>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Show message when full */}
-          {showDropTarget && !canAddMore && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="col-span-full flex items-center justify-center rounded-xl border-2 border-dashed border-destructive/50 bg-destructive/5 p-4"
-            >
-              <span className="text-sm text-destructive font-medium">
-                {t('create.dashboard.quickStartFull')}
-              </span>
-            </motion.div>
-          )}
         </div>
       </motion.div>
 
