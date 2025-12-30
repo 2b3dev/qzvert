@@ -385,7 +385,7 @@ function CreatePage() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="min-h-screen bg-linear-to-b from-background via-muted/30 to-background">
+        <div className="min-h-[calc(100vh-64px)] bg-linear-to-b from-background via-muted/30 to-background">
           {/* Mobile Header */}
           <div className="md:hidden sticky top-16 z-30 bg-background/80 backdrop-blur-sm border-b border-border px-4 py-3">
             <Button
@@ -399,7 +399,7 @@ function CreatePage() {
             </Button>
           </div>
 
-          <div className="flex">
+          <div className="flex min-h-[calc(100vh-64px)]">
             {/* Sidebar */}
             <CreateSidebar
               activeCreator={activeCreator}

@@ -5,13 +5,12 @@ import {
   Bot,
   ChevronLeft,
   ChevronRight,
-  Clock,
   FileImage,
   FolderOpen,
   GitBranch,
   GraduationCap,
-  Home,
   Image,
+  LayoutDashboard,
   Languages,
   LayoutTemplate,
   Map,
@@ -289,40 +288,39 @@ export function CreateSidebar({
         </button>
       </div>
 
-      {/* Home Button */}
-      <div className="px-2 pt-4 pb-2">
-        <motion.button
-          whileHover={{ scale: 1.02, x: isCollapsed ? 0 : 4 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => {
-            onSelectCreator(null)
-            onCloseMobile()
-          }}
-          className={cn(
-            'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
-            isCollapsed && 'justify-center px-2',
-            activeCreator === null
-              ? 'bg-primary/10 text-primary border-l-2 border-primary'
-              : 'text-muted-foreground hover:text-foreground hover:bg-muted',
-          )}
-          title={isCollapsed ? t('create.sidebar.home') : undefined}
-        >
-          <Home
-            className={cn(
-              'w-5 h-5 shrink-0',
-              activeCreator === null && 'text-primary',
-            )}
-          />
-          {!isCollapsed && (
-            <span className="flex-1 text-left text-sm font-medium">
-              {t('create.sidebar.home')}
-            </span>
-          )}
-        </motion.button>
-      </div>
-
       {/* Sections */}
       <div className="flex-1 overflow-y-auto py-2 px-2">
+        {/* Home Button */}
+        <div className="mb-4">
+          <motion.button
+            whileHover={{ scale: 1.02, x: isCollapsed ? 0 : 4 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              onSelectCreator(null)
+              onCloseMobile()
+            }}
+            className={cn(
+              'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
+              isCollapsed && 'justify-center px-2',
+              activeCreator === null
+                ? 'bg-primary/10 text-primary border-l-2 border-primary'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+            )}
+            title={isCollapsed ? t('create.sidebar.home') : undefined}
+          >
+            <LayoutDashboard
+              className={cn(
+                'w-5 h-5 shrink-0',
+                activeCreator === null && 'text-primary',
+              )}
+            />
+            {!isCollapsed && (
+              <span className="flex-1 text-left text-sm font-medium">
+                {t('create.sidebar.home')}
+              </span>
+            )}
+          </motion.button>
+        </div>
         {sidebarSections.map((section) => (
           <div key={section.id} className="mb-6">
             {/* Section title */}
@@ -362,28 +360,6 @@ export function CreateSidebar({
           </div>
         ))}
       </div>
-
-      {/* Footer - Recent & Templates */}
-      {!isCollapsed && (
-        <div className="p-4 border-t border-border">
-          <div className="space-y-2">
-            <button
-              type="button"
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            >
-              <Clock className="w-4 h-4" />
-              <span className="text-sm">{t('create.sidebar.recent')}</span>
-            </button>
-            <button
-              type="button"
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            >
-              <LayoutTemplate className="w-4 h-4" />
-              <span className="text-sm">{t('create.sidebar.templates')}</span>
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 
@@ -396,7 +372,7 @@ export function CreateSidebar({
           width: isCollapsed ? 64 : 280,
         }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="hidden md:flex flex-col bg-card border-r border-border h-[calc(100vh-64px)] sticky top-16"
+        className="hidden md:flex flex-col bg-card border-r border-border h-[calc(100vh-64px)] sticky top-16 self-start"
       >
         {sidebarContent}
       </motion.aside>
