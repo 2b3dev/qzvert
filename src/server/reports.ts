@@ -400,10 +400,15 @@ export const getReportStats = createServerFn({ method: 'GET' }).handler(
   },
 )
 
+// Period type for dashboard stats
+export type StatsPeriod = '1d' | '7d' | '1m' | '1y' | 'all'
+
 // Get admin dashboard overview stats (admin only)
-export const getAdminDashboardStats = createServerFn({ method: 'GET' }).handler(
-  async () => {
+export const getAdminDashboardStats = createServerFn({ method: 'GET' })
+  .inputValidator((data?: { period?: StatsPeriod }) => data || {})
+  .handler(async ({ data }) => {
     const supabase = getSupabaseFromCookies()
+    const period = data?.period || '1d'
 
     // Verify admin
     const {
@@ -424,31 +429,68 @@ export const getAdminDashboardStats = createServerFn({ method: 'GET' }).handler(
       throw new Error('Admin access required')
     }
 
-    // Get total users count
-    const { count: totalUsers } = await supabase
+    // Calculate date range based on period
+    const getStartDate = (p: StatsPeriod): Date | null => {
+      const date = new Date()
+      switch (p) {
+        case '1d':
+          date.setDate(date.getDate() - 1)
+          return date
+        case '7d':
+          date.setDate(date.getDate() - 7)
+          return date
+        case '1m':
+          date.setMonth(date.getMonth() - 1)
+          return date
+        case '1y':
+          date.setFullYear(date.getFullYear() - 1)
+          return date
+        case 'all':
+          return null
+      }
+    }
+
+    const startDate = getStartDate(period)
+
+    // Get total users count (filtered by period)
+    let usersQuery = supabase
       .from('profiles')
       .select('id', { count: 'exact', head: true })
+    if (startDate) {
+      usersQuery = usersQuery.gte('created_at', startDate.toISOString())
+    }
+    const { count: totalUsers } = await usersQuery
 
-    // Get total activities count
-    const { count: totalActivities } = await supabase
+    // Get total activities count (filtered by period)
+    let activitiesQuery = supabase
       .from('activities')
       .select('id', { count: 'exact', head: true })
+    if (startDate) {
+      activitiesQuery = activitiesQuery.gte('created_at', startDate.toISOString())
+    }
+    const { count: totalActivities } = await activitiesQuery
 
-    // Get public activities count
-    const { count: publicActivities } = await supabase
+    // Get public activities count (filtered by period)
+    let publicQuery = supabase
       .from('activities')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'public')
+    if (startDate) {
+      publicQuery = publicQuery.gte('created_at', startDate.toISOString())
+    }
+    const { count: publicActivities } = await publicQuery
 
-    // Get total plays (sum of play_count)
-    const { data: playsData } = await supabase
-      .from('activities')
-      .select('play_count')
+    // Get total plays (sum of play_count) - for period filtered activities
+    let playsQuery = supabase.from('activities').select('play_count')
+    if (startDate) {
+      playsQuery = playsQuery.gte('created_at', startDate.toISOString())
+    }
+    const { data: playsData } = await playsQuery
 
     const totalPlays =
       playsData?.reduce((sum, a) => sum + (a.play_count || 0), 0) || 0
 
-    // Get activities created this week
+    // Get activities created in period (for growth indicator)
     const oneWeekAgo = new Date()
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
     const { count: activitiesThisWeek } = await supabase
@@ -456,7 +498,7 @@ export const getAdminDashboardStats = createServerFn({ method: 'GET' }).handler(
       .select('id', { count: 'exact', head: true })
       .gte('created_at', oneWeekAgo.toISOString())
 
-    // Get users created this week
+    // Get users created in last 7 days (for growth indicator)
     const { count: usersThisWeek } = await supabase
       .from('profiles')
       .select('id', { count: 'exact', head: true })

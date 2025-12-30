@@ -30,7 +30,7 @@ import {
   getCurrentMonthAIUsage,
   getTodayAIUsage,
 } from '../../server/admin-settings'
-import type { ReportStatus } from '../../server/reports'
+import type { ReportStatus, StatsPeriod } from '../../server/reports'
 import {
   checkAdminAccess,
   getAdminDashboardStats,
@@ -260,6 +260,9 @@ function AdminDashboard() {
     isFreeTier: boolean
   } | null>(null)
 
+  // Stats period filter
+  const [statsPeriod, setStatsPeriod] = useState<StatsPeriod>('1d')
+
   // Live mode state
   const [liveMode, setLiveMode] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
@@ -280,20 +283,25 @@ function AdminDashboard() {
   }, [user])
 
   // Fetch dashboard stats function (memoized for reuse)
-  const fetchDashboardStats = useCallback(async (showLoading = true) => {
-    if (showLoading) setDashboardLoading(true)
-    setIsRefreshing(true)
-    try {
-      const data = await getAdminDashboardStats()
-      setDashboardStats(data)
-      setLastUpdate(new Date())
-    } catch (error) {
-      console.error('Failed to fetch dashboard stats:', error)
-    } finally {
-      setDashboardLoading(false)
-      setIsRefreshing(false)
-    }
-  }, [])
+  const fetchDashboardStats = useCallback(
+    async (showLoading = true, period: StatsPeriod = '1d') => {
+      if (showLoading) setDashboardLoading(true)
+      setIsRefreshing(true)
+      try {
+        const data = await getAdminDashboardStats({
+          data: { period },
+        })
+        setDashboardStats(data)
+        setLastUpdate(new Date())
+      } catch (error) {
+        console.error('Failed to fetch dashboard stats:', error)
+      } finally {
+        setDashboardLoading(false)
+        setIsRefreshing(false)
+      }
+    },
+    [],
+  )
 
   // Fetch report stats function
   const fetchReportStats = useCallback(async () => {
@@ -323,14 +331,33 @@ function AdminDashboard() {
     }
   }, [])
 
-  // Fetch dashboard stats on mount (only if admin)
+  // Fetch all data on mount (only if admin)
   useEffect(() => {
     if (isAdmin) {
-      fetchDashboardStats()
+      fetchDashboardStats(true, statsPeriod)
       fetchReportStats()
       fetchAIUsage()
     }
-  }, [isAdmin, fetchDashboardStats, fetchReportStats, fetchAIUsage])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin])
+
+  // Re-fetch only overview stats when period changes (not on mount)
+  const isFirstRender = useRef(true)
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
+    if (isAdmin) {
+      fetchDashboardStats(false, statsPeriod)
+    }
+  }, [statsPeriod, isAdmin, fetchDashboardStats])
+
+  // Store statsPeriod in ref for live mode callbacks
+  const statsPeriodRef = useRef(statsPeriod)
+  useEffect(() => {
+    statsPeriodRef.current = statsPeriod
+  }, [statsPeriod])
 
   // Live mode: Supabase Realtime subscription
   useEffect(() => {
@@ -348,14 +375,14 @@ function AdminDashboard() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'profiles' },
         () => {
-          fetchDashboardStats(false)
+          fetchDashboardStats(false, statsPeriodRef.current)
         },
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'activities' },
         () => {
-          fetchDashboardStats(false)
+          fetchDashboardStats(false, statsPeriodRef.current)
         },
       )
       .on(
@@ -420,7 +447,7 @@ function AdminDashboard() {
       )}
 
       <button
-        onClick={() => fetchDashboardStats(false)}
+        onClick={() => fetchDashboardStats(false, statsPeriod)}
         disabled={isRefreshing}
         className="p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
         title="Refresh stats"
@@ -469,8 +496,41 @@ function AdminDashboard() {
           </div>
         ) : (
           <>
-            {/* Main Stats Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Stats Overview Card */}
+            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5">
+              {/* Header with Period Filter */}
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-foreground">
+                  Overview
+                </h3>
+                <div className="flex items-center gap-1 p-1 bg-muted/30 rounded-lg">
+                  {(
+                    [
+                      { value: '1d', label: '1D' },
+                      { value: '7d', label: '7D' },
+                      { value: '1m', label: '1M' },
+                      { value: '1y', label: '1Y' },
+                      { value: 'all', label: 'ALL' },
+                    ] as const
+                  ).map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => setStatsPeriod(option.value)}
+                      className={cn(
+                        'px-2.5 py-1 text-xs font-medium rounded-md transition-all',
+                        statsPeriod === option.value
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Total Users */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -482,16 +542,22 @@ function AdminDashboard() {
                   <div className="p-2.5 rounded-xl bg-blue-500">
                     <Users className="w-5 h-5 text-white" />
                   </div>
-                  {dashboardStats && dashboardStats.users.thisWeek > 0 && (
-                    <span className="flex items-center gap-1 text-xs font-medium text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full">
-                      <TrendingUp className="w-3 h-3" />+
-                      {dashboardStats.users.thisWeek}
-                    </span>
-                  )}
+                  {!isRefreshing &&
+                    dashboardStats &&
+                    dashboardStats.users.thisWeek > 0 && (
+                      <span className="flex items-center gap-1 text-xs font-medium text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full">
+                        <TrendingUp className="w-3 h-3" />+
+                        {dashboardStats.users.thisWeek}
+                      </span>
+                    )}
                 </div>
-                <p className="text-3xl font-bold text-foreground">
-                  {dashboardStats?.users.total || 0}
-                </p>
+                {isRefreshing ? (
+                  <div className="h-9 w-16 bg-muted/50 rounded animate-pulse" />
+                ) : (
+                  <p className="text-3xl font-bold text-foreground">
+                    {dashboardStats?.users.total || 0}
+                  </p>
+                )}
                 <p className="text-sm text-muted-foreground mt-1">
                   Total Users
                 </p>
@@ -508,16 +574,22 @@ function AdminDashboard() {
                   <div className="p-2.5 rounded-xl bg-purple-500">
                     <FileText className="w-5 h-5 text-white" />
                   </div>
-                  {dashboardStats && dashboardStats.activities.thisWeek > 0 && (
-                    <span className="flex items-center gap-1 text-xs font-medium text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full">
-                      <TrendingUp className="w-3 h-3" />+
-                      {dashboardStats.activities.thisWeek}
-                    </span>
-                  )}
+                  {!isRefreshing &&
+                    dashboardStats &&
+                    dashboardStats.activities.thisWeek > 0 && (
+                      <span className="flex items-center gap-1 text-xs font-medium text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full">
+                        <TrendingUp className="w-3 h-3" />+
+                        {dashboardStats.activities.thisWeek}
+                      </span>
+                    )}
                 </div>
-                <p className="text-3xl font-bold text-foreground">
-                  {dashboardStats?.activities.total || 0}
-                </p>
+                {isRefreshing ? (
+                  <div className="h-9 w-16 bg-muted/50 rounded animate-pulse" />
+                ) : (
+                  <p className="text-3xl font-bold text-foreground">
+                    {dashboardStats?.activities.total || 0}
+                  </p>
+                )}
                 <p className="text-sm text-muted-foreground mt-1">
                   Total Activities
                 </p>
@@ -535,9 +607,13 @@ function AdminDashboard() {
                     <Sparkles className="w-5 h-5 text-white" />
                   </div>
                 </div>
-                <p className="text-3xl font-bold text-foreground">
-                  {dashboardStats?.activities.public || 0}
-                </p>
+                {isRefreshing ? (
+                  <div className="h-9 w-16 bg-muted/50 rounded animate-pulse" />
+                ) : (
+                  <p className="text-3xl font-bold text-foreground">
+                    {dashboardStats?.activities.public || 0}
+                  </p>
+                )}
                 <p className="text-sm text-muted-foreground mt-1">
                   Public Activities
                 </p>
@@ -555,13 +631,18 @@ function AdminDashboard() {
                     <Play className="w-5 h-5 text-white" />
                   </div>
                 </div>
-                <p className="text-3xl font-bold text-foreground">
-                  {dashboardStats?.plays.total.toLocaleString() || 0}
-                </p>
+                {isRefreshing ? (
+                  <div className="h-9 w-16 bg-muted/50 rounded animate-pulse" />
+                ) : (
+                  <p className="text-3xl font-bold text-foreground">
+                    {dashboardStats?.plays.total.toLocaleString() || 0}
+                  </p>
+                )}
                 <p className="text-sm text-muted-foreground mt-1">
                   Total Plays
                 </p>
               </motion.div>
+              </div>
             </div>
 
             {/* Report Stats & Gemini Usage */}
