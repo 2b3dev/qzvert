@@ -115,6 +115,15 @@ function AdminUsages() {
 
     const dailyCost = (paidInputTokensPerDay / 1_000_000) * inputPrice + (paidOutputTokensPerDay / 1_000_000) * outputPrice
 
+    // Calculate total cost with free tier deduction
+    // Total paid requests = total requests - (free tier quota × number of days)
+    const totalFreeRequests = freeTierQuota * days
+    const totalPaidRequests = Math.max(0, requests - totalFreeRequests)
+    const paidRatio = requests > 0 ? totalPaidRequests / requests : 0
+    const totalPaidInputTokens = inputTokens * paidRatio
+    const totalPaidOutputTokens = outputTokens * paidRatio
+    const totalCost = (totalPaidInputTokens / 1_000_000) * inputPrice + (totalPaidOutputTokens / 1_000_000) * outputPrice
+
     return {
       avgRequestsPerDay,
       freeRequestsPerDay,
@@ -125,7 +134,7 @@ function AdminUsages() {
       weeklyCost: dailyCost * 7,
       monthlyCost: dailyCost * 30,
       yearlyCost: dailyCost * 365,
-      totalCost: (inputTokens / 1_000_000) * inputPrice + (outputTokens / 1_000_000) * outputPrice,
+      totalCost,
     }
   }
 
@@ -192,7 +201,7 @@ function AdminUsages() {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
   const projectRef = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1] || ''
   const dashboardUrl = projectRef
-    ? `https://supabase.com/dashboard/project/${projectRef}/reports`
+    ? `https://supabase.com/dashboard/project/${projectRef}`
     : 'https://supabase.com/dashboard'
 
   return (
@@ -211,10 +220,10 @@ function AdminUsages() {
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-foreground">
-                  Server Metrics
+                  Server Usage
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  CPU, RAM, Connections
+                  Database, Storage and more
                 </p>
               </div>
             </div>
@@ -229,8 +238,9 @@ function AdminUsages() {
             </a>
           </div>
           <p className="mt-4 text-sm text-muted-foreground">
-            View detailed server metrics including CPU usage, memory consumption,
-            database connections, and API request statistics in the Supabase Dashboard.
+            View detailed server metrics including CPU usage, memory
+            consumption, database connections, and API request statistics in the
+            Supabase Dashboard.
           </p>
         </motion.div>
 
@@ -277,176 +287,41 @@ function AdminUsages() {
             </div>
           </div>
 
-          {/* Cost Estimation - Always Visible */}
-          {aiStats && (() => {
-            const inputPrice = parseFloat(calcInputPrice) || 0
-            const outputPrice = parseFloat(calcOutputPrice) || 0
-            const freeTierQuota = parseFloat(calcFreeTierQuota) || 0
-            const days = 30
-            const estimation = calculateCostEstimation(
-              aiStats.totalInputTokens,
-              aiStats.totalOutputTokens,
-              aiStats.totalRequests,
-              days,
-              inputPrice,
-              outputPrice,
-              freeTierQuota
-            )
-
-            return (
-              <div className="mb-4 space-y-2">
-                <div className="flex items-center justify-between p-3 rounded-xl bg-purple-500/10 border border-purple-500/20">
-                  <div>
-                    <p className="text-[10px] text-muted-foreground">Estimated Cost</p>
-                    <p className="text-xl font-bold text-foreground">
-                      ${selectedPeriod === '7d' ? estimation.weeklyCost.toFixed(4) :
-                        selectedPeriod === '30d' ? estimation.monthlyCost.toFixed(4) :
-                        selectedPeriod === '365d' ? estimation.yearlyCost.toFixed(2) :
-                        estimation.totalCost.toFixed(4)}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-0.5 p-0.5 rounded-md bg-muted/50">
-                    {[
-                      { key: '7d', label: '7D' },
-                      { key: '30d', label: '30D' },
-                      { key: '365d', label: '1Y' },
-                      { key: 'total', label: 'All' },
-                    ].map((period) => (
-                      <button
-                        key={period.key}
-                        onClick={() => setSelectedPeriod(period.key as typeof selectedPeriod)}
-                        className={cn(
-                          'px-2 py-1 rounded text-[10px] font-medium transition-colors',
-                          selectedPeriod === period.key
-                            ? 'bg-purple-500 text-white'
-                            : 'text-muted-foreground hover:text-foreground'
-                        )}
-                      >
-                        {period.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )
-          })()}
-
-          {/* Cost Calculator Settings - Collapsible */}
-          <div className="mb-6">
-            <button
-              onClick={() => setShowCostCalculator(!showCostCalculator)}
-              className="w-full flex items-center justify-between p-2 rounded-lg bg-muted/30 border border-border hover:bg-muted/50 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-3 h-3 text-blue-500" />
-                <span className="text-xs text-muted-foreground">Cost Settings & Free Tier Limits</span>
-              </div>
-              <ChevronDown className={cn('w-3 h-3 text-muted-foreground transition-transform', showCostCalculator && 'rotate-180')} />
-            </button>
-
-            {showCostCalculator && (
-              <div className="mt-2 p-3 rounded-lg bg-muted/30 border border-border space-y-3">
-                {/* Free Tier Limits */}
-                <div className="grid grid-cols-3 gap-3 text-xs">
-                  <div>
-                    <p className="text-muted-foreground text-[10px]">Free Tier</p>
-                    <p className="font-medium text-foreground">
-                      {GEMINI_FREE_TIER.requestsPerDay.toLocaleString()} req/day
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground text-[10px]">RPM</p>
-                    <p className="font-medium text-foreground">
-                      {GEMINI_FREE_TIER.requestsPerMinute} req/min
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground text-[10px]">TPM</p>
-                    <p className="font-medium text-foreground">
-                      {(GEMINI_FREE_TIER.tokensPerMinute / 1_000_000).toFixed(0)}M/min
-                    </p>
-                  </div>
-                </div>
-
-                {/* Editable Pricing Parameters */}
-                <div className="pt-2 border-t border-border">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs text-muted-foreground">Pricing Settings</p>
-                    <button
-                      onClick={() => {
-                        setCalcInputPrice(GEMINI_PRICING['gemini-2.0-flash'].input.toString())
-                        setCalcOutputPrice(GEMINI_PRICING['gemini-2.0-flash'].output.toString())
-                        setCalcFreeTierQuota(GEMINI_FREE_TIER.requestsPerDay.toString())
-                      }}
-                      className="px-2 py-0.5 rounded bg-muted hover:bg-muted/80 text-foreground text-[10px] transition-colors"
-                    >
-                      Reset
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <label className="text-[10px] text-muted-foreground block mb-1">Input $/1M</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={calcInputPrice}
-                        onChange={(e) => setCalcInputPrice(e.target.value)}
-                        className="w-full px-2 py-1 rounded bg-background border border-border text-xs focus:outline-none focus:ring-1 focus:ring-purple-500/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] text-muted-foreground block mb-1">Output $/1M</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={calcOutputPrice}
-                        onChange={(e) => setCalcOutputPrice(e.target.value)}
-                        className="w-full px-2 py-1 rounded bg-background border border-border text-xs focus:outline-none focus:ring-1 focus:ring-purple-500/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] text-muted-foreground block mb-1">Free/Day</label>
-                      <input
-                        type="number"
-                        value={calcFreeTierQuota}
-                        onChange={(e) => setCalcFreeTierQuota(e.target.value)}
-                        className="w-full px-2 py-1 rounded bg-background border border-border text-xs focus:outline-none focus:ring-1 focus:ring-purple-500/50"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* Today's Usage & Quota */}
           {todayUsage && (
-            <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20">
-              <div className="flex items-center justify-between mb-3">
+            <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20">
+              {/* Header Row with remaining requests */}
+              <div className="flex items-center justify-between mb-2">
                 <h3 className="font-medium flex items-center gap-2">
                   <Zap className="w-4 h-4 text-purple-500" />
                   Today's Usage
                 </h3>
-                {todayUsage.isFreeTier ? (
-                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-500">
-                    Free Tier
-                  </span>
-                ) : (
-                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-500">
-                    Pay-as-you-go
-                  </span>
-                )}
+                <div className="flex items-center gap-2">
+                  {todayUsage.requests / todayUsage.requestsLimit > 0.8 ? (
+                    <span className="flex items-center gap-1 text-xs text-red-500">
+                      <AlertTriangle className="w-3 h-3" />
+                      Approaching limit
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      {(todayUsage.requestsLimit - todayUsage.requests).toLocaleString()} remaining
+                    </span>
+                  )}
+                  {todayUsage.isFreeTier ? (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/20 text-amber-500">
+                      Free
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/20 text-emerald-500">
+                      Paid
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Requests Progress */}
-              <div className="mb-3">
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-muted-foreground">Requests</span>
-                  <span className="font-medium">
-                    {todayUsage.requests.toLocaleString()} / {todayUsage.requestsLimit.toLocaleString()}
-                  </span>
-                </div>
-                <div className="h-2 rounded-full bg-muted overflow-hidden">
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all ${
                       todayUsage.requests / todayUsage.requestsLimit > 0.8
@@ -460,35 +335,231 @@ function AdminUsages() {
                     }}
                   />
                 </div>
-              </div>
-
-              {/* Status Message */}
-              <div className="flex items-center gap-2 text-sm">
-                {todayUsage.requests / todayUsage.requestsLimit > 0.8 ? (
-                  <>
-                    <AlertTriangle className="w-4 h-4 text-red-500" />
-                    <span className="text-red-500">
-                      Approaching daily limit! Consider upgrading.
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-4 h-4 text-emerald-500" />
-                    <span className="text-muted-foreground">
-                      {(todayUsage.requestsLimit - todayUsage.requests).toLocaleString()} requests remaining today
-                    </span>
-                  </>
-                )}
+                <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+                  {todayUsage.requests.toLocaleString()} / {todayUsage.requestsLimit.toLocaleString()}
+                </span>
               </div>
             </div>
           )}
 
+          {/* Cost Estimation - Always Visible */}
+          {aiStats &&
+            (() => {
+              const inputPrice = parseFloat(calcInputPrice) || 0
+              const outputPrice = parseFloat(calcOutputPrice) || 0
+              const freeTierQuota = parseFloat(calcFreeTierQuota) || 0
+              const days = 30
+              const estimation = calculateCostEstimation(
+                aiStats.totalInputTokens,
+                aiStats.totalOutputTokens,
+                aiStats.totalRequests,
+                days,
+                inputPrice,
+                outputPrice,
+                freeTierQuota,
+              )
+
+              return (
+                <div className="mb-6">
+                  <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                    {/* Header Row */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">
+                          Estimated Cost
+                        </p>
+                        <p className="text-xl font-bold text-foreground">
+                          $
+                          {selectedPeriod === '7d'
+                            ? estimation.weeklyCost.toFixed(4)
+                            : selectedPeriod === '30d'
+                              ? estimation.monthlyCost.toFixed(4)
+                              : selectedPeriod === '365d'
+                                ? estimation.yearlyCost.toFixed(4)
+                                : estimation.totalCost.toFixed(4)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-0.5 p-0.5 rounded-md bg-muted/50">
+                          {[
+                            { key: '7d', label: '7D' },
+                            { key: '30d', label: '30D' },
+                            { key: '365d', label: '1Y' },
+                            { key: 'total', label: 'All' },
+                          ].map((period) => (
+                            <button
+                              key={period.key}
+                              onClick={() =>
+                                setSelectedPeriod(
+                                  period.key as typeof selectedPeriod,
+                                )
+                              }
+                              className={cn(
+                                'px-2 py-1 rounded text-[10px] font-medium transition-colors',
+                                selectedPeriod === period.key
+                                  ? 'bg-purple-500 text-white'
+                                  : 'text-muted-foreground hover:text-foreground',
+                              )}
+                            >
+                              {period.label}
+                            </button>
+                          ))}
+                        </div>
+                        <button
+                          onClick={() =>
+                            setShowCostCalculator(!showCostCalculator)
+                          }
+                          className={cn(
+                            'p-1.5 rounded-md transition-colors',
+                            showCostCalculator
+                              ? 'bg-purple-500/20 text-purple-500'
+                              : 'bg-muted/50 text-muted-foreground hover:text-foreground',
+                          )}
+                          title="Cost Settings"
+                        >
+                          <TrendingUp className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Collapsible Settings */}
+                    {showCostCalculator && (
+                      <div className="mt-3 pt-3 border-t border-purple-500/20 space-y-3">
+                        {/* Free Tier Limits */}
+                        <div className="grid grid-cols-3 gap-3 text-xs">
+                          <div>
+                            <p className="text-muted-foreground text-[10px]">
+                              Free Tier
+                            </p>
+                            <p className="font-medium text-foreground">
+                              {GEMINI_FREE_TIER.requestsPerDay.toLocaleString()}{' '}
+                              req/day
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground text-[10px]">
+                              RPM
+                            </p>
+                            <p className="font-medium text-foreground">
+                              {GEMINI_FREE_TIER.requestsPerMinute} req/min
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground text-[10px]">
+                              TPM
+                            </p>
+                            <p className="font-medium text-foreground">
+                              {(
+                                GEMINI_FREE_TIER.tokensPerMinute / 1_000_000
+                              ).toFixed(0)}
+                              M/min
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Editable Pricing Parameters */}
+                        <div className="pt-2 border-t border-purple-500/20">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-xs text-muted-foreground">
+                              Pricing Settings
+                            </p>
+                            <button
+                              onClick={() => {
+                                setCalcInputPrice(
+                                  GEMINI_PRICING[
+                                    'gemini-2.0-flash'
+                                  ].input.toString(),
+                                )
+                                setCalcOutputPrice(
+                                  GEMINI_PRICING[
+                                    'gemini-2.0-flash'
+                                  ].output.toString(),
+                                )
+                                setCalcFreeTierQuota(
+                                  GEMINI_FREE_TIER.requestsPerDay.toString(),
+                                )
+                              }}
+                              className="px-2 py-0.5 rounded bg-muted hover:bg-muted/80 text-foreground text-[10px] transition-colors"
+                            >
+                              Reset
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            <div>
+                              <label className="text-[10px] text-muted-foreground block mb-1">
+                                Input $/1M
+                              </label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={calcInputPrice}
+                                onChange={(e) =>
+                                  setCalcInputPrice(e.target.value)
+                                }
+                                className="w-full px-2 py-1 rounded bg-background border border-border text-xs focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-muted-foreground block mb-1">
+                                Output $/1M
+                              </label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={calcOutputPrice}
+                                onChange={(e) =>
+                                  setCalcOutputPrice(e.target.value)
+                                }
+                                className="w-full px-2 py-1 rounded bg-background border border-border text-xs focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-muted-foreground block mb-1">
+                                Free/Day
+                              </label>
+                              <input
+                                type="number"
+                                value={calcFreeTierQuota}
+                                onChange={(e) =>
+                                  setCalcFreeTierQuota(e.target.value)
+                                }
+                                className="w-full px-2 py-1 rounded bg-background border border-border text-xs focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })()}
+
           {/* Usage Chart */}
           <div className="mb-6">
-            <h3 className="font-medium flex items-center gap-2 mb-4">
-              <BarChart3 className="w-4 h-4 text-purple-500" />
-              Usage History
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-medium flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-purple-500" />
+                Usage History
+              </h3>
+              {chartSummary && (
+                <div className="flex items-center gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded bg-purple-500" />
+                    <span className="text-muted-foreground">Requests</span>
+                    <span className="font-medium">
+                      {chartSummary.totalRequests.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">Tokens</span>
+                    <span className="font-medium">
+                      {(chartSummary.totalTokens / 1000).toFixed(1)}K
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Chart */}
             <div className="relative h-48 rounded-xl bg-muted/30 border border-border p-4">
@@ -501,7 +572,7 @@ function AdminUsages() {
                   {chartData.map((day, index) => {
                     const maxRequests = Math.max(
                       ...chartData.map((d) => d.requests),
-                      1
+                      1,
                     )
                     const barHeight = (day.requests / maxRequests) * 100
 
@@ -515,11 +586,21 @@ function AdminUsages() {
                           <div className="bg-popover border border-border rounded-lg shadow-lg p-2 text-xs whitespace-nowrap">
                             <p className="font-medium text-foreground mb-1">
                               {getChartTimeRange() === 'year'
-                                ? new Date(day.date + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-                                : new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                ? new Date(day.date + '-01').toLocaleDateString(
+                                    'en-US',
+                                    { month: 'short', year: 'numeric' },
+                                  )
+                                : new Date(day.date).toLocaleDateString(
+                                    'en-US',
+                                    { month: 'short', day: 'numeric' },
+                                  )}
                             </p>
-                            <p className="text-purple-500">{day.requests} requests</p>
-                            <p className="text-muted-foreground">{(day.tokens / 1000).toFixed(1)}K tokens</p>
+                            <p className="text-purple-500">
+                              {day.requests} requests
+                            </p>
+                            <p className="text-muted-foreground">
+                              {(day.tokens / 1000).toFixed(1)}K tokens
+                            </p>
                           </div>
                         </div>
 
@@ -528,7 +609,10 @@ function AdminUsages() {
                           {barHeight > 0 ? (
                             <div
                               className="w-full bg-purple-500 rounded-t transition-all"
-                              style={{ height: `${barHeight}%`, minHeight: '2px' }}
+                              style={{
+                                height: `${barHeight}%`,
+                                minHeight: '2px',
+                              }}
                             />
                           ) : (
                             <div className="w-full h-0.5 bg-muted rounded" />
@@ -538,13 +622,19 @@ function AdminUsages() {
                         {/* Date label - show every few bars based on data length */}
                         {(index === 0 ||
                           index === chartData.length - 1 ||
-                          (getChartTimeRange() === 'week') ||
-                          (getChartTimeRange() === 'month' && index % 5 === 0) ||
-                          (getChartTimeRange() === 'year')) && (
+                          getChartTimeRange() === 'week' ||
+                          (getChartTimeRange() === 'month' &&
+                            index % 5 === 0) ||
+                          getChartTimeRange() === 'year') && (
                           <span className="text-[10px] text-muted-foreground truncate max-w-full">
                             {getChartTimeRange() === 'year'
-                              ? new Date(day.date + '-01').toLocaleDateString('en-US', { month: 'short' })
-                              : new Date(day.date).toLocaleDateString('en-US', { day: 'numeric' })}
+                              ? new Date(day.date + '-01').toLocaleDateString(
+                                  'en-US',
+                                  { month: 'short' },
+                                )
+                              : new Date(day.date).toLocaleDateString('en-US', {
+                                  day: 'numeric',
+                                })}
                           </span>
                         )}
                       </div>
@@ -557,23 +647,7 @@ function AdminUsages() {
                 </div>
               )}
             </div>
-
-            {/* Summary */}
-            {chartSummary && (
-              <div className="mt-3 flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded bg-purple-500" />
-                  <span className="text-muted-foreground">Requests</span>
-                  <span className="font-medium">{chartSummary.totalRequests.toLocaleString()}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">Tokens</span>
-                  <span className="font-medium">{(chartSummary.totalTokens / 1000).toFixed(1)}K</span>
-                </div>
-              </div>
-            )}
           </div>
-
         </motion.div>
 
         {/* System Info */}
