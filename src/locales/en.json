@@ -26,6 +26,7 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
+    "done": "Done",
     "create": "Create",
     "generating": "Generating...",
     "loading": "Loading...",
@@ -276,7 +277,10 @@
       "recentActivities": "Recent Activities",
       "noRecent": "No recent activities yet",
       "popularTemplates": "Popular Templates",
-      "noTemplates": "No templates yet"
+      "noTemplates": "No templates yet",
+      "dropHere": "Drop here",
+      "quickStartFull": "Quick Start is full (max 6 items)",
+      "editHint": "Drag items from sidebar to add, drag to reorder, or click X to remove"
     },
     "contentInput": {
       "label": "Your Content",

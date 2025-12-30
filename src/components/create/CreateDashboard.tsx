@@ -1,17 +1,27 @@
+import { useDroppable } from '@dnd-kit/core'
+import {
+  SortableContext,
+  rectSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { motion } from 'framer-motion'
 import {
   ArrowRight,
   BookOpen,
-  Bot,
+  Check,
   Clock,
   FolderOpen,
-  GraduationCap,
+  GripVertical,
   Image,
   LayoutTemplate,
-  Map,
+  Pencil,
+  Plus,
   Sparkles,
+  X,
 } from 'lucide-react'
 import { useTranslation } from '../../hooks/useTranslation'
+import { cn } from '../../lib/utils'
 import {
   Card,
   CardContent,
@@ -19,41 +29,116 @@ import {
   CardHeader,
   CardTitle,
 } from '../ui/card'
-import type { CreatorType } from './CreateSidebar'
+import {
+  creatorGradients,
+  getCreatorIcon,
+  type CreatorType,
+} from './CreateSidebar'
 
-interface QuickAction {
+// Default quick start items
+export const DEFAULT_QUICK_START_ITEMS: CreatorType[] = [
+  'quiz',
+  'quest',
+  'flashcard',
+  'aiTutor',
+]
+
+const MAX_QUICK_START_ITEMS = 6
+
+// Sortable Quick Start Item
+interface SortableQuickItemProps {
   id: CreatorType
-  icon: React.ElementType
-  gradient: string
-  hoverGradient: string
+  onSelect: () => void
+  onRemove: () => void
+  t: (key: string) => string
+  isEditMode: boolean
 }
 
-const quickActions: QuickAction[] = [
-  {
-    id: 'quiz',
-    icon: GraduationCap,
-    gradient: 'from-purple-500 to-pink-500',
-    hoverGradient: 'group-hover:from-purple-600 group-hover:to-pink-600',
-  },
-  {
-    id: 'quest',
-    icon: Map,
-    gradient: 'from-blue-500 to-cyan-500',
-    hoverGradient: 'group-hover:from-blue-600 group-hover:to-cyan-600',
-  },
-  {
-    id: 'flashcard',
-    icon: BookOpen,
-    gradient: 'from-emerald-500 to-green-500',
-    hoverGradient: 'group-hover:from-emerald-600 group-hover:to-green-600',
-  },
-  {
-    id: 'aiTutor',
-    icon: Bot,
-    gradient: 'from-amber-500 to-orange-500',
-    hoverGradient: 'group-hover:from-amber-600 group-hover:to-orange-600',
-  },
-]
+function SortableQuickItem({
+  id,
+  onSelect,
+  onRemove,
+  t,
+  isEditMode,
+}: SortableQuickItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: `quick-${id}`, disabled: !isEditMode })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  const Icon = getCreatorIcon(id)
+  const gradients = creatorGradients[id]
+
+  return (
+    <motion.div
+      ref={setNodeRef}
+      style={style}
+      whileHover={{ scale: isEditMode ? 1 : 1.03, y: isEditMode ? 0 : -2 }}
+      whileTap={{ scale: isEditMode ? 1 : 0.98 }}
+      className={cn(
+        'group relative overflow-hidden rounded-xl p-4 bg-card border border-border hover:border-primary/50 transition-all duration-300',
+        isDragging && 'opacity-50 shadow-lg ring-2 ring-primary/50 z-50',
+        isEditMode && 'ring-2 ring-primary/30 animate-pulse',
+      )}
+    >
+      {/* Remove button - only show in edit mode */}
+      {isEditMode && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onRemove()
+          }}
+          className="absolute top-1 right-1 p-1 rounded-full bg-destructive/90 text-destructive-foreground hover:bg-destructive transition-all z-10"
+        >
+          <X className="w-3 h-3" />
+        </button>
+      )}
+
+      {/* Drag handle - only show in edit mode */}
+      {isEditMode && (
+        <div
+          {...attributes}
+          {...listeners}
+          className="absolute top-1 left-1 p-1 cursor-grab active:cursor-grabbing text-primary hover:text-primary/80 transition-opacity"
+        >
+          <GripVertical className="w-4 h-4" />
+        </div>
+      )}
+
+      <div
+        className={`absolute inset-0 bg-linear-to-br ${gradients.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}
+      />
+      <button
+        type="button"
+        onClick={isEditMode ? undefined : onSelect}
+        disabled={isEditMode}
+        className={cn(
+          'relative flex flex-col items-center gap-3 w-full',
+          isEditMode && 'cursor-default',
+        )}
+      >
+        <div
+          className={`w-12 h-12 rounded-xl bg-linear-to-br ${gradients.gradient} flex items-center justify-center shadow-lg`}
+        >
+          <Icon className="w-6 h-6 text-white" />
+        </div>
+        <span className="font-medium text-foreground">
+          {t(`create.types.${id}.name`)}
+        </span>
+      </button>
+    </motion.div>
+  )
+}
 
 interface CategoryCard {
   id: string
@@ -105,13 +190,35 @@ const categoryCards: CategoryCard[] = [
 interface CreateDashboardProps {
   onSelectCreator: (type: CreatorType) => void
   userName?: string
+  quickStartItems: CreatorType[]
+  onQuickStartChange: (items: CreatorType[]) => void
+  isDropTarget?: boolean
+  isEditMode: boolean
+  onToggleEditMode: () => void
 }
 
 export function CreateDashboard({
   onSelectCreator,
   userName,
+  quickStartItems,
+  onQuickStartChange,
+  isDropTarget,
+  isEditMode,
+  onToggleEditMode,
 }: CreateDashboardProps) {
   const { t } = useTranslation()
+
+  const { setNodeRef, isOver } = useDroppable({
+    id: 'quick-start-dropzone',
+    disabled: !isEditMode,
+  })
+
+  const handleRemoveItem = (itemToRemove: CreatorType) => {
+    onQuickStartChange(quickStartItems.filter((item) => item !== itemToRemove))
+  }
+
+  const canAddMore = quickStartItems.length < MAX_QUICK_START_ITEMS
+  const showDropTarget = isEditMode && (isOver || isDropTarget)
 
   const container = {
     hidden: { opacity: 0 },
@@ -138,7 +245,7 @@ export function CreateDashboard({
       {/* Welcome Section */}
       <motion.div variants={item} className="text-center mb-8">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">
-          <span className="bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">
+          <span className="bg-linear-to-r from-primary to-pink-500 bg-clip-text text-transparent">
             {t('create.dashboard.welcome')}
             {userName && `, ${userName}`}
           </span>
@@ -150,34 +257,93 @@ export function CreateDashboard({
 
       {/* Quick Start */}
       <motion.div variants={item} className="mb-8">
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-primary" />
-          {t('create.dashboard.quickStart')}
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {quickActions.map((action) => (
-            <motion.button
-              key={action.id}
-              whileHover={{ scale: 1.03, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => onSelectCreator(action.id)}
-              className="group relative overflow-hidden rounded-xl p-4 bg-card border border-border hover:border-primary/50 transition-all duration-300"
-            >
-              <div
-                className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-primary" />
+            {t('create.dashboard.quickStart')}
+          </h2>
+          <button
+            type="button"
+            onClick={onToggleEditMode}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
+              isEditMode
+                ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground',
+            )}
+          >
+            {isEditMode ? (
+              <>
+                <Check className="w-4 h-4" />
+                {t('common.done')}
+              </>
+            ) : (
+              <>
+                <Pencil className="w-4 h-4" />
+                {t('common.edit')}
+              </>
+            )}
+          </button>
+        </div>
+        {isEditMode && (
+          <p className="text-sm text-muted-foreground mb-4">
+            {t('create.dashboard.editHint')} ({quickStartItems.length}/{MAX_QUICK_START_ITEMS})
+          </p>
+        )}
+        <div
+          ref={setNodeRef}
+          className={cn(
+            'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 p-4 -m-4 rounded-xl transition-all duration-300',
+            showDropTarget &&
+              canAddMore &&
+              'bg-primary/5 ring-2 ring-primary/30 ring-dashed',
+            showDropTarget && !canAddMore && 'bg-destructive/5 ring-2 ring-destructive/30 ring-dashed',
+          )}
+        >
+          <SortableContext
+            items={quickStartItems.map((id) => `quick-${id}`)}
+            strategy={rectSortingStrategy}
+          >
+            {quickStartItems.map((itemId) => (
+              <SortableQuickItem
+                key={itemId}
+                id={itemId}
+                onSelect={() => onSelectCreator(itemId)}
+                onRemove={() => handleRemoveItem(itemId)}
+                t={t}
+                isEditMode={isEditMode}
               />
-              <div className="relative flex flex-col items-center gap-3">
-                <div
-                  className={`w-12 h-12 rounded-xl bg-gradient-to-br ${action.gradient} flex items-center justify-center shadow-lg`}
-                >
-                  <action.icon className="w-6 h-6 text-white" />
-                </div>
-                <span className="font-medium text-foreground">
-                  {t(`create.types.${action.id}.name`)}
+            ))}
+          </SortableContext>
+
+          {/* Drop hint when dragging in edit mode */}
+          {showDropTarget && canAddMore && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex items-center justify-center rounded-xl border-2 border-dashed border-primary/50 bg-primary/5 p-4 min-h-[120px]"
+            >
+              <div className="flex flex-col items-center gap-2 text-primary">
+                <Plus className="w-8 h-8" />
+                <span className="text-sm font-medium">
+                  {t('create.dashboard.dropHere')}
                 </span>
               </div>
-            </motion.button>
-          ))}
+            </motion.div>
+          )}
+
+          {/* Show message when full */}
+          {showDropTarget && !canAddMore && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="col-span-full flex items-center justify-center rounded-xl border-2 border-dashed border-destructive/50 bg-destructive/5 p-4"
+            >
+              <span className="text-sm text-destructive font-medium">
+                {t('create.dashboard.quickStartFull')}
+              </span>
+            </motion.div>
+          )}
         </div>
       </motion.div>
 

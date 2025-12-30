@@ -1,3 +1,15 @@
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  pointerWithin,
+  rectIntersection,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core'
+import { arrayMove } from '@dnd-kit/sortable'
 import { createFileRoute } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -13,22 +25,28 @@ import {
   Trophy,
   Users,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   ComingSoonCreator,
   CreateDashboard,
   CreateSidebar,
+  DEFAULT_QUICK_START_ITEMS,
   FlashcardCreator,
+  getCreatorIcon,
   LessonCreator,
   QuestCreatorComponent,
   QuizCreator,
   RoleplayCreator,
+  creatorGradients,
 } from '../components/create'
 import { DefaultLayout } from '../components/layouts/DefaultLayout'
 import { Button } from '../components/ui/button'
 import { useTranslation } from '../hooks/useTranslation'
 
 import type { CreatorType } from '../components/create'
+
+const QUICK_START_STORAGE_KEY = 'qzvert-quick-start-items'
+const MAX_QUICK_START_ITEMS = 6
 
 export const Route = createFileRoute('/create')({ component: CreatePage })
 
@@ -37,6 +55,183 @@ function CreatePage() {
   const [activeCreator, setActiveCreator] = useState<CreatorType | null>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [activeDragId, setActiveDragId] = useState<string | null>(null)
+  const [isDraggingOverQuickStart, setIsDraggingOverQuickStart] =
+    useState(false)
+  const [isQuickStartEditMode, setIsQuickStartEditMode] = useState(false)
+
+  // Quick Start items with localStorage persistence
+  const [quickStartItems, setQuickStartItems] = useState<CreatorType[]>(() => {
+    if (typeof window === 'undefined') return DEFAULT_QUICK_START_ITEMS
+    const stored = localStorage.getItem(QUICK_START_STORAGE_KEY)
+    if (stored) {
+      try {
+        return JSON.parse(stored)
+      } catch {
+        return DEFAULT_QUICK_START_ITEMS
+      }
+    }
+    return DEFAULT_QUICK_START_ITEMS
+  })
+
+  // Save to localStorage when quickStartItems changes
+  useEffect(() => {
+    localStorage.setItem(
+      QUICK_START_STORAGE_KEY,
+      JSON.stringify(quickStartItems),
+    )
+  }, [quickStartItems])
+
+  // Drag sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+  )
+
+  // Handle drag start
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveDragId(event.active.id as string)
+  }, [])
+
+  // Custom collision detection - prioritize quick start items, then dropzone
+  const collisionDetection = useCallback(
+    (args: Parameters<typeof rectIntersection>[0]) => {
+      // First check for intersections with quick start items
+      const pointerCollisions = pointerWithin(args)
+      if (pointerCollisions.length > 0) {
+        // Prioritize quick- items for sorting
+        const quickItem = pointerCollisions.find((c) =>
+          String(c.id).startsWith('quick-'),
+        )
+        if (quickItem) return [quickItem]
+        return pointerCollisions
+      }
+      // Fall back to rect intersection
+      return rectIntersection(args)
+    },
+    [],
+  )
+
+  // Handle drag over
+  const handleDragOver = useCallback(
+    (event: { over: { id: string | number } | null }) => {
+      const overId = event.over?.id ? String(event.over.id) : null
+      // Show drop target when over dropzone OR any quick- item
+      setIsDraggingOverQuickStart(
+        overId === 'quick-start-dropzone' || (overId?.startsWith('quick-') ?? false),
+      )
+    },
+    [],
+  )
+
+  // Handle drag end
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event
+      setActiveDragId(null)
+      setIsDraggingOverQuickStart(false)
+
+      if (!over) return
+
+      const activeId = active.id as string
+      const overId = over.id as string
+
+      // Dropping sidebar item to quick start (on dropzone or on any quick item)
+      if (activeId.startsWith('sidebar-')) {
+        const isDropOnQuickStart =
+          overId === 'quick-start-dropzone' || overId.startsWith('quick-')
+
+        if (isDropOnQuickStart) {
+          const creatorType = activeId.replace('sidebar-', '') as CreatorType
+          if (
+            !quickStartItems.includes(creatorType) &&
+            quickStartItems.length < MAX_QUICK_START_ITEMS
+          ) {
+            // If dropping on a specific quick item, insert at that position
+            if (overId.startsWith('quick-')) {
+              const overIndex = quickStartItems.findIndex(
+                (item) => `quick-${item}` === overId,
+              )
+              if (overIndex !== -1) {
+                setQuickStartItems((prev) => {
+                  const newItems = [...prev]
+                  newItems.splice(overIndex, 0, creatorType)
+                  return newItems
+                })
+                return
+              }
+            }
+            // Otherwise add at end
+            setQuickStartItems((prev) => [...prev, creatorType])
+          }
+        }
+        return
+      }
+
+      // Reordering within quick start
+      if (activeId.startsWith('quick-') && overId.startsWith('quick-')) {
+        const activeIndex = quickStartItems.findIndex(
+          (item) => `quick-${item}` === activeId,
+        )
+        const overIndex = quickStartItems.findIndex(
+          (item) => `quick-${item}` === overId,
+        )
+
+        if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
+          setQuickStartItems((prev) => arrayMove(prev, activeIndex, overIndex))
+        }
+      }
+    },
+    [quickStartItems],
+  )
+
+  // Get drag overlay content
+  const getDragOverlayContent = () => {
+    if (!activeDragId) return null
+
+    if (activeDragId.startsWith('sidebar-')) {
+      const creatorType = activeDragId.replace('sidebar-', '') as CreatorType
+      const Icon = getCreatorIcon(creatorType)
+      const gradients = creatorGradients[creatorType]
+
+      return (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-primary shadow-lg">
+          <div
+            className={`w-8 h-8 rounded-lg bg-linear-to-br ${gradients.gradient} flex items-center justify-center`}
+          >
+            <Icon className="w-4 h-4 text-white" />
+          </div>
+          <span className="font-medium text-sm">
+            {t(`create.types.${creatorType}.name`)}
+          </span>
+        </div>
+      )
+    }
+
+    if (activeDragId.startsWith('quick-')) {
+      const creatorType = activeDragId.replace('quick-', '') as CreatorType
+      const Icon = getCreatorIcon(creatorType)
+      const gradients = creatorGradients[creatorType]
+
+      return (
+        <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border border-primary shadow-lg">
+          <div
+            className={`w-12 h-12 rounded-xl bg-linear-to-br ${gradients.gradient} flex items-center justify-center`}
+          >
+            <Icon className="w-6 h-6 text-white" />
+          </div>
+          <span className="font-medium text-sm">
+            {t(`create.types.${creatorType}.name`)}
+          </span>
+        </div>
+      )
+    }
+
+    return null
+  }
 
   const renderCreator = () => {
     if (!activeCreator) {
@@ -44,6 +239,11 @@ function CreatePage() {
         <CreateDashboard
           onSelectCreator={setActiveCreator}
           userName={undefined}
+          quickStartItems={quickStartItems}
+          onQuickStartChange={setQuickStartItems}
+          isDropTarget={isDraggingOverQuickStart}
+          isEditMode={isQuickStartEditMode}
+          onToggleEditMode={() => setIsQuickStartEditMode((prev) => !prev)}
         />
       )
     }
@@ -224,6 +424,11 @@ function CreatePage() {
           <CreateDashboard
             onSelectCreator={setActiveCreator}
             userName={undefined}
+            quickStartItems={quickStartItems}
+            onQuickStartChange={setQuickStartItems}
+            isDropTarget={isDraggingOverQuickStart}
+            isEditMode={isQuickStartEditMode}
+            onToggleEditMode={() => setIsQuickStartEditMode((prev) => !prev)}
           />
         )
     }
@@ -231,69 +436,81 @@ function CreatePage() {
 
   return (
     <DefaultLayout>
-      <div className="min-h-screen bg-linear-to-b from-background via-muted/30 to-background">
-        {/* Mobile Header */}
-        <div className="md:hidden sticky top-16 z-30 bg-background/80 backdrop-blur-sm border-b border-border px-4 py-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setMobileMenuOpen(true)}
-            className="flex items-center gap-2"
-          >
-            <Menu className="w-5 h-5" />
-            <span>{t('create.title')}</span>
-          </Button>
-        </div>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={collisionDetection}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="min-h-screen bg-linear-to-b from-background via-muted/30 to-background">
+          {/* Mobile Header */}
+          <div className="md:hidden sticky top-16 z-30 bg-background/80 backdrop-blur-sm border-b border-border px-4 py-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setMobileMenuOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <Menu className="w-5 h-5" />
+              <span>{t('create.title')}</span>
+            </Button>
+          </div>
 
-        <div className="flex">
-          {/* Sidebar */}
-          <CreateSidebar
-            activeCreator={activeCreator}
-            onSelectCreator={setActiveCreator}
-            isCollapsed={sidebarCollapsed}
-            onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-            isMobileOpen={mobileMenuOpen}
-            onCloseMobile={() => setMobileMenuOpen(false)}
-          />
+          <div className="flex">
+            {/* Sidebar */}
+            <CreateSidebar
+              activeCreator={activeCreator}
+              onSelectCreator={setActiveCreator}
+              isCollapsed={sidebarCollapsed}
+              onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+              isMobileOpen={mobileMenuOpen}
+              onCloseMobile={() => setMobileMenuOpen(false)}
+              isQuickStartEditMode={isQuickStartEditMode}
+            />
 
-          {/* Main Content */}
-          <main className="flex-1 p-4 md:p-8">
-            {/* Back Button when creator is active */}
-            <AnimatePresence>
-              {activeCreator && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="mb-4"
-                >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setActiveCreator(null)}
-                    className="text-muted-foreground hover:text-foreground"
+            {/* Main Content */}
+            <main className="flex-1 p-4 md:p-8">
+              {/* Back Button when creator is active */}
+              <AnimatePresence>
+                {activeCreator && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="mb-4"
                   >
-                    ← Back to Dashboard
-                  </Button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setActiveCreator(null)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      ← Back to Dashboard
+                    </Button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-            {/* Creator Content */}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeCreator || 'dashboard'}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-              >
-                {renderCreator()}
-              </motion.div>
-            </AnimatePresence>
-          </main>
+              {/* Creator Content */}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeCreator || 'dashboard'}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {renderCreator()}
+                </motion.div>
+              </AnimatePresence>
+            </main>
+          </div>
         </div>
-      </div>
+
+        {/* Drag Overlay */}
+        <DragOverlay dropAnimation={null}>{getDragOverlayContent()}</DragOverlay>
+      </DndContext>
     </DefaultLayout>
   )
 }

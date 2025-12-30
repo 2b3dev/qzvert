@@ -26,6 +26,7 @@
     "cancel": "ยกเลิก",
     "delete": "ลบ",
     "edit": "แก้ไข",
+    "done": "เสร็จสิ้น",
     "create": "สร้าง",
     "generating": "กำลังสร้าง...",
     "loading": "กำลังโหลด...",
@@ -276,7 +277,10 @@
       "recentActivities": "กิจกรรมล่าสุด",
       "noRecent": "ยังไม่มีกิจกรรมล่าสุด",
       "popularTemplates": "เทมเพลตยอดนิยม",
-      "noTemplates": "ยังไม่มีเทมเพลต"
+      "noTemplates": "ยังไม่มีเทมเพลต",
+      "dropHere": "วางที่นี่",
+      "quickStartFull": "เต็มแล้ว (สูงสุด 6 รายการ)",
+      "editHint": "ลากจาก sidebar เพื่อเพิ่ม, ลากเพื่อเรียงลำดับ, หรือกด X เพื่อลบ"
     },
     "contentInput": {
       "label": "เนื้อหาของคุณ",

@@ -1,3 +1,5 @@
+import { useDraggable } from '@dnd-kit/core'
+import { CSS } from '@dnd-kit/utilities'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   BookOpen,
@@ -10,6 +12,7 @@ import {
   FolderOpen,
   GitBranch,
   GraduationCap,
+  GripVertical,
   Home,
   Image,
   Languages,
@@ -207,6 +210,7 @@ interface CreateSidebarProps {
   onToggleCollapse: () => void
   isMobileOpen: boolean
   onCloseMobile: () => void
+  isQuickStartEditMode?: boolean
 }
 
 export function CreateSidebar({
@@ -216,6 +220,7 @@ export function CreateSidebar({
   onToggleCollapse,
   isMobileOpen,
   onCloseMobile,
+  isQuickStartEditMode = false,
 }: CreateSidebarProps) {
   const { t } = useTranslation()
 
@@ -299,7 +304,7 @@ export function CreateSidebar({
         >
           <Home
             className={cn(
-              'w-5 h-5 flex-shrink-0',
+              'w-5 h-5 shrink-0',
               activeCreator === null && 'text-primary',
             )}
           />
@@ -328,52 +333,22 @@ export function CreateSidebar({
             {/* Section items */}
             <div className="space-y-1">
               {section.items.map((item) => (
-                <motion.button
+                <DraggableSidebarItem
                   key={item.id}
-                  whileHover={{ scale: 1.02, x: isCollapsed ? 0 : 4 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => {
-                    if (item.available) {
+                  item={item}
+                  isCollapsed={isCollapsed}
+                  isActive={activeCreator === item.id}
+                  onSelect={() => {
+                    if (item.available && !isQuickStartEditMode) {
                       onSelectCreator(item.id)
                       onCloseMobile()
                     }
                   }}
-                  disabled={!item.available}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
-                    isCollapsed && 'justify-center px-2',
-                    activeCreator === item.id
-                      ? 'bg-primary/10 text-primary border-l-2 border-primary'
-                      : item.available
-                        ? 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                        : 'text-muted-foreground/50 cursor-not-allowed',
-                  )}
-                  title={isCollapsed ? t(item.labelKey) : undefined}
-                >
-                  <item.icon
-                    className={cn(
-                      'w-5 h-5 flex-shrink-0',
-                      activeCreator === item.id && 'text-primary',
-                    )}
-                  />
-                  {!isCollapsed && (
-                    <>
-                      <span className="flex-1 text-left text-sm">
-                        {t(item.labelKey)}
-                      </span>
-                      {item.badge && (
-                        <span
-                          className={cn(
-                            'text-[10px] px-1.5 py-0.5 rounded-full font-medium',
-                            getBadgeStyle(item.badge),
-                          )}
-                        >
-                          {getBadgeText(item.badge)}
-                        </span>
-                      )}
-                    </>
-                  )}
-                </motion.button>
+                  getBadgeStyle={getBadgeStyle}
+                  getBadgeText={getBadgeText}
+                  t={t}
+                  isQuickStartEditMode={isQuickStartEditMode}
+                />
               ))}
             </div>
           </div>
@@ -447,4 +422,182 @@ export function CreateSidebar({
   )
 }
 
+// Gradient mapping for each creator type
+export const creatorGradients: Record<
+  CreatorType,
+  { gradient: string; hoverGradient: string }
+> = {
+  quiz: {
+    gradient: 'from-purple-500 to-pink-500',
+    hoverGradient: 'group-hover:from-purple-600 group-hover:to-pink-600',
+  },
+  quest: {
+    gradient: 'from-blue-500 to-cyan-500',
+    hoverGradient: 'group-hover:from-blue-600 group-hover:to-cyan-600',
+  },
+  lesson: {
+    gradient: 'from-teal-500 to-emerald-500',
+    hoverGradient: 'group-hover:from-teal-600 group-hover:to-emerald-600',
+  },
+  flashcard: {
+    gradient: 'from-emerald-500 to-green-500',
+    hoverGradient: 'group-hover:from-emerald-600 group-hover:to-green-600',
+  },
+  roleplay: {
+    gradient: 'from-rose-500 to-pink-500',
+    hoverGradient: 'group-hover:from-rose-600 group-hover:to-pink-600',
+  },
+  course: {
+    gradient: 'from-blue-500 to-indigo-500',
+    hoverGradient: 'group-hover:from-blue-600 group-hover:to-indigo-600',
+  },
+  classroom: {
+    gradient: 'from-cyan-500 to-blue-500',
+    hoverGradient: 'group-hover:from-cyan-600 group-hover:to-blue-600',
+  },
+  collection: {
+    gradient: 'from-teal-500 to-emerald-500',
+    hoverGradient: 'group-hover:from-teal-600 group-hover:to-emerald-600',
+  },
+  challenge: {
+    gradient: 'from-amber-500 to-orange-500',
+    hoverGradient: 'group-hover:from-amber-600 group-hover:to-orange-600',
+  },
+  template: {
+    gradient: 'from-slate-500 to-gray-500',
+    hoverGradient: 'group-hover:from-slate-600 group-hover:to-gray-600',
+  },
+  aiTutor: {
+    gradient: 'from-violet-500 to-purple-500',
+    hoverGradient: 'group-hover:from-violet-600 group-hover:to-purple-600',
+  },
+  infographic: {
+    gradient: 'from-rose-500 to-pink-500',
+    hoverGradient: 'group-hover:from-rose-600 group-hover:to-pink-600',
+  },
+  diagram: {
+    gradient: 'from-indigo-500 to-violet-500',
+    hoverGradient: 'group-hover:from-indigo-600 group-hover:to-violet-600',
+  },
+  cards: {
+    gradient: 'from-pink-500 to-rose-500',
+    hoverGradient: 'group-hover:from-pink-600 group-hover:to-rose-600',
+  },
+  slides: {
+    gradient: 'from-orange-500 to-red-500',
+    hoverGradient: 'group-hover:from-orange-600 group-hover:to-red-600',
+  },
+  cover: {
+    gradient: 'from-fuchsia-500 to-pink-500',
+    hoverGradient: 'group-hover:from-fuchsia-600 group-hover:to-pink-600',
+  },
+}
+
+// Get icon for a creator type
+export function getCreatorIcon(type: CreatorType): LucideIcon {
+  for (const section of sidebarSections) {
+    const item = section.items.find((i) => i.id === type)
+    if (item) return item.icon
+  }
+  return GraduationCap
+}
+
+// Draggable sidebar item component
+interface DraggableSidebarItemProps {
+  item: SidebarItem
+  isCollapsed: boolean
+  isActive: boolean
+  onSelect: () => void
+  getBadgeStyle: (badge?: 'new' | 'beta' | 'coming') => string
+  getBadgeText: (badge?: 'new' | 'beta' | 'coming') => string
+  t: (key: string) => string
+  isQuickStartEditMode?: boolean
+}
+
+export function DraggableSidebarItem({
+  item,
+  isCollapsed,
+  isActive,
+  onSelect,
+  getBadgeStyle,
+  getBadgeText,
+  t,
+  isQuickStartEditMode = false,
+}: DraggableSidebarItemProps) {
+  const canDrag = item.available && isQuickStartEditMode
+  const isClickDisabled = !item.available || isQuickStartEditMode
+
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({
+      id: `sidebar-${item.id}`,
+      disabled: !canDrag,
+      data: {
+        type: 'sidebar-item',
+        creatorType: item.id,
+        icon: item.icon,
+      },
+    })
+
+  const style = transform
+    ? {
+        transform: CSS.Translate.toString(transform),
+        zIndex: isDragging ? 50 : undefined,
+        opacity: isDragging ? 0.8 : 1,
+      }
+    : undefined
+
+  return (
+    <div ref={setNodeRef} style={style} className="relative">
+      <motion.button
+        whileHover={isClickDisabled ? {} : { scale: 1.02, x: isCollapsed ? 0 : 4 }}
+        whileTap={isClickDisabled ? {} : { scale: 0.98 }}
+        onClick={onSelect}
+        disabled={isClickDisabled}
+        className={cn(
+          'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
+          isCollapsed && 'justify-center px-2',
+          isActive && !isQuickStartEditMode
+            ? 'bg-primary/10 text-primary border-l-2 border-primary'
+            : isClickDisabled
+              ? 'text-muted-foreground/50 cursor-not-allowed'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+          isDragging && 'shadow-lg ring-2 ring-primary/50',
+          isQuickStartEditMode && canDrag && 'ring-1 ring-primary/30',
+        )}
+        title={isCollapsed ? t(item.labelKey) : undefined}
+      >
+        {/* Drag handle - only show in edit mode */}
+        {!isCollapsed && canDrag && (
+          <div
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing text-primary hover:text-primary/80 -ml-1"
+          >
+            <GripVertical className="w-4 h-4" />
+          </div>
+        )}
+        <item.icon
+          className={cn('w-5 h-5 shrink-0', isActive && 'text-primary')}
+        />
+        {!isCollapsed && (
+          <>
+            <span className="flex-1 text-left text-sm">{t(item.labelKey)}</span>
+            {item.badge && (
+              <span
+                className={cn(
+                  'text-[10px] px-1.5 py-0.5 rounded-full font-medium',
+                  getBadgeStyle(item.badge),
+                )}
+              >
+                {getBadgeText(item.badge)}
+              </span>
+            )}
+          </>
+        )}
+      </motion.button>
+    </div>
+  )
+}
+
 export { sidebarSections }
+export type { SidebarItem }
