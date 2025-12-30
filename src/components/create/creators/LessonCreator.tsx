@@ -76,14 +76,14 @@ export function LessonCreator() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Card className="border-primary/20 bg-gradient-to-br from-card via-card/80 to-card">
+        <Card className="border-primary/20 bg-linear-to-br from-card via-card/80 to-card">
           <CardHeader className="text-center pb-2">
             <div className="flex justify-center mb-4">
               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
                 <Lock className="w-8 h-8 text-primary" />
               </div>
             </div>
-            <CardTitle className="text-3xl bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">
+            <CardTitle className="text-3xl bg-linear-to-r from-primary to-pink-500 bg-clip-text text-transparent">
               {t('create.auth.loginRequired')}
             </CardTitle>
             <CardDescription className="text-muted-foreground text-lg">
@@ -182,10 +182,10 @@ export function LessonCreator() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="border-primary/20 bg-gradient-to-br from-card via-card/80 to-card">
+      <Card className="border-primary/20 bg-linear-to-br from-card via-card/80 to-card">
         <CardHeader className="text-center pb-2">
           <div className="flex items-center justify-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-500 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-emerald-500 to-green-500 flex items-center justify-center">
               <BookOpenCheck className="w-5 h-5 text-white" />
             </div>
             <div className="text-left">
@@ -277,7 +277,7 @@ export function LessonCreator() {
                 <Lightbulb className="w-4 h-4 text-yellow-500" />
                 <span className="text-sm font-medium">Easy Explain Mode</span>
                 {!canUseEasyExplain && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-xs font-medium text-purple-400">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-linear-to-r from-purple-500/20 to-pink-500/20 text-xs font-medium text-purple-400">
                     Plus
                   </span>
                 )}

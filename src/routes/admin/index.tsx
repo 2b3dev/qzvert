@@ -99,7 +99,7 @@ const statusIcons: Record<ReportStatus, React.ReactNode> = {
 
 // Admin Login Form Component
 function AdminLoginForm() {
-  const { signInWithEmail, signInWithGoogle } = useAuthStore()
+  const { signInWithEmail } = useAuthStore()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -126,14 +126,6 @@ function AdminLoginForm() {
       }
     } finally {
       setIsSubmitting(false)
-    }
-  }
-
-  const handleGoogleSignIn = async () => {
-    setError(null)
-    const { error: authError } = await signInWithGoogle('/admin')
-    if (authError) {
-      setError(authError.message)
     }
   }
 
@@ -531,117 +523,117 @@ function AdminDashboard() {
 
               {/* Stats Grid */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Total Users */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2.5 rounded-xl bg-blue-500">
-                    <Users className="w-5 h-5 text-white" />
+                {/* Total Users */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="p-2.5 rounded-xl bg-blue-500">
+                      <Users className="w-5 h-5 text-white" />
+                    </div>
+                    {!isRefreshing &&
+                      dashboardStats &&
+                      dashboardStats.users.thisWeek > 0 && (
+                        <span className="flex items-center gap-1 text-xs font-medium text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full">
+                          <TrendingUp className="w-3 h-3" />+
+                          {dashboardStats.users.thisWeek}
+                        </span>
+                      )}
                   </div>
-                  {!isRefreshing &&
-                    dashboardStats &&
-                    dashboardStats.users.thisWeek > 0 && (
-                      <span className="flex items-center gap-1 text-xs font-medium text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full">
-                        <TrendingUp className="w-3 h-3" />+
-                        {dashboardStats.users.thisWeek}
-                      </span>
-                    )}
-                </div>
-                {isRefreshing ? (
-                  <div className="h-9 w-16 bg-muted/50 rounded animate-pulse" />
-                ) : (
-                  <p className="text-3xl font-bold text-foreground">
-                    {dashboardStats?.users.total || 0}
+                  {isRefreshing ? (
+                    <div className="h-9 w-16 bg-muted/50 rounded animate-pulse" />
+                  ) : (
+                    <p className="text-3xl font-bold text-foreground">
+                      {dashboardStats?.users.total || 0}
+                    </p>
+                  )}
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Total Users
                   </p>
-                )}
-                <p className="text-sm text-muted-foreground mt-1">
-                  Total Users
-                </p>
-              </motion.div>
+                </motion.div>
 
-              {/* Total Activities */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2.5 rounded-xl bg-purple-500">
-                    <FileText className="w-5 h-5 text-white" />
+                {/* Total Activities */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="p-2.5 rounded-xl bg-purple-500">
+                      <FileText className="w-5 h-5 text-white" />
+                    </div>
+                    {!isRefreshing &&
+                      dashboardStats &&
+                      dashboardStats.activities.thisWeek > 0 && (
+                        <span className="flex items-center gap-1 text-xs font-medium text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full">
+                          <TrendingUp className="w-3 h-3" />+
+                          {dashboardStats.activities.thisWeek}
+                        </span>
+                      )}
                   </div>
-                  {!isRefreshing &&
-                    dashboardStats &&
-                    dashboardStats.activities.thisWeek > 0 && (
-                      <span className="flex items-center gap-1 text-xs font-medium text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full">
-                        <TrendingUp className="w-3 h-3" />+
-                        {dashboardStats.activities.thisWeek}
-                      </span>
-                    )}
-                </div>
-                {isRefreshing ? (
-                  <div className="h-9 w-16 bg-muted/50 rounded animate-pulse" />
-                ) : (
-                  <p className="text-3xl font-bold text-foreground">
-                    {dashboardStats?.activities.total || 0}
+                  {isRefreshing ? (
+                    <div className="h-9 w-16 bg-muted/50 rounded animate-pulse" />
+                  ) : (
+                    <p className="text-3xl font-bold text-foreground">
+                      {dashboardStats?.activities.total || 0}
+                    </p>
+                  )}
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Total Activities
                   </p>
-                )}
-                <p className="text-sm text-muted-foreground mt-1">
-                  Total Activities
-                </p>
-              </motion.div>
+                </motion.div>
 
-              {/* Public Activities */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2.5 rounded-xl bg-emerald-500">
-                    <Sparkles className="w-5 h-5 text-white" />
+                {/* Public Activities */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="p-2.5 rounded-xl bg-emerald-500">
+                      <Sparkles className="w-5 h-5 text-white" />
+                    </div>
                   </div>
-                </div>
-                {isRefreshing ? (
-                  <div className="h-9 w-16 bg-muted/50 rounded animate-pulse" />
-                ) : (
-                  <p className="text-3xl font-bold text-foreground">
-                    {dashboardStats?.activities.public || 0}
+                  {isRefreshing ? (
+                    <div className="h-9 w-16 bg-muted/50 rounded animate-pulse" />
+                  ) : (
+                    <p className="text-3xl font-bold text-foreground">
+                      {dashboardStats?.activities.public || 0}
+                    </p>
+                  )}
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Public Activities
                   </p>
-                )}
-                <p className="text-sm text-muted-foreground mt-1">
-                  Public Activities
-                </p>
-              </motion.div>
+                </motion.div>
 
-              {/* Total Plays */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2.5 rounded-xl bg-amber-500">
-                    <Play className="w-5 h-5 text-white" />
+                {/* Total Plays */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="p-2.5 rounded-xl bg-amber-500">
+                      <Play className="w-5 h-5 text-white" />
+                    </div>
                   </div>
-                </div>
-                {isRefreshing ? (
-                  <div className="h-9 w-16 bg-muted/50 rounded animate-pulse" />
-                ) : (
-                  <p className="text-3xl font-bold text-foreground">
-                    {dashboardStats?.plays.total.toLocaleString() || 0}
+                  {isRefreshing ? (
+                    <div className="h-9 w-16 bg-muted/50 rounded animate-pulse" />
+                  ) : (
+                    <p className="text-3xl font-bold text-foreground">
+                      {dashboardStats?.plays.total.toLocaleString() || 0}
+                    </p>
+                  )}
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Total Plays
                   </p>
-                )}
-                <p className="text-sm text-muted-foreground mt-1">
-                  Total Plays
-                </p>
-              </motion.div>
+                </motion.div>
               </div>
             </div>
 
@@ -729,7 +721,7 @@ function AdminDashboard() {
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500">
+                    <div className="p-1.5 rounded-lg bg-linear-to-br from-purple-500 to-pink-500">
                       <Sparkles className="w-3.5 h-3.5 text-white" />
                     </div>
                     <h3 className="text-sm font-semibold text-foreground">

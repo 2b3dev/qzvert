@@ -71,14 +71,14 @@ export function QuizCreator() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Card className="border-primary/20 bg-gradient-to-br from-card via-card/80 to-card">
+        <Card className="border-primary/20 bg-linear-to-br from-card via-card/80 to-card">
           <CardHeader className="text-center pb-2">
             <div className="flex justify-center mb-4">
               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
                 <Lock className="w-8 h-8 text-primary" />
               </div>
             </div>
-            <CardTitle className="text-3xl bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">
+            <CardTitle className="text-3xl bg-linear-to-r from-primary to-pink-500 bg-clip-text text-transparent">
               {t('create.auth.loginRequired')}
             </CardTitle>
             <CardDescription className="text-muted-foreground text-lg">
@@ -251,10 +251,10 @@ export function QuizCreator() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="border-primary/20 bg-gradient-to-br from-card via-card/80 to-card">
+      <Card className="border-primary/20 bg-linear-to-br from-card via-card/80 to-card">
         <CardHeader className="text-center pb-2">
           <div className="flex items-center justify-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-purple-500 to-pink-500 flex items-center justify-center">
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
             <div className="text-left">
