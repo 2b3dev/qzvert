@@ -26,13 +26,16 @@ import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { supabase } from '../../lib/supabase'
 import { cn } from '../../lib/utils'
+import {
+  getCurrentMonthAIUsage,
+  getTodayAIUsage,
+} from '../../server/admin-settings'
 import type { ReportStatus } from '../../server/reports'
 import {
   checkAdminAccess,
   getAdminDashboardStats,
   getReportStats,
 } from '../../server/reports'
-import { getCurrentMonthAIUsage } from '../../server/admin-settings'
 import { useAuthStore } from '../../stores/auth-store'
 
 interface DashboardStats {
@@ -86,13 +89,6 @@ interface DashboardStats {
 export const Route = createFileRoute('/admin/')({
   component: AdminDashboard,
 })
-
-const statusColors: Record<ReportStatus, string> = {
-  pending: 'bg-amber-500/20 text-amber-500',
-  reviewed: 'bg-blue-500/20 text-blue-500',
-  resolved: 'bg-green-500/20 text-green-500',
-  dismissed: 'bg-gray-500/20 text-gray-400',
-}
 
 const statusIcons: Record<ReportStatus, React.ReactNode> = {
   pending: <Clock className="w-4 h-4" />,
@@ -258,6 +254,11 @@ function AdminDashboard() {
     tokens: number
     monthName: string
   } | null>(null)
+  const [todayUsage, setTodayUsage] = useState<{
+    requests: number
+    requestsLimit: number
+    isFreeTier: boolean
+  } | null>(null)
 
   // Live mode state
   const [liveMode, setLiveMode] = useState(false)
@@ -307,8 +308,16 @@ function AdminDashboard() {
   // Fetch AI usage stats function
   const fetchAIUsage = useCallback(async () => {
     try {
-      const usage = await getCurrentMonthAIUsage()
+      const [usage, today] = await Promise.all([
+        getCurrentMonthAIUsage(),
+        getTodayAIUsage(),
+      ])
       setAiUsage(usage)
+      setTodayUsage({
+        requests: today.requests,
+        requestsLimit: today.requestsLimit,
+        isFreeTier: today.isFreeTier,
+      })
     } catch (error) {
       console.error('Failed to fetch AI usage:', error)
     }
@@ -483,7 +492,9 @@ function AdminDashboard() {
                 <p className="text-3xl font-bold text-foreground">
                   {dashboardStats?.users.total || 0}
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">Total Users</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Total Users
+                </p>
               </motion.div>
 
               {/* Total Activities */}
@@ -547,7 +558,9 @@ function AdminDashboard() {
                 <p className="text-3xl font-bold text-foreground">
                   {dashboardStats?.plays.total.toLocaleString() || 0}
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">Total Plays</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Total Plays
+                </p>
               </motion.div>
             </div>
 
@@ -626,7 +639,7 @@ function AdminDashboard() {
                 </div>
               </motion.div>
 
-              {/* Gemini Usage */}
+              {/* AI Usage */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -639,7 +652,7 @@ function AdminDashboard() {
                       <Sparkles className="w-3.5 h-3.5 text-white" />
                     </div>
                     <h3 className="text-sm font-semibold text-foreground">
-                      Gemini Usage
+                      AI Usage
                     </h3>
                     {aiUsage && (
                       <span className="text-xs text-muted-foreground">
@@ -654,17 +667,17 @@ function AdminDashboard() {
                     View details <ArrowUpRight className="w-3 h-3" />
                   </Link>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
-                    <p className="text-2xl font-bold text-foreground">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                    <p className="text-xl font-bold text-foreground">
                       {aiUsage?.requests.toLocaleString() || 0}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-[10px] text-muted-foreground">
                       Requests
                     </p>
                   </div>
-                  <div className="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
-                    <p className="text-2xl font-bold text-foreground">
+                  <div className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                    <p className="text-xl font-bold text-foreground">
                       {aiUsage
                         ? aiUsage.tokens >= 1_000_000
                           ? `${(aiUsage.tokens / 1_000_000).toFixed(1)}M`
@@ -673,9 +686,46 @@ function AdminDashboard() {
                             : aiUsage.tokens.toLocaleString()
                         : 0}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">Tokens</p>
+                    <p className="text-[10px] text-muted-foreground">Tokens</p>
                   </div>
                 </div>
+
+                {/* Today's Quota Progress */}
+                {todayUsage && (
+                  <div className="mt-3 pt-3 border-t border-border/30">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] text-muted-foreground">
+                        Today's Quota
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-medium text-muted-foreground">
+                          {todayUsage.requests.toLocaleString()} /{' '}
+                          {todayUsage.requestsLimit.toLocaleString()}
+                        </span>
+                        {todayUsage.isFreeTier && (
+                          <span className="px-1.5 py-0.5 rounded text-[8px] font-medium bg-amber-500/20 text-amber-500">
+                            Free
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="h-1.5 bg-muted/50 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          todayUsage.requests / todayUsage.requestsLimit > 0.9
+                            ? 'bg-red-500'
+                            : todayUsage.requests / todayUsage.requestsLimit >
+                                0.7
+                              ? 'bg-amber-500'
+                              : 'bg-purple-500'
+                        }`}
+                        style={{
+                          width: `${Math.min((todayUsage.requests / todayUsage.requestsLimit) * 100, 100)}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
               </motion.div>
             </div>
 
