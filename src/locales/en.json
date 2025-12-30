@@ -776,8 +776,8 @@
       }
     }
   },
-  "guru": {
-    "badge": "Guru to Loud",
+  "ttl": {
+    "badge": "ttl to Loud",
     "title1": "Turn Boring Content into",
     "title2": "Easy Listening",
     "subtitle": "Paste any content and let AI summarize, restructure, then read it aloud for you.",

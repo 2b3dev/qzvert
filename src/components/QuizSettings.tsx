@@ -23,6 +23,8 @@ export interface QuizSettingsData {
   tags: string[]
   // Age range
   ageRange: string | 'auto'
+  // Easy Explain (Feynman Mode) - Plus/Pro only
+  easyExplainEnabled?: boolean
 }
 
 export interface QuestSettingsData {
@@ -37,6 +39,8 @@ export interface QuestSettingsData {
   tags: string[]
   // Age range
   ageRange: string | 'auto'
+  // Easy Explain (Feynman Mode) - Plus/Pro only
+  easyExplainEnabled?: boolean
 }
 
 interface QuizSettingsProps {
@@ -894,6 +898,7 @@ export function QuizSettings(props: Props) {
               />
             </div>
           </div>
+
         </>
         )}
       </div>
@@ -1312,6 +1317,7 @@ export function QuizSettings(props: Props) {
           />
         </div>
       </div>
+
     </div>
   )
 }

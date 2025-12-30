@@ -1,8 +1,83 @@
 import { createServerFn } from '@tanstack/react-start'
 import type { GeneratedQuest } from '../types/database'
+import { logAIUsage } from './admin-settings'
 
 const GEMINI_API_URL =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+
+const MAX_RETRIES = 2
+const RETRY_DELAY_MS = 1000
+
+// Helper function to clean and parse JSON from Gemini response
+function cleanAndParseJSON(textContent: string): unknown {
+  let cleanedContent = textContent.trim()
+
+  // Remove markdown code blocks if present
+  if (cleanedContent.startsWith('```json')) {
+    cleanedContent = cleanedContent.slice(7)
+  } else if (cleanedContent.startsWith('```')) {
+    cleanedContent = cleanedContent.slice(3)
+  }
+  if (cleanedContent.endsWith('```')) {
+    cleanedContent = cleanedContent.slice(0, -3)
+  }
+  cleanedContent = cleanedContent.trim()
+
+  // Try to fix common JSON issues from Gemini
+  // 1. Remove trailing commas before ] or }
+  cleanedContent = cleanedContent.replace(/,(\s*[}\]])/g, '$1')
+
+  // 2. Fix unescaped newlines in strings
+  cleanedContent = cleanedContent.replace(
+    /"([^"]*(?:\\.[^"]*)*)"/g,
+    (match) => match.replace(/\n/g, '\\n').replace(/\r/g, '\\r'),
+  )
+
+  // 3. Remove any control characters that might break JSON
+  cleanedContent = cleanedContent.replace(/[\x00-\x1F\x7F]/g, (char) => {
+    if (char === '\n' || char === '\r' || char === '\t') return char
+    return ''
+  })
+
+  // 4. Fix unescaped quotes inside strings (common Gemini issue)
+  // Look for patterns like "text "quoted" text" and escape inner quotes
+  cleanedContent = cleanedContent.replace(
+    /:\s*"([^"]*)"([^,}\]]*)"([^"]*)"(?=\s*[,}\]])/g,
+    (match, before, middle, after) => {
+      return `: "${before}\\"${middle}\\"${after}"`
+    },
+  )
+
+  // 5. Fix broken strings with unescaped backslashes
+  cleanedContent = cleanedContent.replace(/\\(?!["\\/bfnrtu])/g, '\\\\')
+
+  // 6. Try to extract valid JSON if there's extra content
+  const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/)
+  if (jsonMatch) {
+    cleanedContent = jsonMatch[0]
+  }
+
+  return JSON.parse(cleanedContent)
+}
+
+// Helper function to delay
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+// Interface for Gemini API response with usage metadata
+interface GeminiResponse {
+  candidates?: Array<{
+    content?: {
+      parts?: Array<{
+        text?: string
+      }>
+    }
+  }>
+  usageMetadata?: {
+    promptTokenCount?: number
+    candidatesTokenCount?: number
+    totalTokenCount?: number
+  }
+}
 
 interface GenerateQuestInput {
   content: string
@@ -22,6 +97,8 @@ interface GenerateQuestInput {
   // Common settings
   tags?: Array<string>
   ageRange?: string
+  // Easy Explain Mode (Feynman Technique)
+  easyExplainEnabled?: boolean
 }
 
 export const generateQuest = createServerFn({ method: 'POST' })
@@ -54,9 +131,28 @@ export const generateQuest = createServerFn({ method: 'POST' })
         ? `Use these exact tags: ${JSON.stringify(data.tags)}`
         : 'Generate 3-5 relevant tags that describe the content topic (lowercase, e.g., "physics", "newton\'s laws", "motion")'
 
-    const ageRangeInstruction = data.ageRange
+    const ageRangeInstruction = data.ageRange && data.ageRange !== 'auto'
       ? `Target age range: ${data.ageRange}. Adjust language complexity and examples accordingly.`
-      : 'Estimate the appropriate age range based on content complexity and include it in the response as "age_range" field.'
+      : 'Estimate the appropriate age range based on content complexity (choose from: 3-5, 6-9, 10-12, 13-17, 18+) and include it in the response as "age_range" field.'
+
+    // Easy Explain Mode (Feynman Technique) instruction
+    const easyExplainInstruction = data.easyExplainEnabled
+      ? `
+EASY EXPLAIN MODE (Feynman Technique) - IMPORTANT:
+For ALL explanations, you MUST:
+1. Use simple, everyday language - explain like teaching a curious child
+2. Use analogies and metaphors from daily life (e.g., "think of it like a water pipe..." or "imagine a busy highway...")
+3. Avoid technical jargon - if you must use it, explain it immediately with a simple comparison
+4. Break down complex concepts into small, digestible pieces
+5. Use concrete examples that anyone can relate to
+6. Start with "why it matters" before explaining "what it is"
+7. Make the explanation memorable and fun
+
+Example of Easy Explain style:
+- Instead of: "Photosynthesis is the process by which plants convert light energy into chemical energy"
+- Write: "Plants are like tiny food factories! They catch sunlight (like catching rain in a bucket) and mix it with water and air to cook their own food. That's why plants need sunlight - they're basically solar-powered chefs!"
+`
+      : ''
 
     let quizFormatInstruction: string
     let quizJsonExample: string
@@ -126,6 +222,7 @@ Each quiz should have:
 
 ${languageInstruction}
 ${ageRangeInstruction}
+${easyExplainInstruction}
 
 Content to transform:
 ${data.content}
@@ -161,6 +258,7 @@ ${includesSubjective ? '- For subjective: provide a comprehensive model_answer' 
 
 ${languageInstruction}
 ${ageRangeInstruction}
+${easyExplainInstruction}
 
 Content to transform:
 ${data.content}
@@ -208,6 +306,7 @@ ${includesSubjective ? '- For subjective: provide a comprehensive model_answer' 
 
 ${languageInstruction}
 ${ageRangeInstruction}
+${easyExplainInstruction}
 
 Content to transform:
 ${data.content}
@@ -264,50 +363,122 @@ Rules:
       throw new Error(`Unsupported output type: ${data.outputType}`)
     }
 
-    const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [{ text: prompt }],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 8192,
+    // Determine action type based on outputType
+    const actionMap = {
+      quiz: 'generate_quiz',
+      quest: 'generate_quest',
+      lesson: 'generate_lesson',
+      flashcard: 'generate_quiz',
+      roleplay: 'generate_quest',
+    } as const
+
+    // Helper function to make a single API call
+    const makeApiCall = async (): Promise<{ textContent: string; inputTokens: number; outputTokens: number }> => {
+      const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      }),
-    })
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: prompt }],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 8192,
+          },
+        }),
+      })
 
-    if (!response.ok) {
-      const error = await response.text()
-      throw new Error(`Gemini API error: ${error}`)
+      if (!response.ok) {
+        const error = await response.text()
+        throw new Error(`Gemini API error: ${error}`)
+      }
+
+      const result: GeminiResponse = await response.json()
+      const textContent = result.candidates?.[0]?.content?.parts?.[0]?.text
+
+      if (!textContent) {
+        throw new Error('No content generated')
+      }
+
+      return {
+        textContent,
+        inputTokens: result.usageMetadata?.promptTokenCount || 0,
+        outputTokens: result.usageMetadata?.candidatesTokenCount || 0,
+      }
     }
 
-    const result = await response.json()
-    const textContent = result.candidates?.[0]?.content?.parts?.[0]?.text
+    // Retry logic for JSON parsing errors
+    let lastError: Error | null = null
+    let totalInputTokens = 0
+    let totalOutputTokens = 0
 
-    if (!textContent) {
-      throw new Error('No content generated')
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const { textContent, inputTokens, outputTokens } = await makeApiCall()
+        totalInputTokens += inputTokens
+        totalOutputTokens += outputTokens
+
+        // Try to parse the JSON
+        const quest = cleanAndParseJSON(textContent) as GeneratedQuest
+
+        // Log usage after successful parse
+        try {
+          await logAIUsage({
+            data: {
+              action: actionMap[data.outputType] || 'generate_quiz',
+              inputTokens: totalInputTokens,
+              outputTokens: totalOutputTokens,
+              model: 'gemini-2.0-flash',
+            },
+          })
+        } catch (error) {
+          console.error('Failed to log AI usage:', error)
+        }
+
+        return quest
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error))
+
+        // Only retry on JSON parse errors, not API errors
+        const isParseError =
+          lastError.message.includes('JSON') ||
+          lastError.message.includes('Unexpected token') ||
+          lastError.message.includes('Expected')
+
+        if (isParseError && attempt < MAX_RETRIES) {
+          console.log(`JSON parse failed (attempt ${attempt + 1}/${MAX_RETRIES + 1}), retrying...`)
+          await delay(RETRY_DELAY_MS)
+          continue
+        }
+
+        // Log usage even on failure
+        if (totalInputTokens > 0 || totalOutputTokens > 0) {
+          try {
+            await logAIUsage({
+              data: {
+                action: actionMap[data.outputType] || 'generate_quiz',
+                inputTokens: totalInputTokens,
+                outputTokens: totalOutputTokens,
+                model: 'gemini-2.0-flash',
+              },
+            })
+          } catch (logError) {
+            console.error('Failed to log AI usage:', logError)
+          }
+        }
+
+        break
+      }
     }
 
-    // Clean the response - remove markdown code blocks if present
-    let cleanedContent = textContent.trim()
-    if (cleanedContent.startsWith('```json')) {
-      cleanedContent = cleanedContent.slice(7)
-    } else if (cleanedContent.startsWith('```')) {
-      cleanedContent = cleanedContent.slice(3)
-    }
-    if (cleanedContent.endsWith('```')) {
-      cleanedContent = cleanedContent.slice(0, -3)
-    }
-    cleanedContent = cleanedContent.trim()
-
-    const quest: GeneratedQuest = JSON.parse(cleanedContent)
-    return quest
+    console.error('All retry attempts failed:', lastError?.message)
+    throw new Error(
+      `Failed to generate valid content after ${MAX_RETRIES + 1} attempts. Please try again.`,
+    )
   })

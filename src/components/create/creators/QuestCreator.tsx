@@ -47,7 +47,7 @@ export function QuestCreatorComponent() {
   const [error, setError] = useState<string | null>(null)
   const [aiEnabled, setAiEnabled] = useState(true)
 
-  const { setActivity, setTimeLimitMinutes, themeConfig, setThemeConfig } = useActivityStore()
+  const { setActivity, setTimeLimitMinutes, setAgeRange, themeConfig, setThemeConfig } = useActivityStore()
   const { user, isLoading: isAuthLoading } = useAuthStore()
   const { profile, fetchProfile } = useProfileStore()
 
@@ -149,6 +149,13 @@ export function QuestCreatorComponent() {
       })
 
       setActivity(quest, content)
+
+      // Set age range - use AI's suggestion if user didn't select manually
+      if (settings.ageRange !== 'auto') {
+        setAgeRange(settings.ageRange)
+      } else if (quest.age_range) {
+        setAgeRange(quest.age_range)
+      }
 
       if (settings.timerEnabled && settings.timerSeconds > 0) {
         setTimeLimitMinutes(Math.ceil(settings.timerSeconds / 60))

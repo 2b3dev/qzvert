@@ -392,6 +392,39 @@ export interface Database {
         }
         Relationships: []
       }
+      ai_usage_logs: {
+        Row: {
+          id: string
+          user_id: string | null
+          action: 'summarize' | 'craft' | 'translate' | 'generate_quiz' | 'generate_quest' | 'generate_lesson' | 'deep_lesson'
+          input_tokens: number
+          output_tokens: number
+          total_tokens: number
+          model: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          action: 'summarize' | 'craft' | 'translate' | 'generate_quiz' | 'generate_quest' | 'generate_lesson' | 'deep_lesson'
+          input_tokens: number
+          output_tokens: number
+          total_tokens: number
+          model?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          action?: 'summarize' | 'craft' | 'translate' | 'generate_quiz' | 'generate_quest' | 'generate_lesson' | 'deep_lesson'
+          input_tokens?: number
+          output_tokens?: number
+          total_tokens?: number
+          model?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -435,6 +468,7 @@ export interface ThemeConfig {
   livesEnabled: boolean
   maxLives: number
   theme: 'adventure' | 'space' | 'fantasy' | 'science'
+  easyExplainEnabled?: boolean // Feynman Mode - อธิบายง่ายๆ สำหรับ Plus/Pro users
 }
 
 export const ACTIVITY_STATUS_OPTIONS: { value: ActivityStatus; label: string; description: string }[] = [
@@ -630,3 +664,34 @@ export interface SavedItemWithActivity extends SavedItem {
 export interface CollectionWithCount extends Collection {
   item_count: number
 }
+
+// AI Usage Log
+export type AIAction = 'summarize' | 'craft' | 'translate' | 'generate_quiz' | 'generate_quest' | 'generate_lesson' | 'deep_lesson'
+
+export interface AIUsageLog {
+  id: string
+  user_id: string | null
+  action: AIAction
+  input_tokens: number
+  output_tokens: number
+  total_tokens: number
+  model: string
+  created_at: string
+}
+
+export interface AIUsageStats {
+  totalRequests: number
+  totalInputTokens: number
+  totalOutputTokens: number
+  totalTokens: number
+  requestsByAction: Record<AIAction, number>
+  tokensByAction: Record<AIAction, number>
+  dailyUsage: Array<{
+    date: string
+    requests: number
+    tokens: number
+  }>
+  estimatedCost: number // in USD
+}
+
+export type AIUsageTimeRange = 'week' | 'month' | 'year'

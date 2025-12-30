@@ -76,7 +76,7 @@
     "createFreeQuest": "สร้างเควสฟรี",
     "allRightsReserved": "สงวนลิขสิทธิ์",
     "madeWith": "สร้างด้วย",
-    "inThailand": "ในประเทศไทย"
+    "inThailand": "จากประเทศไทย"
   },
   "home": {
     "hero": {
@@ -777,8 +777,8 @@
       }
     }
   },
-  "guru": {
-    "badge": "Guru to Loud",
+  "ttl": {
+    "badge": "ttl to Loud",
     "title1": "เปลี่ยนเนื้อหาน่าเบื่อ",
     "title2": "ให้ฟังง่ายๆ",
     "subtitle": "วางเนื้อหาใดๆ ให้ AI สรุป จัดรูปแบบ แล้วอ่านออกเสียงให้คุณฟัง",

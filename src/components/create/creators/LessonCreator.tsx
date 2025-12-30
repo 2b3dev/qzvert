@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { BookOpenCheck, Lock, Map, Sparkles, Wand2, GraduationCap } from 'lucide-react'
+import { BookOpenCheck, Lock, Map, Sparkles, Wand2, GraduationCap, Lightbulb } from 'lucide-react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
+import { cn } from '../../../lib/utils'
 import { useTranslation } from '../../../hooks/useTranslation'
 import { generateQuest } from '../../../server/gemini'
 import { isAIGenerationEnabled } from '../../../server/admin-settings'
@@ -27,6 +28,7 @@ interface LessonSettings {
   moduleCount: 'auto' | number
   tags: string[]
   ageRange: 'auto' | string
+  easyExplainEnabled?: boolean
 }
 
 const defaultLessonSettings: LessonSettings = {
@@ -34,6 +36,7 @@ const defaultLessonSettings: LessonSettings = {
   moduleCount: 'auto',
   tags: [],
   ageRange: 'auto',
+  easyExplainEnabled: false,
 }
 
 export function LessonCreator() {
@@ -48,9 +51,12 @@ export function LessonCreator() {
   const [error, setError] = useState<string | null>(null)
   const [aiEnabled, setAiEnabled] = useState(true)
 
-  const { setActivity, setTimeLimitMinutes } = useActivityStore()
+  const { setActivity, setTimeLimitMinutes, setAgeRange, themeConfig, setThemeConfig } = useActivityStore()
   const { user, isLoading: isAuthLoading } = useAuthStore()
   const { profile, fetchProfile } = useProfileStore()
+
+  // Check if user can use Easy Explain
+  const canUseEasyExplain = profile?.role === 'plus' || profile?.role === 'pro' || profile?.role === 'ultra' || profile?.role === 'admin'
 
   useEffect(() => {
     if (user?.id && !profile) {
@@ -141,11 +147,26 @@ export function LessonCreator() {
           stageCount: typeof stageCount === 'number' ? stageCount : undefined,
           tags: settings.tags.length > 0 ? settings.tags : undefined,
           ageRange: settings.ageRange !== 'auto' ? settings.ageRange : undefined,
+          easyExplainEnabled: settings.easyExplainEnabled,
         },
       })
 
       setActivity(lesson, content)
+
+      // Set age range - use AI's suggestion if user didn't select manually
+      if (settings.ageRange !== 'auto') {
+        setAgeRange(settings.ageRange)
+      } else if (lesson.age_range) {
+        setAgeRange(lesson.age_range)
+      }
+
       setTimeLimitMinutes(null)
+
+      const updatedThemeConfig = {
+        ...themeConfig,
+        easyExplainEnabled: settings.easyExplainEnabled,
+      }
+      setThemeConfig(updatedThemeConfig)
 
       navigate({ to: '/activity/upload/lesson/$id', params: { id: 'new' } })
     } catch (err) {
@@ -249,6 +270,51 @@ export function LessonCreator() {
                 </span>
               </div>
             )}
+
+            {/* Easy Explain Mode */}
+            <div className="flex items-center justify-between pt-3 border-t border-border">
+              <div className="flex items-center gap-2">
+                <Lightbulb className="w-4 h-4 text-yellow-500" />
+                <span className="text-sm font-medium">Easy Explain Mode</span>
+                {!canUseEasyExplain && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-xs font-medium text-purple-400">
+                    Plus
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (canUseEasyExplain) {
+                    setSettings((prev) => ({
+                      ...prev,
+                      easyExplainEnabled: !prev.easyExplainEnabled,
+                    }))
+                  }
+                }}
+                disabled={!canUseEasyExplain}
+                className={cn(
+                  "relative w-12 h-6 rounded-full transition-colors duration-200",
+                  settings.easyExplainEnabled && canUseEasyExplain
+                    ? "bg-yellow-500"
+                    : "bg-muted",
+                  !canUseEasyExplain && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <motion.div
+                  className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm"
+                  animate={{
+                    left: settings.easyExplainEnabled && canUseEasyExplain ? '1.625rem' : '0.25rem'
+                  }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                />
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {canUseEasyExplain
+                ? 'AI จะอธิบายเนื้อหาแบบง่ายๆ ใช้การเปรียบเทียบและตัวอย่างจากชีวิตจริง'
+                : 'อัปเกรดเป็น Plus หรือ Pro เพื่อใช้งาน'}
+            </p>
           </div>
 
           <AnimatePresence>

@@ -1,6 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { getCookies, setCookie } from '@tanstack/react-start/server'
 import { createSupabaseServerClient } from '../lib/supabase'
+import type { AIAction, AIUsageStats } from '../types/database'
 
 const getSupabaseFromCookies = () => {
   return createSupabaseServerClient(getCookies, setCookie)
@@ -545,3 +546,427 @@ export const isMaintenanceMode = createServerFn({ method: 'GET' }).handler(
     }
   },
 )
+
+// ============================================
+// AI Usage Tracking
+// ============================================
+
+// Gemini API Pricing (per 1M tokens) - Gemini 2.0 Flash
+export const GEMINI_PRICING = {
+  'gemini-2.0-flash': {
+    input: 0.10, // $0.10 per 1M input tokens
+    output: 0.40, // $0.40 per 1M output tokens
+  },
+  'gemini-1.5-flash': {
+    input: 0.075,
+    output: 0.30,
+  },
+  'gemini-1.5-pro': {
+    input: 1.25,
+    output: 5.00,
+  },
+} as const
+
+// Free tier limits
+export const GEMINI_FREE_TIER = {
+  requestsPerMinute: 15,
+  tokensPerMinute: 1_000_000,
+  requestsPerDay: 1_500,
+} as const
+
+// Log AI usage (called from ttl.ts and gemini.ts)
+export const logAIUsage = createServerFn({ method: 'POST' })
+  .inputValidator(
+    (data: {
+      action: AIAction
+      inputTokens: number
+      outputTokens: number
+      model?: string
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseFromCookies()
+
+    // Get current user (optional - can log anonymous usage)
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    const { error } = await supabase.from('ai_usage_logs').insert({
+      user_id: user?.id || null,
+      action: data.action,
+      input_tokens: data.inputTokens,
+      output_tokens: data.outputTokens,
+      total_tokens: data.inputTokens + data.outputTokens,
+      model: data.model || 'gemini-2.0-flash',
+    })
+
+    if (error) {
+      console.error('Failed to log AI usage:', error)
+    }
+
+    return { success: !error }
+  })
+
+// Get AI usage stats (admin only)
+export const getAIUsageStats = createServerFn({ method: 'GET' })
+  .inputValidator((data?: { days?: number }) => data || {})
+  .handler(async ({ data }): Promise<AIUsageStats> => {
+    const supabase = getSupabaseFromCookies()
+    const days = data?.days || 30
+
+    // Verify admin
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+    if (userError || !user) {
+      throw new Error('Authentication required')
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.role !== 'admin') {
+      throw new Error('Admin access required')
+    }
+
+    // Calculate date range
+    const startDate = new Date()
+    startDate.setDate(startDate.getDate() - days)
+
+    // Fetch all logs in date range
+    const { data: logs, error } = await supabase
+      .from('ai_usage_logs')
+      .select('*')
+      .gte('created_at', startDate.toISOString())
+      .order('created_at', { ascending: true })
+
+    if (error) {
+      console.error('Failed to fetch AI usage logs:', error)
+      throw new Error('Failed to fetch usage data')
+    }
+
+    // Initialize stats
+    const actions: AIAction[] = [
+      'summarize',
+      'craft',
+      'translate',
+      'generate_quiz',
+      'generate_quest',
+      'generate_lesson',
+      'deep_lesson',
+    ]
+
+    const requestsByAction = Object.fromEntries(
+      actions.map((a) => [a, 0]),
+    ) as Record<AIAction, number>
+    const tokensByAction = Object.fromEntries(
+      actions.map((a) => [a, 0]),
+    ) as Record<AIAction, number>
+
+    let totalInputTokens = 0
+    let totalOutputTokens = 0
+
+    // Daily usage map
+    const dailyMap = new Map<string, { requests: number; tokens: number }>()
+
+    // Process logs
+    for (const log of logs || []) {
+      // Action stats
+      requestsByAction[log.action as AIAction]++
+      tokensByAction[log.action as AIAction] += log.total_tokens
+
+      // Totals
+      totalInputTokens += log.input_tokens
+      totalOutputTokens += log.output_tokens
+
+      // Daily stats
+      const date = new Date(log.created_at).toISOString().split('T')[0]
+      const existing = dailyMap.get(date) || { requests: 0, tokens: 0 }
+      dailyMap.set(date, {
+        requests: existing.requests + 1,
+        tokens: existing.tokens + log.total_tokens,
+      })
+    }
+
+    // Convert daily map to array
+    const dailyUsage = Array.from(dailyMap.entries()).map(([date, stats]) => ({
+      date,
+      requests: stats.requests,
+      tokens: stats.tokens,
+    }))
+
+    // Calculate estimated cost (using gemini-2.0-flash pricing)
+    const pricing = GEMINI_PRICING['gemini-2.0-flash']
+    const estimatedCost =
+      (totalInputTokens / 1_000_000) * pricing.input +
+      (totalOutputTokens / 1_000_000) * pricing.output
+
+    return {
+      totalRequests: logs?.length || 0,
+      totalInputTokens,
+      totalOutputTokens,
+      totalTokens: totalInputTokens + totalOutputTokens,
+      requestsByAction,
+      tokensByAction,
+      dailyUsage,
+      estimatedCost: Math.round(estimatedCost * 10000) / 10000, // Round to 4 decimals
+    }
+  })
+
+// Get daily AI usage chart data (admin only)
+export const getDailyAIUsageChart = createServerFn({ method: 'GET' })
+  .inputValidator((data: { timeRange: 'week' | 'month' | 'year' }) => data)
+  .handler(
+    async ({
+      data,
+    }): Promise<{
+      data: Array<{
+        date: string
+        requests: number
+        tokens: number
+      }>
+      summary: {
+        totalRequests: number
+        totalTokens: number
+        estimatedCost: number
+      }
+    }> => {
+      const supabase = getSupabaseFromCookies()
+
+      // Verify admin
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser()
+      if (userError || !user) {
+        throw new Error('Authentication required')
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      if (profile?.role !== 'admin') {
+        throw new Error('Admin access required')
+      }
+
+      // Calculate date range based on timeRange
+      const now = new Date()
+      const startDate = new Date()
+      let daysCount = 7
+
+      switch (data.timeRange) {
+        case 'week':
+          daysCount = 7
+          startDate.setDate(now.getDate() - 6)
+          break
+        case 'month':
+          daysCount = 30
+          startDate.setDate(now.getDate() - 29)
+          break
+        case 'year':
+          daysCount = 365
+          startDate.setDate(now.getDate() - 364)
+          break
+      }
+      // Use UTC to match database timestamps
+      startDate.setUTCHours(0, 0, 0, 0)
+
+      // Fetch all logs
+      const { data: logs, error } = await supabase
+        .from('ai_usage_logs')
+        .select('input_tokens, output_tokens, total_tokens, created_at')
+        .gte('created_at', startDate.toISOString())
+        .order('created_at', { ascending: true })
+
+      if (error) {
+        console.error('Failed to fetch AI usage logs:', error)
+        throw new Error('Failed to fetch usage data')
+      }
+
+      // Initialize daily map
+      const dailyMap = new Map<string, { requests: number; tokens: number }>()
+
+      // Pre-fill all days in range
+      for (let i = 0; i < daysCount; i++) {
+        const date = new Date(startDate)
+        date.setDate(startDate.getDate() + i)
+        const dateStr = date.toISOString().split('T')[0]
+        dailyMap.set(dateStr, { requests: 0, tokens: 0 })
+      }
+
+      // Process logs
+      let totalRequests = 0
+      let totalTokens = 0
+      let totalInputTokens = 0
+      let totalOutputTokens = 0
+
+      for (const log of logs || []) {
+        const dateStr = new Date(log.created_at).toISOString().split('T')[0]
+        const existing = dailyMap.get(dateStr)
+        if (!existing) continue
+
+        existing.requests++
+        existing.tokens += log.total_tokens
+        totalRequests++
+        totalTokens += log.total_tokens
+        totalInputTokens += log.input_tokens
+        totalOutputTokens += log.output_tokens
+      }
+
+      // Calculate estimated cost
+      const pricing = GEMINI_PRICING['gemini-2.0-flash']
+      const estimatedCost =
+        (totalInputTokens / 1_000_000) * pricing.input +
+        (totalOutputTokens / 1_000_000) * pricing.output
+
+      // Convert to array (for year, aggregate to months)
+      let chartData: Array<{ date: string; requests: number; tokens: number }>
+
+      if (data.timeRange === 'year') {
+        // Aggregate by month
+        const monthlyMap = new Map<
+          string,
+          { requests: number; tokens: number }
+        >()
+
+        for (const [dateStr, stats] of dailyMap.entries()) {
+          const monthKey = dateStr.substring(0, 7) // YYYY-MM
+          const existing = monthlyMap.get(monthKey) || { requests: 0, tokens: 0 }
+          monthlyMap.set(monthKey, {
+            requests: existing.requests + stats.requests,
+            tokens: existing.tokens + stats.tokens,
+          })
+        }
+
+        chartData = Array.from(monthlyMap.entries())
+          .map(([date, stats]) => ({ date, ...stats }))
+          .sort((a, b) => a.date.localeCompare(b.date))
+      } else {
+        chartData = Array.from(dailyMap.entries())
+          .map(([date, stats]) => ({ date, ...stats }))
+          .sort((a, b) => a.date.localeCompare(b.date))
+      }
+
+      return {
+        data: chartData,
+        summary: {
+          totalRequests,
+          totalTokens,
+          estimatedCost: Math.round(estimatedCost * 10000) / 10000,
+        },
+      }
+    },
+  )
+
+// Get today's usage for quota check
+export const getTodayAIUsage = createServerFn({ method: 'GET' }).handler(
+  async (): Promise<{
+    requests: number
+    tokens: number
+    requestsLimit: number
+    tokensLimit: number
+    isFreeTier: boolean
+  }> => {
+    const supabase = getSupabaseFromCookies()
+
+    // Verify admin
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+    if (userError || !user) {
+      throw new Error('Authentication required')
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.role !== 'admin') {
+      throw new Error('Admin access required')
+    }
+
+    // Get today's start (UTC)
+    const today = new Date()
+    today.setUTCHours(0, 0, 0, 0)
+
+    const { data: logs, count } = await supabase
+      .from('ai_usage_logs')
+      .select('total_tokens', { count: 'exact' })
+      .gte('created_at', today.toISOString())
+
+    const totalTokens =
+      logs?.reduce((sum, log) => sum + log.total_tokens, 0) || 0
+
+    // Check if we're on free tier (no billing configured)
+    // For now, assume free tier
+    const isFreeTier = true
+
+    return {
+      requests: count || 0,
+      tokens: totalTokens,
+      requestsLimit: isFreeTier ? GEMINI_FREE_TIER.requestsPerDay : -1, // -1 = unlimited
+      tokensLimit: isFreeTier ? GEMINI_FREE_TIER.tokensPerMinute * 60 * 24 : -1,
+      isFreeTier,
+    }
+  },
+)
+
+// Clear old AI usage logs (admin only)
+export const clearOldAIUsageLogs = createServerFn({ method: 'POST' })
+  .inputValidator((data: { daysOld: number }) => data)
+  .handler(
+    async ({ data }): Promise<{ success: boolean; deletedCount: number }> => {
+      const supabase = getSupabaseFromCookies()
+
+      // Verify admin
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser()
+      if (userError || !user) {
+        throw new Error('Authentication required')
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      if (profile?.role !== 'admin') {
+        throw new Error('Admin access required')
+      }
+
+      const cutoffDate = new Date()
+      cutoffDate.setDate(cutoffDate.getDate() - data.daysOld)
+
+      // Get count before deleting
+      const { count } = await supabase
+        .from('ai_usage_logs')
+        .select('id', { count: 'exact', head: true })
+        .lt('created_at', cutoffDate.toISOString())
+
+      // Delete old logs
+      const { error } = await supabase
+        .from('ai_usage_logs')
+        .delete()
+        .lt('created_at', cutoffDate.toISOString())
+
+      if (error) {
+        throw new Error(`Failed to clear AI usage logs: ${error.message}`)
+      }
+
+      return { success: true, deletedCount: count || 0 }
+    },
+  )

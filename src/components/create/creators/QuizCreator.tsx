@@ -217,6 +217,13 @@ export function QuizCreator() {
 
       setActivity(quiz, content)
 
+      // Set age range - use AI's suggestion if user didn't select manually
+      if (settings.ageRange !== 'auto') {
+        setAgeRange(settings.ageRange)
+      } else if (quiz.age_range) {
+        setAgeRange(quiz.age_range)
+      }
+
       if (settings.timerEnabled && settings.timerSeconds > 0) {
         setTimeLimitMinutes(Math.ceil(settings.timerSeconds / 60))
       } else {
