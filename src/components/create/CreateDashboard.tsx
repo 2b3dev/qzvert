@@ -225,15 +225,11 @@ export function CreateDashboard({
     >
       {/* Welcome Section */}
       <motion.div variants={item} className="text-center mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold mb-2">
-          <span className="bg-linear-to-r from-primary to-pink-500 bg-clip-text text-transparent">
-            {t('create.dashboard.welcome')}
-            {userName && `, ${userName}`}
+        <h1 className="text-3xl md:text-4xl font-bold leading-loose">
+          <span className="bg-linear-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent">
+            {t('create.dashboard.welcomeQuestion')}
           </span>
         </h1>
-        <p className="text-muted-foreground text-lg">
-          {t('create.dashboard.welcomeMessage')}
-        </p>
       </motion.div>
 
       {/* Quick Start */}

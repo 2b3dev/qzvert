@@ -37,7 +37,13 @@
     "logout": "Logout",
     "or": "or",
     "freeStart": "Start learning for free, no cost",
-    "aiDisabled": "AI generation is currently unavailable"
+    "aiDisabled": "AI generation is currently unavailable",
+    "user": "User",
+    "myAccount": "My Account",
+    "goToHome": "Go to Home",
+    "settings": "Settings",
+    "signOut": "Sign Out",
+    "signIn": "Sign In"
   },
   "nav": {
     "explore": "Explore",
@@ -271,8 +277,7 @@
       }
     },
     "dashboard": {
-      "welcome": "Welcome",
-      "welcomeMessage": "Choose an activity type from the menu, or start quickly",
+      "welcomeQuestion": "What magic are you crafting today?",
       "quickStart": "Quick Start",
       "recentActivities": "Recent Activities",
       "noRecent": "No recent activities yet",

@@ -1,32 +1,49 @@
+import IconApp from '@/components/icon/icon-app'
+import { Link } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'framer-motion'
+import { Route } from '../../routes/__root'
 import {
   BookOpen,
   BookOpenCheck,
   Bot,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   FileImage,
   FolderOpen,
   GitBranch,
   GraduationCap,
+  Home,
   Image,
   LayoutDashboard,
   Languages,
   LayoutTemplate,
+  LogOut,
   Map,
   MessageSquare,
   Minus,
   Plus,
   Presentation,
   School,
-  Sparkles,
+  Settings,
   Trophy,
   Users,
   X,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { useEffect } from 'react'
 import { useTranslation } from '../../hooks/useTranslation'
 import { cn } from '../../lib/utils'
+import { useAuthStore } from '../../stores/auth-store'
+import { useProfileStore } from '../../stores/profile-store'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu'
 
 export type CreatorType =
   // Content
@@ -227,6 +244,16 @@ export function CreateSidebar({
   onRemoveFromQuickStart,
 }: CreateSidebarProps) {
   const { t } = useTranslation()
+  const { siteSettings } = Route.useLoaderData()
+  const { user, signOut } = useAuthStore()
+  const { profile, fetchProfile } = useProfileStore()
+
+  // Fetch profile
+  useEffect(() => {
+    if (user?.id && !profile) {
+      fetchProfile(user.id)
+    }
+  }, [user?.id, profile, fetchProfile])
 
   const getBadgeStyle = (badge?: 'new' | 'beta' | 'coming') => {
     switch (badge) {
@@ -258,13 +285,25 @@ export function CreateSidebar({
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-border flex items-center justify-between">
-        {!isCollapsed && (
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary" />
-            <span className="font-semibold text-foreground">
-              {t('create.title')}
+        {isCollapsed ? (
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            className="flex items-center gap-2 group cursor-pointer"
+          >
+            <motion.div whileHover={{ rotate: 180 }} transition={{ duration: 0.3 }}>
+              <IconApp className="w-6 h-6" color={'hsl(var(--foreground))'} />
+            </motion.div>
+          </button>
+        ) : (
+          <Link to="/" className="flex items-center gap-2 group">
+            <motion.div whileHover={{ rotate: 180 }} transition={{ duration: 0.3 }}>
+              <IconApp className="w-6 h-6" color={'hsl(var(--foreground))'} />
+            </motion.div>
+            <span className="font-black text-xl text-foreground group-hover:text-primary transition-colors">
+              {siteSettings?.siteName || 'QzVert'}
             </span>
-          </div>
+          </Link>
         )}
         {/* Desktop collapse button */}
         <button
@@ -289,7 +328,7 @@ export function CreateSidebar({
       </div>
 
       {/* Sections */}
-      <div className="flex-1 overflow-y-auto py-2 px-2">
+      <div className="flex-1 overflow-y-auto py-2 px-2 scrollbar-thin">
         {/* Home Button */}
         <div className="mb-4">
           <motion.button
@@ -360,6 +399,84 @@ export function CreateSidebar({
           </div>
         ))}
       </div>
+
+      {/* User Section Footer */}
+      <div className="p-3 border-t border-border/50">
+        {user ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className={cn(
+                  'w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-accent/50 transition-all duration-200 group',
+                  isCollapsed && 'justify-center px-0',
+                )}
+              >
+                {profile?.avatar_url ? (
+                  <img
+                    src={profile.avatar_url}
+                    alt=""
+                    className="w-9 h-9 rounded-xl object-cover ring-2 ring-border/50 group-hover:ring-primary/50 transition-all shrink-0"
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded-xl bg-linear-to-br from-primary/20 to-purple-500/20 flex items-center justify-center ring-2 ring-border/50 group-hover:ring-primary/50 transition-all shrink-0">
+                    <span className="text-sm font-bold bg-linear-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+                      {(profile?.display_name || user?.email || 'U')[0].toUpperCase()}
+                    </span>
+                  </div>
+                )}
+                {!isCollapsed && (
+                  <>
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {profile?.display_name || t('common.user')}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {user?.email}
+                      </p>
+                    </div>
+                    <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
+                  </>
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" side="top" className="w-56 mb-2">
+              <DropdownMenuLabel>{t('common.myAccount')}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/" className="flex items-center gap-2 cursor-pointer">
+                  <Home className="w-4 h-4" />
+                  {t('common.goToHome')}
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                  <Settings className="w-4 h-4" />
+                  {t('common.settings')}
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => signOut()}
+                className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
+              >
+                <LogOut className="w-4 h-4" />
+                {t('common.signOut')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Link
+            to="/login"
+            className={cn(
+              'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors',
+              isCollapsed && 'justify-center px-2',
+            )}
+          >
+            <LogOut className="w-5 h-5 shrink-0" />
+            {!isCollapsed && t('common.signIn')}
+          </Link>
+        )}
+      </div>
     </div>
   )
 
@@ -372,7 +489,7 @@ export function CreateSidebar({
           width: isCollapsed ? 64 : 280,
         }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="hidden md:flex flex-col bg-card border-r border-border h-[calc(100vh-64px)] sticky top-16 self-start"
+        className="hidden md:flex flex-col bg-card border-r border-border rounded-r-2xl shadow-[4px_0_12px_-4px_rgba(0,0,0,0.15)] h-screen sticky top-0 self-start"
       >
         {sidebarContent}
       </motion.aside>
@@ -395,7 +512,7 @@ export function CreateSidebar({
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="md:hidden fixed left-0 top-0 w-[280px] h-full bg-card border-r border-border z-50 shadow-lg"
+              className="md:hidden fixed left-0 top-0 w-[280px] h-full bg-card border-r border-border rounded-r-2xl z-50 shadow-lg"
             >
               {sidebarContent}
             </motion.aside>

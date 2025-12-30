@@ -12,18 +12,22 @@ import {
 } from '@dnd-kit/core'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { arrayMove } from '@dnd-kit/sortable'
-import { createFileRoute } from '@tanstack/react-router'
+import { setTheme, type Theme } from '@/server/theme'
+import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   Bot,
   FileImage,
   FolderOpen,
   GitBranch,
+  Globe,
   Image,
   LayoutTemplate,
   Menu,
+  Moon,
   Presentation,
   School,
+  Sun,
   Trophy,
   Users,
 } from 'lucide-react'
@@ -41,9 +45,9 @@ import {
   RoleplayCreator,
   creatorGradients,
 } from '../components/create'
-import { DefaultLayout } from '../components/layouts/DefaultLayout'
 import { Button } from '../components/ui/button'
 import { useTranslation } from '../hooks/useTranslation'
+import { Route as RootRoute } from './__root'
 
 import type { CreatorType } from '../components/create'
 
@@ -53,7 +57,9 @@ const MAX_QUICK_START_ITEMS = 12
 export const Route = createFileRoute('/create')({ component: CreatePage })
 
 function CreatePage() {
-  const { t } = useTranslation()
+  const { t, language, toggleLanguage } = useTranslation()
+  const { theme } = RootRoute.useLoaderData()
+  const router = useRouter()
   const [activeCreator, setActiveCreator] = useState<CreatorType | null>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -378,84 +384,121 @@ function CreatePage() {
   }
 
   return (
-    <DefaultLayout>
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="min-h-[calc(100vh-64px)] bg-linear-to-b from-background via-muted/30 to-background">
-          {/* Mobile Header */}
-          <div className="md:hidden sticky top-16 z-30 bg-background/80 backdrop-blur-sm border-b border-border px-4 py-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setMobileMenuOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <Menu className="w-5 h-5" />
-              <span>{t('create.title')}</span>
-            </Button>
-          </div>
-
-          <div className="flex min-h-[calc(100vh-64px)]">
-            {/* Sidebar */}
-            <CreateSidebar
-              activeCreator={activeCreator}
-              onSelectCreator={setActiveCreator}
-              isCollapsed={sidebarCollapsed}
-              onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-              isMobileOpen={mobileMenuOpen}
-              onCloseMobile={() => setMobileMenuOpen(false)}
-              isQuickStartEditMode={isQuickStartEditMode}
-              quickStartItems={quickStartItems}
-              onAddToQuickStart={handleAddToQuickStart}
-              onRemoveFromQuickStart={handleRemoveFromQuickStart}
-            />
-
-            {/* Main Content */}
-            <main className="flex-1 p-4 md:p-8">
-              {/* Back Button when creator is active */}
-              <AnimatePresence>
-                {activeCreator && (
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className="mb-4"
-                  >
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setActiveCreator(null)}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      ← Back to Dashboard
-                    </Button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Creator Content */}
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeCreator || 'dashboard'}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {renderCreator()}
-                </motion.div>
-              </AnimatePresence>
-            </main>
-          </div>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="min-h-screen bg-linear-to-b from-background via-muted/30 to-background">
+        {/* Mobile Header */}
+        <div className="md:hidden sticky top-0 z-30 bg-background/80 backdrop-blur-sm border-b border-border px-4 py-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setMobileMenuOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Menu className="w-5 h-5" />
+            <span>{t('create.title')}</span>
+          </Button>
         </div>
 
-        {/* Drag Overlay */}
-        <DragOverlay dropAnimation={null}>{getDragOverlayContent()}</DragOverlay>
-      </DndContext>
-    </DefaultLayout>
+        <div className="flex min-h-screen">
+          {/* Sidebar */}
+          <CreateSidebar
+            activeCreator={activeCreator}
+            onSelectCreator={setActiveCreator}
+            isCollapsed={sidebarCollapsed}
+            onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+            isMobileOpen={mobileMenuOpen}
+            onCloseMobile={() => setMobileMenuOpen(false)}
+            isQuickStartEditMode={isQuickStartEditMode}
+            quickStartItems={quickStartItems}
+            onAddToQuickStart={handleAddToQuickStart}
+            onRemoveFromQuickStart={handleRemoveFromQuickStart}
+          />
+
+          {/* Main Content */}
+          <main className="flex-1 p-4 md:p-8 relative">
+            {/* Top Right Controls */}
+            <div className="absolute top-4 right-4 md:top-8 md:right-8 flex items-center gap-2 z-10">
+              {/* Language Toggle */}
+              <button
+                onClick={toggleLanguage}
+                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors flex items-center gap-1"
+                aria-label="Toggle language"
+                title={language === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}
+              >
+                <Globe className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  {language === 'th' ? 'TH' : 'EN'}
+                </span>
+              </button>
+
+              {/* Theme Toggle */}
+              <button
+                onClick={async () => {
+                  const newTheme: Theme = theme === 'dark' ? 'light' : 'dark'
+                  await setTheme({ data: { theme: newTheme } })
+                  router.invalidate()
+                }}
+                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                aria-label="Toggle theme"
+              >
+                <motion.div
+                  initial={false}
+                  animate={{ rotate: theme === 'dark' ? 0 : 180 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {theme === 'dark' ? (
+                    <Moon className="w-5 h-5" />
+                  ) : (
+                    <Sun className="w-5 h-5" />
+                  )}
+                </motion.div>
+              </button>
+            </div>
+
+            {/* Back Button when creator is active */}
+            <AnimatePresence>
+              {activeCreator && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="mb-4"
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setActiveCreator(null)}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    ← Back to Dashboard
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Creator Content */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeCreator || 'dashboard'}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                {renderCreator()}
+              </motion.div>
+            </AnimatePresence>
+          </main>
+        </div>
+      </div>
+
+      {/* Drag Overlay */}
+      <DragOverlay dropAnimation={null}>{getDragOverlayContent()}</DragOverlay>
+    </DndContext>
   )
 }
