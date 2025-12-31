@@ -7,6 +7,13 @@
     "ogTitle": "QzVert - Turn Content Into Learning Games",
     "ogDescription": "Create gamified learning activities with AI for free.",
     "pages": {
+      "home": {
+        "title": "QzVert - AI-Powered Gamified Learning Platform | Create Quizzes & Quests",
+        "description": "Transform boring content into engaging learning adventures with AI. Create quizzes, quests, flashcards, and interactive lessons in seconds. Free to start for learners and creators.",
+        "keywords": "AI learning platform, gamified education, create quiz online, interactive learning, edtech, education games, quiz maker, learning management, online quiz, flashcard maker",
+        "ogTitle": "QzVert - Turn Any Content Into Fun Learning Games with AI",
+        "ogDescription": "Stop studying, start playing! AI transforms your content into gamified quests, quizzes and flashcards. Perfect for learners, teachers, and content creators."
+      },
       "create": {
         "title": "Create Activity - QzVert",
         "description": "Create Quizzes, Quests, Lessons and Flashcards with AI from your content."
