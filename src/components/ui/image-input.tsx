@@ -31,8 +31,8 @@ export function ImageInput({
   className,
   aspectRatio = 'video',
   allowExternalUrl = false,
-  maxSizeMB = 5,
-  recommendedSize,
+  maxSizeMB = 2,
+  recommendedSize = '1280x720',
 }: ImageInputProps) {
   const [isUrlMode, setIsUrlMode] = useState(false)
   const [urlInput, setUrlInput] = useState('')
@@ -217,8 +217,7 @@ export function ImageInput({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             className={cn(
-              'relative rounded-lg border-2 border-dashed transition-colors',
-              aspectRatioClass,
+              'rounded-lg border-2 border-dashed transition-colors cursor-pointer',
               isDragging
                 ? 'border-primary bg-primary/10'
                 : 'border-border bg-secondary/30 hover:border-muted-foreground',
@@ -226,24 +225,26 @@ export function ImageInput({
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
           >
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4">
+            <div className="flex flex-col items-center justify-center gap-3 p-6 cursor-pointer">
               <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
                 <ImagePlus className="w-6 h-6 text-muted-foreground" />
               </div>
               <div className="text-center">
-                <p className="text-sm font-medium text-foreground">
-                  {placeholder}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {recommendedSize && `${recommendedSize} • `}Max {maxSizeMB}MB
+                <p className="text-xs text-muted-foreground">
+                  {recommendedSize} (max {maxSizeMB}MB)
                 </p>
               </div>
               <div className="flex gap-2">
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => fileInputRef.current?.click()}
+                  className="cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    fileInputRef.current?.click()
+                  }}
                 >
                   <Upload className="w-4 h-4" />
                   Upload
@@ -252,7 +253,10 @@ export function ImageInput({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setIsUrlMode(true)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setIsUrlMode(true)
+                    }}
                   >
                     <LinkIcon className="w-4 h-4" />
                     URL

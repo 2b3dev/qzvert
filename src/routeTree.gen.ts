@@ -31,12 +31,12 @@ import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminUsagesRouteImport } from './routes/admin/usages'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminReportsRouteImport } from './routes/admin/reports'
-import { Route as AdminPostsRouteImport } from './routes/admin/posts'
 import { Route as AdminCategoriesRouteImport } from './routes/admin/categories'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
 import { Route as AdminActivitiesRouteImport } from './routes/admin/activities'
 import { Route as ActivityResultsRouteImport } from './routes/activity/results'
 import { Route as ActivityMeRouteImport } from './routes/activity/me'
+import { Route as AdminPostsIndexRouteImport } from './routes/admin/posts.index'
 import { Route as BlogCategorySlugRouteImport } from './routes/blog/category.$slug'
 import { Route as AdminPostsIdRouteImport } from './routes/admin/posts.$id'
 import { Route as ActivityPlayIdRouteImport } from './routes/activity/play.$id'
@@ -154,11 +154,6 @@ const AdminReportsRoute = AdminReportsRouteImport.update({
   path: '/admin/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminPostsRoute = AdminPostsRouteImport.update({
-  id: '/admin/posts',
-  path: '/admin/posts',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
   id: '/admin/categories',
   path: '/admin/categories',
@@ -184,15 +179,20 @@ const ActivityMeRoute = ActivityMeRouteImport.update({
   path: '/activity/me',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminPostsIndexRoute = AdminPostsIndexRouteImport.update({
+  id: '/admin/posts/',
+  path: '/admin/posts/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BlogCategorySlugRoute = BlogCategorySlugRouteImport.update({
   id: '/blog/category/$slug',
   path: '/blog/category/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminPostsIdRoute = AdminPostsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AdminPostsRoute,
+  id: '/admin/posts/$id',
+  path: '/admin/posts/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ActivityPlayIdRoute = ActivityPlayIdRouteImport.update({
   id: '/activity/play/$id',
@@ -234,7 +234,6 @@ export interface FileRoutesByFullPath {
   '/admin/activities': typeof AdminActivitiesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/categories': typeof AdminCategoriesRoute
-  '/admin/posts': typeof AdminPostsRouteWithChildren
   '/admin/reports': typeof AdminReportsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/usages': typeof AdminUsagesRoute
@@ -247,6 +246,7 @@ export interface FileRoutesByFullPath {
   '/activity/play/$id': typeof ActivityPlayIdRoute
   '/admin/posts/$id': typeof AdminPostsIdRoute
   '/blog/category/$slug': typeof BlogCategorySlugRoute
+  '/admin/posts': typeof AdminPostsIndexRoute
   '/activity/upload/lesson/$id': typeof ActivityUploadLessonIdRoute
   '/activity/upload/quest/$id': typeof ActivityUploadQuestIdRoute
   '/activity/upload/quiz/$id': typeof ActivityUploadQuizIdRoute
@@ -270,7 +270,6 @@ export interface FileRoutesByTo {
   '/admin/activities': typeof AdminActivitiesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/categories': typeof AdminCategoriesRoute
-  '/admin/posts': typeof AdminPostsRouteWithChildren
   '/admin/reports': typeof AdminReportsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/usages': typeof AdminUsagesRoute
@@ -283,6 +282,7 @@ export interface FileRoutesByTo {
   '/activity/play/$id': typeof ActivityPlayIdRoute
   '/admin/posts/$id': typeof AdminPostsIdRoute
   '/blog/category/$slug': typeof BlogCategorySlugRoute
+  '/admin/posts': typeof AdminPostsIndexRoute
   '/activity/upload/lesson/$id': typeof ActivityUploadLessonIdRoute
   '/activity/upload/quest/$id': typeof ActivityUploadQuestIdRoute
   '/activity/upload/quiz/$id': typeof ActivityUploadQuizIdRoute
@@ -307,7 +307,6 @@ export interface FileRoutesById {
   '/admin/activities': typeof AdminActivitiesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/categories': typeof AdminCategoriesRoute
-  '/admin/posts': typeof AdminPostsRouteWithChildren
   '/admin/reports': typeof AdminReportsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/usages': typeof AdminUsagesRoute
@@ -320,6 +319,7 @@ export interface FileRoutesById {
   '/activity/play/$id': typeof ActivityPlayIdRoute
   '/admin/posts/$id': typeof AdminPostsIdRoute
   '/blog/category/$slug': typeof BlogCategorySlugRoute
+  '/admin/posts/': typeof AdminPostsIndexRoute
   '/activity/upload/lesson/$id': typeof ActivityUploadLessonIdRoute
   '/activity/upload/quest/$id': typeof ActivityUploadQuestIdRoute
   '/activity/upload/quiz/$id': typeof ActivityUploadQuizIdRoute
@@ -345,7 +345,6 @@ export interface FileRouteTypes {
     | '/admin/activities'
     | '/admin/analytics'
     | '/admin/categories'
-    | '/admin/posts'
     | '/admin/reports'
     | '/admin/settings'
     | '/admin/usages'
@@ -358,6 +357,7 @@ export interface FileRouteTypes {
     | '/activity/play/$id'
     | '/admin/posts/$id'
     | '/blog/category/$slug'
+    | '/admin/posts'
     | '/activity/upload/lesson/$id'
     | '/activity/upload/quest/$id'
     | '/activity/upload/quiz/$id'
@@ -381,7 +381,6 @@ export interface FileRouteTypes {
     | '/admin/activities'
     | '/admin/analytics'
     | '/admin/categories'
-    | '/admin/posts'
     | '/admin/reports'
     | '/admin/settings'
     | '/admin/usages'
@@ -394,6 +393,7 @@ export interface FileRouteTypes {
     | '/activity/play/$id'
     | '/admin/posts/$id'
     | '/blog/category/$slug'
+    | '/admin/posts'
     | '/activity/upload/lesson/$id'
     | '/activity/upload/quest/$id'
     | '/activity/upload/quiz/$id'
@@ -417,7 +417,6 @@ export interface FileRouteTypes {
     | '/admin/activities'
     | '/admin/analytics'
     | '/admin/categories'
-    | '/admin/posts'
     | '/admin/reports'
     | '/admin/settings'
     | '/admin/usages'
@@ -430,6 +429,7 @@ export interface FileRouteTypes {
     | '/activity/play/$id'
     | '/admin/posts/$id'
     | '/blog/category/$slug'
+    | '/admin/posts/'
     | '/activity/upload/lesson/$id'
     | '/activity/upload/quest/$id'
     | '/activity/upload/quiz/$id'
@@ -454,7 +454,6 @@ export interface RootRouteChildren {
   AdminActivitiesRoute: typeof AdminActivitiesRoute
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminCategoriesRoute: typeof AdminCategoriesRoute
-  AdminPostsRoute: typeof AdminPostsRouteWithChildren
   AdminReportsRoute: typeof AdminReportsRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminUsagesRoute: typeof AdminUsagesRoute
@@ -465,7 +464,9 @@ export interface RootRouteChildren {
   BlogIndexRoute: typeof BlogIndexRoute
   CategoriesIndexRoute: typeof CategoriesIndexRoute
   ActivityPlayIdRoute: typeof ActivityPlayIdRoute
+  AdminPostsIdRoute: typeof AdminPostsIdRoute
   BlogCategorySlugRoute: typeof BlogCategorySlugRoute
+  AdminPostsIndexRoute: typeof AdminPostsIndexRoute
   ActivityUploadLessonIdRoute: typeof ActivityUploadLessonIdRoute
   ActivityUploadQuestIdRoute: typeof ActivityUploadQuestIdRoute
   ActivityUploadQuizIdRoute: typeof ActivityUploadQuizIdRoute
@@ -627,13 +628,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/posts': {
-      id: '/admin/posts'
-      path: '/admin/posts'
-      fullPath: '/admin/posts'
-      preLoaderRoute: typeof AdminPostsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin/categories': {
       id: '/admin/categories'
       path: '/admin/categories'
@@ -669,6 +663,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ActivityMeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/posts/': {
+      id: '/admin/posts/'
+      path: '/admin/posts'
+      fullPath: '/admin/posts'
+      preLoaderRoute: typeof AdminPostsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog/category/$slug': {
       id: '/blog/category/$slug'
       path: '/blog/category/$slug'
@@ -678,10 +679,10 @@ declare module '@tanstack/react-router' {
     }
     '/admin/posts/$id': {
       id: '/admin/posts/$id'
-      path: '/$id'
+      path: '/admin/posts/$id'
       fullPath: '/admin/posts/$id'
       preLoaderRoute: typeof AdminPostsIdRouteImport
-      parentRoute: typeof AdminPostsRoute
+      parentRoute: typeof rootRouteImport
     }
     '/activity/play/$id': {
       id: '/activity/play/$id'
@@ -714,18 +715,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AdminPostsRouteChildren {
-  AdminPostsIdRoute: typeof AdminPostsIdRoute
-}
-
-const AdminPostsRouteChildren: AdminPostsRouteChildren = {
-  AdminPostsIdRoute: AdminPostsIdRoute,
-}
-
-const AdminPostsRouteWithChildren = AdminPostsRoute._addFileChildren(
-  AdminPostsRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
@@ -745,7 +734,6 @@ const rootRouteChildren: RootRouteChildren = {
   AdminActivitiesRoute: AdminActivitiesRoute,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminCategoriesRoute: AdminCategoriesRoute,
-  AdminPostsRoute: AdminPostsRouteWithChildren,
   AdminReportsRoute: AdminReportsRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminUsagesRoute: AdminUsagesRoute,
@@ -756,7 +744,9 @@ const rootRouteChildren: RootRouteChildren = {
   BlogIndexRoute: BlogIndexRoute,
   CategoriesIndexRoute: CategoriesIndexRoute,
   ActivityPlayIdRoute: ActivityPlayIdRoute,
+  AdminPostsIdRoute: AdminPostsIdRoute,
   BlogCategorySlugRoute: BlogCategorySlugRoute,
+  AdminPostsIndexRoute: AdminPostsIndexRoute,
   ActivityUploadLessonIdRoute: ActivityUploadLessonIdRoute,
   ActivityUploadQuestIdRoute: ActivityUploadQuestIdRoute,
   ActivityUploadQuizIdRoute: ActivityUploadQuizIdRoute,

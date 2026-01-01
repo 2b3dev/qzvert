@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect } from '@tanstack/react-router'
+import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router'
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import {
   Calendar,
@@ -43,7 +43,7 @@ import {
 } from '../../server/posts'
 import type { Post, PostStatus } from '../../types/database'
 
-export const Route = createFileRoute('/admin/posts')({
+export const Route = createFileRoute('/admin/posts/')({
   beforeLoad: async () => {
     const { isAdmin } = await checkAdminAccess()
     if (!isAdmin) {
@@ -54,6 +54,7 @@ export const Route = createFileRoute('/admin/posts')({
 })
 
 function AdminPosts() {
+  const navigate = useNavigate()
   const [posts, setPosts] = useState<Post[]>([])
   const [totalPosts, setTotalPosts] = useState(0)
   const [stats, setStats] = useState<{
@@ -358,12 +359,10 @@ function AdminPosts() {
             <h1 className="text-2xl font-bold">Posts</h1>
             <p className="text-muted-foreground">Manage blog posts</p>
           </div>
-          <Link to="/admin/posts/new">
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              New Post
-            </Button>
-          </Link>
+          <Button onClick={() => navigate({ to: '/admin/posts/$id', params: { id: 'new' } })}>
+            <Plus className="w-4 h-4 mr-2" />
+            New Post
+          </Button>
         </div>
 
         {/* Stats */}

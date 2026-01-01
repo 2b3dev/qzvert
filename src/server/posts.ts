@@ -78,7 +78,7 @@ export const getPublishedPosts = createServerFn({ method: 'GET' })
       .select(`
         *,
         category:categories(*),
-        author:profiles!posts_user_id_fkey(id, display_name, avatar_url)
+        author:profiles!posts_user_id_profiles_fkey(id, display_name, avatar_url)
       `, { count: 'exact' })
       .eq('status', 'published')
       .lte('published_at', new Date().toISOString())
@@ -135,7 +135,7 @@ export const getPostBySlug = createServerFn({ method: 'GET' })
       .select(`
         *,
         category:categories(*),
-        author:profiles!posts_user_id_fkey(id, display_name, avatar_url)
+        author:profiles!posts_user_id_profiles_fkey(id, display_name, avatar_url)
       `)
       .eq('slug', data.slug)
       .eq('status', 'published')
@@ -171,7 +171,7 @@ export const getFeaturedPosts = createServerFn({ method: 'GET' })
       .select(`
         *,
         category:categories(*),
-        author:profiles!posts_user_id_fkey(id, display_name, avatar_url)
+        author:profiles!posts_user_id_profiles_fkey(id, display_name, avatar_url)
       `)
       .eq('status', 'published')
       .eq('featured', true)
@@ -199,7 +199,7 @@ export const getRecentPosts = createServerFn({ method: 'GET' })
       .select(`
         *,
         category:categories(*),
-        author:profiles!posts_user_id_fkey(id, display_name, avatar_url)
+        author:profiles!posts_user_id_profiles_fkey(id, display_name, avatar_url)
       `)
       .eq('status', 'published')
       .lte('published_at', new Date().toISOString())
@@ -236,7 +236,7 @@ export interface GetAdminPostsResult {
 }
 
 export const getAdminPosts = createServerFn({ method: 'GET' })
-  .inputValidator((data: GetAdminPostsInput) => data)
+  .inputValidator((data?: GetAdminPostsInput) => data || {})
   .handler(async ({ data }): Promise<GetAdminPostsResult> => {
     const supabase = getSupabaseFromCookies()
     await checkAdminAccess(supabase)
@@ -252,7 +252,7 @@ export const getAdminPosts = createServerFn({ method: 'GET' })
       .select(`
         *,
         category:categories(*),
-        author:profiles!posts_user_id_fkey(id, display_name, avatar_url)
+        author:profiles!posts_user_id_profiles_fkey(id, display_name, avatar_url)
       `, { count: 'exact' })
 
     // Filter by status
@@ -296,7 +296,7 @@ export const getAdminPostById = createServerFn({ method: 'GET' })
       .select(`
         *,
         category:categories(*),
-        author:profiles!posts_user_id_fkey(id, display_name, avatar_url)
+        author:profiles!posts_user_id_profiles_fkey(id, display_name, avatar_url)
       `)
       .eq('id', data.id)
       .single()
@@ -343,7 +343,7 @@ export const createPost = createServerFn({ method: 'POST' })
       .select(`
         *,
         category:categories(*),
-        author:profiles!posts_user_id_fkey(id, display_name, avatar_url)
+        author:profiles!posts_user_id_profiles_fkey(id, display_name, avatar_url)
       `)
       .single()
 
@@ -401,7 +401,7 @@ export const updatePost = createServerFn({ method: 'POST' })
       .select(`
         *,
         category:categories(*),
-        author:profiles!posts_user_id_fkey(id, display_name, avatar_url)
+        author:profiles!posts_user_id_profiles_fkey(id, display_name, avatar_url)
       `)
       .single()
 
