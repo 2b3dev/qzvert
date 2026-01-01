@@ -126,9 +126,9 @@ export const Route = createFileRoute('/')({
       ],
       links: [
         { rel: 'canonical', href: 'https://qzvert.com' },
-        { rel: 'alternate', hreflang: 'en', href: 'https://qzvert.com?lang=en' },
-        { rel: 'alternate', hreflang: 'th', href: 'https://qzvert.com?lang=th' },
-        { rel: 'alternate', hreflang: 'x-default', href: 'https://qzvert.com' },
+        { rel: 'alternate', hrefLang: 'en', href: 'https://qzvert.com?lang=en' },
+        { rel: 'alternate', hrefLang: 'th', href: 'https://qzvert.com?lang=th' },
+        { rel: 'alternate', hrefLang: 'x-default', href: 'https://qzvert.com' },
       ],
       scripts: [
         {
