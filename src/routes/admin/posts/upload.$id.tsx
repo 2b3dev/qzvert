@@ -2,9 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import {
   ArrowLeft,
-  Calendar,
   Eye,
-  FileText,
   Globe,
   Loader2,
   Save,
@@ -13,29 +11,27 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { AdminLayout } from '../../components/layouts/AdminLayout'
-import { Button } from '../../components/ui/button'
-import { Input } from '../../components/ui/input'
-import { ImageInput } from '../../components/ui/image-input'
-import { RichTextEditor } from '../../components/ui/rich-text-editor'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../../components/ui/dropdown-menu'
-import { cn } from '../../lib/utils'
-import { checkAdminAccess } from '../../server/admin-activities'
-import { getCategories } from '../../server/categories'
+import { AdminLayout } from '../../../components/layouts/AdminLayout'
+import { Button } from '../../../components/ui/button'
+import { ImageInput } from '../../../components/ui/image-input'
+import { Input } from '../../../components/ui/input'
+import { RichTextEditor } from '../../../components/ui/rich-text-editor'
+import { cn } from '../../../lib/utils'
+import { checkAdminAccess } from '../../../server/admin-activities'
+import { getCategories } from '../../../server/categories'
 import {
   createPost,
   deletePost,
   getAdminPostById,
   updatePost,
-} from '../../server/posts'
-import type { Post, PostStatus, PostInsert, PostUpdate } from '../../types/database'
+} from '../../../server/posts'
+import type {
+  PostInsert,
+  PostStatus,
+  PostUpdate,
+} from '../../../types/database'
 
-export const Route = createFileRoute('/admin/posts/$id')({
+export const Route = createFileRoute('/admin/posts/upload/$id')({
   beforeLoad: async () => {
     const { isAdmin } = await checkAdminAccess()
     if (!isAdmin) {
@@ -142,7 +138,9 @@ function PostEditor() {
       }
 
       if (isNew) {
-        return createPost(data as Omit<PostInsert, 'user_id' | 'slug'> & { slug?: string })
+        return createPost(
+          data as Omit<PostInsert, 'user_id' | 'slug'> & { slug?: string },
+        )
       } else {
         return updatePost({ id, ...data } as { id: string } & PostUpdate)
       }
@@ -155,7 +153,9 @@ function PostEditor() {
       }
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Failed to save post')
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to save post',
+      )
     },
   })
 
@@ -167,7 +167,9 @@ function PostEditor() {
       navigate({ to: '/admin/posts' })
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Failed to delete post')
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to delete post',
+      )
     },
   })
 
@@ -203,7 +205,7 @@ function PostEditor() {
     <AdminLayout>
       <div className="h-full flex flex-col">
         {/* Header */}
-        <div className="border-b px-6 py-4 flex items-center justify-between flex-shrink-0">
+        <div className="border-b px-6 py-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -282,7 +284,9 @@ function PostEditor() {
 
             {/* Thumbnail */}
             <div>
-              <label className="text-sm font-medium mb-2 block">Thumbnail</label>
+              <label className="text-sm font-medium mb-2 block">
+                Thumbnail
+              </label>
               <ImageInput
                 value={thumbnail}
                 onChange={setThumbnail}
@@ -323,7 +327,12 @@ function PostEditor() {
                   <Settings className="w-4 h-4" />
                   <span className="font-medium">Post Settings</span>
                 </div>
-                <span className={cn('transition-transform', showSettings && 'rotate-180')}>
+                <span
+                  className={cn(
+                    'transition-transform',
+                    showSettings && 'rotate-180',
+                  )}
+                >
                   ▼
                 </span>
               </button>
@@ -333,10 +342,14 @@ function PostEditor() {
                   {/* Status & Schedule */}
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Status</label>
+                      <label className="text-sm font-medium mb-2 block">
+                        Status
+                      </label>
                       <select
                         value={status}
-                        onChange={(e) => setStatus(e.target.value as PostStatus)}
+                        onChange={(e) =>
+                          setStatus(e.target.value as PostStatus)
+                        }
                         className="w-full h-10 px-3 border rounded-lg bg-background"
                       >
                         <option value="draft">Draft</option>
@@ -346,7 +359,9 @@ function PostEditor() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Publish Date</label>
+                      <label className="text-sm font-medium mb-2 block">
+                        Publish Date
+                      </label>
                       <Input
                         type="datetime-local"
                         value={publishedAt}
@@ -357,7 +372,9 @@ function PostEditor() {
 
                   {/* Category */}
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Category</label>
+                    <label className="text-sm font-medium mb-2 block">
+                      Category
+                    </label>
                     <select
                       value={categoryId || ''}
                       onChange={(e) => setCategoryId(e.target.value || null)}
@@ -374,7 +391,9 @@ function PostEditor() {
 
                   {/* Tags */}
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Tags</label>
+                    <label className="text-sm font-medium mb-2 block">
+                      Tags
+                    </label>
                     <div className="flex flex-wrap gap-2 mb-2">
                       {tags.map((tag) => (
                         <span
@@ -404,7 +423,11 @@ function PostEditor() {
                           }
                         }}
                       />
-                      <Button type="button" variant="outline" onClick={handleAddTag}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleAddTag}
+                      >
                         Add
                       </Button>
                     </div>

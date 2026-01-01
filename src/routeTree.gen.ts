@@ -36,10 +36,10 @@ import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
 import { Route as AdminActivitiesRouteImport } from './routes/admin/activities'
 import { Route as ActivityResultsRouteImport } from './routes/activity/results'
 import { Route as ActivityMeRouteImport } from './routes/activity/me'
-import { Route as AdminPostsIndexRouteImport } from './routes/admin/posts.index'
+import { Route as AdminPostsIndexRouteImport } from './routes/admin/posts/index'
 import { Route as BlogCategorySlugRouteImport } from './routes/blog/category.$slug'
-import { Route as AdminPostsIdRouteImport } from './routes/admin/posts.$id'
 import { Route as ActivityPlayIdRouteImport } from './routes/activity/play.$id'
+import { Route as AdminPostsUploadIdRouteImport } from './routes/admin/posts/upload.$id'
 import { Route as ActivityUploadQuizIdRouteImport } from './routes/activity/upload/quiz.$id'
 import { Route as ActivityUploadQuestIdRouteImport } from './routes/activity/upload/quest.$id'
 import { Route as ActivityUploadLessonIdRouteImport } from './routes/activity/upload/lesson.$id'
@@ -189,14 +189,14 @@ const BlogCategorySlugRoute = BlogCategorySlugRouteImport.update({
   path: '/blog/category/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminPostsIdRoute = AdminPostsIdRouteImport.update({
-  id: '/admin/posts/$id',
-  path: '/admin/posts/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ActivityPlayIdRoute = ActivityPlayIdRouteImport.update({
   id: '/activity/play/$id',
   path: '/activity/play/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPostsUploadIdRoute = AdminPostsUploadIdRouteImport.update({
+  id: '/admin/posts/upload/$id',
+  path: '/admin/posts/upload/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ActivityUploadQuizIdRoute = ActivityUploadQuizIdRouteImport.update({
@@ -244,12 +244,12 @@ export interface FileRoutesByFullPath {
   '/blog': typeof BlogIndexRoute
   '/categories': typeof CategoriesIndexRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
-  '/admin/posts/$id': typeof AdminPostsIdRoute
   '/blog/category/$slug': typeof BlogCategorySlugRoute
   '/admin/posts': typeof AdminPostsIndexRoute
   '/activity/upload/lesson/$id': typeof ActivityUploadLessonIdRoute
   '/activity/upload/quest/$id': typeof ActivityUploadQuestIdRoute
   '/activity/upload/quiz/$id': typeof ActivityUploadQuizIdRoute
+  '/admin/posts/upload/$id': typeof AdminPostsUploadIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -280,12 +280,12 @@ export interface FileRoutesByTo {
   '/blog': typeof BlogIndexRoute
   '/categories': typeof CategoriesIndexRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
-  '/admin/posts/$id': typeof AdminPostsIdRoute
   '/blog/category/$slug': typeof BlogCategorySlugRoute
   '/admin/posts': typeof AdminPostsIndexRoute
   '/activity/upload/lesson/$id': typeof ActivityUploadLessonIdRoute
   '/activity/upload/quest/$id': typeof ActivityUploadQuestIdRoute
   '/activity/upload/quiz/$id': typeof ActivityUploadQuizIdRoute
+  '/admin/posts/upload/$id': typeof AdminPostsUploadIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -317,12 +317,12 @@ export interface FileRoutesById {
   '/blog/': typeof BlogIndexRoute
   '/categories/': typeof CategoriesIndexRoute
   '/activity/play/$id': typeof ActivityPlayIdRoute
-  '/admin/posts/$id': typeof AdminPostsIdRoute
   '/blog/category/$slug': typeof BlogCategorySlugRoute
   '/admin/posts/': typeof AdminPostsIndexRoute
   '/activity/upload/lesson/$id': typeof ActivityUploadLessonIdRoute
   '/activity/upload/quest/$id': typeof ActivityUploadQuestIdRoute
   '/activity/upload/quiz/$id': typeof ActivityUploadQuizIdRoute
+  '/admin/posts/upload/$id': typeof AdminPostsUploadIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -355,12 +355,12 @@ export interface FileRouteTypes {
     | '/blog'
     | '/categories'
     | '/activity/play/$id'
-    | '/admin/posts/$id'
     | '/blog/category/$slug'
     | '/admin/posts'
     | '/activity/upload/lesson/$id'
     | '/activity/upload/quest/$id'
     | '/activity/upload/quiz/$id'
+    | '/admin/posts/upload/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -391,12 +391,12 @@ export interface FileRouteTypes {
     | '/blog'
     | '/categories'
     | '/activity/play/$id'
-    | '/admin/posts/$id'
     | '/blog/category/$slug'
     | '/admin/posts'
     | '/activity/upload/lesson/$id'
     | '/activity/upload/quest/$id'
     | '/activity/upload/quiz/$id'
+    | '/admin/posts/upload/$id'
   id:
     | '__root__'
     | '/'
@@ -427,12 +427,12 @@ export interface FileRouteTypes {
     | '/blog/'
     | '/categories/'
     | '/activity/play/$id'
-    | '/admin/posts/$id'
     | '/blog/category/$slug'
     | '/admin/posts/'
     | '/activity/upload/lesson/$id'
     | '/activity/upload/quest/$id'
     | '/activity/upload/quiz/$id'
+    | '/admin/posts/upload/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -464,12 +464,12 @@ export interface RootRouteChildren {
   BlogIndexRoute: typeof BlogIndexRoute
   CategoriesIndexRoute: typeof CategoriesIndexRoute
   ActivityPlayIdRoute: typeof ActivityPlayIdRoute
-  AdminPostsIdRoute: typeof AdminPostsIdRoute
   BlogCategorySlugRoute: typeof BlogCategorySlugRoute
   AdminPostsIndexRoute: typeof AdminPostsIndexRoute
   ActivityUploadLessonIdRoute: typeof ActivityUploadLessonIdRoute
   ActivityUploadQuestIdRoute: typeof ActivityUploadQuestIdRoute
   ActivityUploadQuizIdRoute: typeof ActivityUploadQuizIdRoute
+  AdminPostsUploadIdRoute: typeof AdminPostsUploadIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -677,18 +677,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogCategorySlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/posts/$id': {
-      id: '/admin/posts/$id'
-      path: '/admin/posts/$id'
-      fullPath: '/admin/posts/$id'
-      preLoaderRoute: typeof AdminPostsIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/activity/play/$id': {
       id: '/activity/play/$id'
       path: '/activity/play/$id'
       fullPath: '/activity/play/$id'
       preLoaderRoute: typeof ActivityPlayIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/posts/upload/$id': {
+      id: '/admin/posts/upload/$id'
+      path: '/admin/posts/upload/$id'
+      fullPath: '/admin/posts/upload/$id'
+      preLoaderRoute: typeof AdminPostsUploadIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/activity/upload/quiz/$id': {
@@ -744,12 +744,12 @@ const rootRouteChildren: RootRouteChildren = {
   BlogIndexRoute: BlogIndexRoute,
   CategoriesIndexRoute: CategoriesIndexRoute,
   ActivityPlayIdRoute: ActivityPlayIdRoute,
-  AdminPostsIdRoute: AdminPostsIdRoute,
   BlogCategorySlugRoute: BlogCategorySlugRoute,
   AdminPostsIndexRoute: AdminPostsIndexRoute,
   ActivityUploadLessonIdRoute: ActivityUploadLessonIdRoute,
   ActivityUploadQuestIdRoute: ActivityUploadQuestIdRoute,
   ActivityUploadQuizIdRoute: ActivityUploadQuizIdRoute,
+  AdminPostsUploadIdRoute: AdminPostsUploadIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -9,7 +9,11 @@ interface PostCardProps {
   className?: string
 }
 
-export function PostCard({ post, variant = 'default', className }: PostCardProps) {
+export function PostCard({
+  post,
+  variant = 'default',
+  className,
+}: PostCardProps) {
   const formattedDate = post.published_at
     ? new Date(post.published_at).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -25,14 +29,14 @@ export function PostCard({ post, variant = 'default', className }: PostCardProps
         params={{ slug: post.slug }}
         className={cn(
           'group flex gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors',
-          className
+          className,
         )}
       >
         {post.thumbnail && (
           <img
             src={post.thumbnail}
             alt={post.title}
-            className="w-20 h-20 object-cover rounded-md flex-shrink-0"
+            className="w-20 h-20 object-cover rounded-md shrink-0"
           />
         )}
         <div className="flex-1 min-w-0">
@@ -40,7 +44,9 @@ export function PostCard({ post, variant = 'default', className }: PostCardProps
             {post.title}
           </h3>
           {formattedDate && (
-            <p className="text-xs text-muted-foreground mt-1">{formattedDate}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {formattedDate}
+            </p>
           )}
         </div>
       </Link>
@@ -54,7 +60,7 @@ export function PostCard({ post, variant = 'default', className }: PostCardProps
         params={{ slug: post.slug }}
         className={cn(
           'group relative block overflow-hidden rounded-xl',
-          className
+          className,
         )}
       >
         <div className="aspect-[16/9] relative">
@@ -79,7 +85,9 @@ export function PostCard({ post, variant = 'default', className }: PostCardProps
             {post.title}
           </h2>
           {post.excerpt && (
-            <p className="text-sm text-white/80 line-clamp-2 mb-3">{post.excerpt}</p>
+            <p className="text-sm text-white/80 line-clamp-2 mb-3">
+              {post.excerpt}
+            </p>
           )}
           <div className="flex items-center gap-4 text-xs text-white/70">
             {post.author?.display_name && (
@@ -114,7 +122,7 @@ export function PostCard({ post, variant = 'default', className }: PostCardProps
       params={{ slug: post.slug }}
       className={cn(
         'group block overflow-hidden rounded-xl border bg-card hover:shadow-lg transition-all duration-300',
-        className
+        className,
       )}
     >
       <div className="aspect-[16/9] relative overflow-hidden">

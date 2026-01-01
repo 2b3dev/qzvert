@@ -25,7 +25,13 @@ export const Route = createFileRoute('/categories/')({
 
 type CategoryWithChildren = Category & { children: CategoryWithChildren[] }
 
-function CategoryCard({ category, index }: { category: CategoryWithChildren; index: number }) {
+function CategoryCard({
+  category,
+  index,
+}: {
+  category: CategoryWithChildren
+  index: number
+}) {
   const hasChildren = category.children && category.children.length > 0
 
   return (
@@ -41,7 +47,7 @@ function CategoryCard({ category, index }: { category: CategoryWithChildren; ind
       >
         <div className="relative bg-card border border-border/50 rounded-xl p-5 transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
               <Folder className="w-6 h-6 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
@@ -115,7 +121,8 @@ function CategoriesPage() {
                 <h1 className="text-4xl md:text-5xl font-bold">Categories</h1>
               </div>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Explore our learning categories to find posts and activities that match your interests
+                Explore our learning categories to find posts and activities
+                that match your interests
               </p>
             </motion.div>
           </div>
@@ -130,7 +137,11 @@ function CategoriesPage() {
           ) : categories && categories.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {(categories as CategoryWithChildren[]).map((category, index) => (
-                <CategoryCard key={category.id} category={category} index={index} />
+                <CategoryCard
+                  key={category.id}
+                  category={category}
+                  index={index}
+                />
               ))}
             </div>
           ) : (

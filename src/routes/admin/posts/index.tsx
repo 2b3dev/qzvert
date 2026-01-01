@@ -1,14 +1,12 @@
-import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import {
-  Calendar,
   ChevronDown,
   Edit,
   ExternalLink,
   Eye,
   FileText,
   Filter,
-  Loader2,
   MoreVertical,
   Plus,
   Search,
@@ -17,8 +15,8 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { AdminLayout } from '../../components/layouts/AdminLayout'
-import { Button } from '../../components/ui/button'
+import { AdminLayout } from '../../../components/layouts/AdminLayout'
+import { Button } from '../../../components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,22 +24,22 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '../../components/ui/dropdown-menu'
-import { Input } from '../../components/ui/input'
+} from '../../../components/ui/dropdown-menu'
+import { Input } from '../../../components/ui/input'
 import {
   PaginatedTable,
   TableCellBadge,
   TableCellMuted,
-} from '../../components/ui/paginated-table'
-import { cn } from '../../lib/utils'
-import { checkAdminAccess } from '../../server/admin-activities'
+} from '../../../components/ui/paginated-table'
+import { cn } from '../../../lib/utils'
+import { checkAdminAccess } from '../../../server/admin-activities'
 import {
   deletePost,
   getAdminPosts,
   getPostStats,
   updatePost,
-} from '../../server/posts'
-import type { Post, PostStatus } from '../../types/database'
+} from '../../../server/posts'
+import type { Post, PostStatus } from '../../../types/database'
 
 export const Route = createFileRoute('/admin/posts/')({
   beforeLoad: async () => {
@@ -54,7 +52,6 @@ export const Route = createFileRoute('/admin/posts/')({
 })
 
 function AdminPosts() {
-  const navigate = useNavigate()
   const [posts, setPosts] = useState<Post[]>([])
   const [totalPosts, setTotalPosts] = useState(0)
   const [stats, setStats] = useState<{
@@ -79,7 +76,10 @@ function AdminPosts() {
     { id: 'created_at', desc: true },
   ])
 
-  const columnIdToSortBy: Record<string, 'created_at' | 'updated_at' | 'published_at' | 'title' | 'view_count'> = {
+  const columnIdToSortBy: Record<
+    string,
+    'created_at' | 'updated_at' | 'published_at' | 'title' | 'view_count'
+  > = {
     title: 'title',
     created_at: 'created_at',
     published_at: 'published_at',
@@ -91,17 +91,21 @@ function AdminPosts() {
     setLoading(true)
     try {
       const sortColumn = sorting[0]
-      const sortBy = sortColumn ? columnIdToSortBy[sortColumn.id] || 'created_at' : 'created_at'
+      const sortBy = sortColumn
+        ? columnIdToSortBy[sortColumn.id] || 'created_at'
+        : 'created_at'
       const sortOrder = sortColumn?.desc ? 'desc' : 'asc'
 
       const [postsResult, statsResult] = await Promise.all([
         getAdminPosts({
-          page: pageIndex + 1,
-          limit: pageSize,
-          status: statusFilter,
-          search: searchQuery || undefined,
-          sortBy,
-          sortOrder,
+          data: {
+            page: pageIndex + 1,
+            limit: pageSize,
+            status: statusFilter,
+            search: searchQuery || undefined,
+            sortBy,
+            sortOrder,
+          },
         }),
         getPostStats(),
       ])
@@ -133,7 +137,7 @@ function AdminPosts() {
     if (!confirm('Are you sure you want to delete this post?')) return
     setDeletingId(id)
     try {
-      await deletePost({ id })
+      await deletePost({ data: { id } })
       toast.success('Post deleted')
       fetchData()
     } catch (error) {
@@ -145,8 +149,10 @@ function AdminPosts() {
 
   const handleToggleFeatured = async (post: Post) => {
     try {
-      await updatePost({ id: post.id, featured: !post.featured })
-      toast.success(post.featured ? 'Removed from featured' : 'Added to featured')
+      await updatePost({ data: { id: post.id, featured: !post.featured } })
+      toast.success(
+        post.featured ? 'Removed from featured' : 'Added to featured',
+      )
       fetchData()
     } catch (error) {
       toast.error('Failed to update post')
@@ -155,7 +161,7 @@ function AdminPosts() {
 
   const handleTogglePinned = async (post: Post) => {
     try {
-      await updatePost({ id: post.id, pinned: !post.pinned })
+      await updatePost({ data: { id: post.id, pinned: !post.pinned } })
       toast.success(post.pinned ? 'Unpinned' : 'Pinned')
       fetchData()
     } catch (error) {
@@ -165,7 +171,7 @@ function AdminPosts() {
 
   const handleStatusChange = async (post: Post, status: PostStatus) => {
     try {
-      await updatePost({ id: post.id, status })
+      await updatePost({ data: { id: post.id, status } })
       toast.success(`Status changed to ${status}`)
       fetchData()
     } catch (error) {
@@ -173,13 +179,20 @@ function AdminPosts() {
     }
   }
 
-  const statusBadgeVariant = (status: PostStatus) => {
+  const statusBadgeVariant = (
+    status: PostStatus,
+  ): 'default' | 'success' | 'warning' | 'danger' | 'info' => {
     switch (status) {
-      case 'published': return 'success'
-      case 'draft': return 'secondary'
-      case 'scheduled': return 'warning'
-      case 'archived': return 'destructive'
-      default: return 'secondary'
+      case 'published':
+        return 'success'
+      case 'draft':
+        return 'default'
+      case 'scheduled':
+        return 'warning'
+      case 'archived':
+        return 'danger'
+      default:
+        return 'default'
     }
   }
 
@@ -196,10 +209,10 @@ function AdminPosts() {
                 <img
                   src={post.thumbnail}
                   alt=""
-                  className="w-10 h-10 rounded object-cover flex-shrink-0"
+                  className="w-10 h-10 rounded object-cover shrink-0"
                 />
               ) : (
-                <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded bg-muted flex items-center justify-center shrink-0">
                   <FileText className="w-5 h-5 text-muted-foreground" />
                 </div>
               )}
@@ -236,9 +249,7 @@ function AdminPosts() {
         accessorKey: 'category',
         header: 'Category',
         cell: ({ row }) => (
-          <TableCellMuted>
-            {row.original.category?.name || '-'}
-          </TableCellMuted>
+          <TableCellMuted>{row.original.category?.name || '-'}</TableCellMuted>
         ),
       },
       {
@@ -296,7 +307,7 @@ function AdminPosts() {
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link to="/admin/posts/$id" params={{ id: post.id }}>
+                  <Link to={"/admin/posts/upload/$id" as any} params={{ id: post.id } as any}>
                     <Edit className="w-4 h-4 mr-2" />
                     Edit
                   </Link>
@@ -313,7 +324,12 @@ function AdminPosts() {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => handleToggleFeatured(post)}>
-                  <Star className={cn('w-4 h-4 mr-2', post.featured && 'fill-current')} />
+                  <Star
+                    className={cn(
+                      'w-4 h-4 mr-2',
+                      post.featured && 'fill-current',
+                    )}
+                  />
                   {post.featured ? 'Remove Featured' : 'Set Featured'}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleTogglePinned(post)}>
@@ -321,17 +337,22 @@ function AdminPosts() {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel>Change Status</DropdownMenuLabel>
-                {(['draft', 'published', 'scheduled', 'archived'] as PostStatus[]).map(
-                  (status) => (
-                    <DropdownMenuItem
-                      key={status}
-                      onClick={() => handleStatusChange(post, status)}
-                      disabled={post.status === status}
-                    >
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
-                    </DropdownMenuItem>
-                  )
-                )}
+                {(
+                  [
+                    'draft',
+                    'published',
+                    'scheduled',
+                    'archived',
+                  ] as PostStatus[]
+                ).map((status) => (
+                  <DropdownMenuItem
+                    key={status}
+                    onClick={() => handleStatusChange(post, status)}
+                    disabled={post.status === status}
+                  >
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                  </DropdownMenuItem>
+                ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-destructive"
@@ -347,7 +368,7 @@ function AdminPosts() {
         },
       },
     ],
-    [deletingId]
+    [deletingId],
   )
 
   return (
@@ -359,10 +380,12 @@ function AdminPosts() {
             <h1 className="text-2xl font-bold">Posts</h1>
             <p className="text-muted-foreground">Manage blog posts</p>
           </div>
-          <Button onClick={() => navigate({ to: '/admin/posts/$id', params: { id: 'new' } })}>
-            <Plus className="w-4 h-4 mr-2" />
-            New Post
-          </Button>
+          <Link to={"/admin/posts/upload/$id" as any} params={{ id: 'new' } as any}>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              New Post
+            </Button>
+          </Link>
         </div>
 
         {/* Stats */}
@@ -373,15 +396,21 @@ function AdminPosts() {
               <div className="text-sm text-muted-foreground">Total</div>
             </div>
             <div className="bg-card border rounded-lg p-4">
-              <div className="text-2xl font-bold text-green-600">{stats.published}</div>
+              <div className="text-2xl font-bold text-green-600">
+                {stats.published}
+              </div>
               <div className="text-sm text-muted-foreground">Published</div>
             </div>
             <div className="bg-card border rounded-lg p-4">
-              <div className="text-2xl font-bold text-yellow-600">{stats.draft}</div>
+              <div className="text-2xl font-bold text-yellow-600">
+                {stats.draft}
+              </div>
               <div className="text-sm text-muted-foreground">Draft</div>
             </div>
             <div className="bg-card border rounded-lg p-4">
-              <div className="text-2xl font-bold text-blue-600">{stats.scheduled}</div>
+              <div className="text-2xl font-bold text-blue-600">
+                {stats.scheduled}
+              </div>
               <div className="text-sm text-muted-foreground">Scheduled</div>
             </div>
             <div className="bg-card border rounded-lg p-4">
@@ -416,16 +445,16 @@ function AdminPosts() {
                 All Status
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              {(['draft', 'published', 'scheduled', 'archived'] as PostStatus[]).map(
-                (status) => (
-                  <DropdownMenuItem
-                    key={status}
-                    onClick={() => setStatusFilter(status)}
-                  >
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </DropdownMenuItem>
-                )
-              )}
+              {(
+                ['draft', 'published', 'scheduled', 'archived'] as PostStatus[]
+              ).map((status) => (
+                <DropdownMenuItem
+                  key={status}
+                  onClick={() => setStatusFilter(status)}
+                >
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -437,9 +466,17 @@ function AdminPosts() {
           pageCount={Math.ceil(totalPosts / pageSize)}
           pageIndex={pageIndex}
           pageSize={pageSize}
-          onPageChange={setPageIndex}
+          onPaginationChange={(updater) => {
+            const newState =
+              typeof updater === 'function'
+                ? updater({ pageIndex, pageSize })
+                : updater
+            setPageIndex(newState.pageIndex)
+          }}
+          manualPagination
           sorting={sorting}
           onSortingChange={setSorting}
+          manualSorting
           loading={loading}
         />
       </div>

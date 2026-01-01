@@ -66,7 +66,7 @@ export function ConfirmModal({
                 <div className="flex items-start gap-4">
                   <div
                     className={cn(
-                      'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0',
+                      'w-10 h-10 rounded-full flex items-center justify-center shrink-0',
                       iconColors[variant],
                     )}
                   >

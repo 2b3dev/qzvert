@@ -19,8 +19,8 @@ import {
   getPostComments,
 } from '../../server/comments'
 import { useAuthStore } from '../../stores/auth-store'
-import { Button } from '../ui/button'
 import type { Comment } from '../../types/database'
+import { Button } from '../ui/button'
 
 interface CommentSectionProps {
   postId: string
@@ -54,7 +54,9 @@ export function CommentSection({ postId, allowComments }: CommentSectionProps) {
       }
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Failed to post comment')
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to post comment',
+      )
     },
   })
 
@@ -65,7 +67,9 @@ export function CommentSection({ postId, allowComments }: CommentSectionProps) {
       toast.success('Comment deleted')
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Failed to delete comment')
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to delete comment',
+      )
     },
   })
 
@@ -108,12 +112,12 @@ export function CommentSection({ postId, allowComments }: CommentSectionProps) {
         key={comment.id}
         className={cn(
           'group',
-          isReply ? 'ml-8 pl-4 border-l-2 border-muted' : ''
+          isReply ? 'ml-8 pl-4 border-l-2 border-muted' : '',
         )}
       >
         <div className="flex gap-3 py-4">
           {/* Avatar */}
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             {comment.author?.avatar_url ? (
               <img
                 src={comment.author.avatar_url}
@@ -134,7 +138,9 @@ export function CommentSection({ postId, allowComments }: CommentSectionProps) {
                 {comment.author?.display_name || 'Anonymous'}
               </span>
               <span className="text-xs text-muted-foreground">
-                {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                {formatDistanceToNow(new Date(comment.created_at), {
+                  addSuffix: true,
+                })}
               </span>
             </div>
 
@@ -147,7 +153,9 @@ export function CommentSection({ postId, allowComments }: CommentSectionProps) {
                   variant="ghost"
                   size="sm"
                   className="h-7 text-xs"
-                  onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                  onClick={() =>
+                    setReplyingTo(replyingTo === comment.id ? null : comment.id)
+                  }
                 >
                   <Reply className="w-3 h-3 mr-1" />
                   Reply
@@ -166,7 +174,8 @@ export function CommentSection({ postId, allowComments }: CommentSectionProps) {
                   ) : (
                     <ChevronDown className="w-3 h-3 mr-1" />
                   )}
-                  {comment.reply_count} {comment.reply_count === 1 ? 'reply' : 'replies'}
+                  {comment.reply_count}{' '}
+                  {comment.reply_count === 1 ? 'reply' : 'replies'}
                 </Button>
               )}
 
@@ -247,10 +256,10 @@ export function CommentSection({ postId, allowComments }: CommentSectionProps) {
                 <img
                   src={user.user_metadata.avatar_url}
                   alt="You"
-                  className="w-8 h-8 rounded-full flex-shrink-0"
+                  className="w-8 h-8 rounded-full shrink-0"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
                   <User className="w-4 h-4 text-muted-foreground" />
                 </div>
               )}

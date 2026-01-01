@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import {
-  ChevronRight,
   Edit,
   Folder,
   FolderPlus,
@@ -76,21 +75,25 @@ function AdminCategories() {
       resetForm()
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Failed to create category')
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to create category',
+      )
     },
   })
 
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: ({ id, ...data }: { id: string } & Partial<CategoryFormData>) =>
-      updateCategory({ id, ...data }),
+      updateCategory({ data: { id, ...data } }),
     onSuccess: () => {
       toast.success('Category updated')
       queryClient.invalidateQueries({ queryKey: ['admin-categories'] })
       resetForm()
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Failed to update category')
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to update category',
+      )
     },
   })
 
@@ -102,7 +105,9 @@ function AdminCategories() {
       queryClient.invalidateQueries({ queryKey: ['admin-categories'] })
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Failed to delete category')
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to delete category',
+      )
     },
   })
 
@@ -130,7 +135,7 @@ function AdminCategories() {
     if (editingId) {
       updateMutation.mutate({ id: editingId, ...formData })
     } else {
-      createMutation.mutate(formData)
+      createMutation.mutate({ data: formData })
     }
   }
 
@@ -140,7 +145,7 @@ function AdminCategories() {
       return
     }
     if (confirm(`Delete "${category.name}"?`)) {
-      deleteMutation.mutate({ id: category.id })
+      deleteMutation.mutate({ data: { id: category.id } })
     }
   }
 
@@ -181,8 +186,8 @@ function AdminCategories() {
   const categoryTree = buildTree(categories)
 
   const renderCategory = (
-    category: (typeof categories)[0],
-    level = 0
+    category: NonNullable<typeof categories>[number],
+    level = 0,
   ): React.ReactNode => {
     const children = categoryTree.get(category.id) || []
 
@@ -191,12 +196,12 @@ function AdminCategories() {
         <div
           className={cn(
             'flex items-center justify-between py-3 px-4 hover:bg-muted/50 transition-colors',
-            level > 0 && 'border-l-2 border-muted ml-6'
+            level > 0 && 'border-l-2 border-muted ml-6',
           )}
           style={{ paddingLeft: level > 0 ? 16 + level * 8 : 16 }}
         >
           <div className="flex items-center gap-3 min-w-0">
-            <Folder className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+            <Folder className="w-5 h-5 text-muted-foreground shrink-0" />
             <div className="min-w-0">
               <div className="font-medium">{category.name}</div>
               <div className="text-xs text-muted-foreground">
@@ -311,7 +316,9 @@ function AdminCategories() {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium mb-1 block">Name</label>
+                    <label className="text-sm font-medium mb-1 block">
+                      Name
+                    </label>
                     <Input
                       value={formData.name}
                       onChange={(e) => handleNameChange(e.target.value)}
@@ -321,11 +328,16 @@ function AdminCategories() {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium mb-1 block">Slug</label>
+                    <label className="text-sm font-medium mb-1 block">
+                      Slug
+                    </label>
                     <Input
                       value={formData.slug}
                       onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, slug: e.target.value }))
+                        setFormData((prev) => ({
+                          ...prev,
+                          slug: e.target.value,
+                        }))
                       }
                       placeholder="category-slug"
                     />

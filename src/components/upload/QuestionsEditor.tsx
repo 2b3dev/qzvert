@@ -10,15 +10,15 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
-import { Input, Textarea } from '../ui/input'
 import { cn } from '../../lib/utils'
 import type {
   GeneratedMultipleChoiceQuiz,
   GeneratedQuiz,
   GeneratedSubjectiveQuiz,
 } from '../../types/database'
+import { Button } from '../ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
+import { Input, Textarea } from '../ui/input'
 
 interface QuestionsEditorProps {
   quizzes: GeneratedQuiz[]
@@ -234,7 +234,7 @@ export function QuestionsEditor({
                     <ChevronDown className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm shrink-0">
                   {index + 1}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -301,9 +301,7 @@ export function QuestionsEditor({
                         </button>
                         <button
                           type="button"
-                          onClick={() =>
-                            changeQuizType(index, 'subjective')
-                          }
+                          onClick={() => changeQuizType(index, 'subjective')}
                           className={cn(
                             'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
                             quiz.type === 'subjective'
@@ -350,7 +348,7 @@ export function QuestionsEditor({
                                   setCorrectAnswer(index, optIndex)
                                 }
                                 className={cn(
-                                  'w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 transition-all',
+                                  'w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0 transition-all',
                                   quiz.correct_answer === optIndex
                                     ? 'bg-emerald-500 text-white'
                                     : 'bg-muted text-muted-foreground hover:bg-muted/80',
@@ -365,11 +363,7 @@ export function QuestionsEditor({
                               <Input
                                 value={option}
                                 onChange={(e) =>
-                                  updateOption(
-                                    index,
-                                    optIndex,
-                                    e.target.value,
-                                  )
+                                  updateOption(index, optIndex, e.target.value)
                                 }
                                 placeholder={`Option ${optIndex + 1}`}
                                 className={cn(
@@ -379,9 +373,7 @@ export function QuestionsEditor({
                                 )}
                               />
                               <button
-                                onClick={() =>
-                                  removeOption(index, optIndex)
-                                }
+                                onClick={() => removeOption(index, optIndex)}
                                 disabled={quiz.options.length <= 2}
                                 className="p-2 hover:bg-destructive/10 rounded-lg text-destructive disabled:opacity-30"
                               >

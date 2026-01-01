@@ -39,7 +39,8 @@
       "Bash(taskkill /PID 268364 /F)",
       "Bash(taskkill:*)",
       "Bash(timeout 10 pnpm dev:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(timeout /t 5 /nobreak)"
     ]
   }
 }
