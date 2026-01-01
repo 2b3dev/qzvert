@@ -49,6 +49,7 @@ export interface Database {
           available_from: string | null
           available_until: string | null
           time_limit_minutes: number | null
+          category_id: string | null
         }
         Insert: {
           id?: string
@@ -67,6 +68,7 @@ export interface Database {
           available_from?: string | null
           available_until?: string | null
           time_limit_minutes?: number | null
+          category_id?: string | null
         }
         Update: {
           id?: string
@@ -85,6 +87,7 @@ export interface Database {
           available_from?: string | null
           available_until?: string | null
           time_limit_minutes?: number | null
+          category_id?: string | null
         }
         Relationships: []
       }
@@ -695,3 +698,166 @@ export interface AIUsageStats {
 }
 
 export type AIUsageTimeRange = 'week' | 'month' | 'year'
+
+// ============================================
+// Blog/CMS Types
+// ============================================
+
+export type PostStatus = 'draft' | 'scheduled' | 'published' | 'archived'
+
+export interface Post {
+  id: string
+  user_id: string | null
+
+  // Content
+  title: string
+  slug: string
+  excerpt: string | null
+  body: string | null // TipTap JSON or HTML
+  thumbnail: string | null
+
+  // Taxonomy
+  category_id: string | null
+  tags: string[] | null
+
+  // Publishing
+  status: PostStatus
+  published_at: string | null
+
+  // SEO
+  meta_title: string | null
+  meta_description: string | null
+
+  // Stats
+  view_count: number
+
+  // Flags
+  featured: boolean
+  pinned: boolean
+  allow_comments: boolean
+
+  // Timestamps
+  created_at: string
+  updated_at: string
+
+  // Relations (optional, populated by joins)
+  category?: Category | null
+  author?: {
+    id: string
+    display_name: string | null
+    avatar_url: string | null
+  } | null
+  comment_count?: number
+}
+
+export interface PostInsert {
+  id?: string
+  user_id?: string | null
+  title: string
+  slug: string
+  excerpt?: string | null
+  body?: string | null
+  thumbnail?: string | null
+  category_id?: string | null
+  tags?: string[] | null
+  status?: PostStatus
+  published_at?: string | null
+  meta_title?: string | null
+  meta_description?: string | null
+  view_count?: number
+  featured?: boolean
+  pinned?: boolean
+  allow_comments?: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+export interface PostUpdate {
+  title?: string
+  slug?: string
+  excerpt?: string | null
+  body?: string | null
+  thumbnail?: string | null
+  category_id?: string | null
+  tags?: string[] | null
+  status?: PostStatus
+  published_at?: string | null
+  meta_title?: string | null
+  meta_description?: string | null
+  featured?: boolean
+  pinned?: boolean
+  allow_comments?: boolean
+  updated_at?: string
+}
+
+export interface Category {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  parent_id: string | null
+  order_index: number
+  created_at: string
+
+  // Relations (optional)
+  parent?: Category | null
+  children?: Category[]
+  post_count?: number
+}
+
+export interface CategoryInsert {
+  id?: string
+  name: string
+  slug: string
+  description?: string | null
+  parent_id?: string | null
+  order_index?: number
+  created_at?: string
+}
+
+export interface CategoryUpdate {
+  name?: string
+  slug?: string
+  description?: string | null
+  parent_id?: string | null
+  order_index?: number
+}
+
+export type CommentStatus = 'pending' | 'approved' | 'spam'
+
+export interface Comment {
+  id: string
+  post_id: string
+  user_id: string
+  parent_id: string | null
+  body: string
+  status: CommentStatus
+  created_at: string
+  updated_at: string
+
+  // Relations (optional)
+  author?: {
+    id: string
+    display_name: string | null
+    avatar_url: string | null
+  } | null
+  replies?: Comment[]
+  reply_count?: number
+}
+
+export interface CommentInsert {
+  id?: string
+  post_id: string
+  user_id: string
+  parent_id?: string | null
+  body: string
+  status?: CommentStatus
+  created_at?: string
+  updated_at?: string
+}
+
+export interface CommentUpdate {
+  body?: string
+  status?: CommentStatus
+  updated_at?: string
+}

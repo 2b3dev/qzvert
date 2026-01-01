@@ -5,11 +5,13 @@ import {
   ChevronDown,
   FileText,
   Flag,
+  Folder,
   HardDrive,
   Home,
   LayoutDashboard,
   LogOut,
   Menu,
+  Newspaper,
   Settings,
   Shield,
   Users,
@@ -31,12 +33,14 @@ import {
 
 interface AdminLayoutProps {
   children: ReactNode
-  title: string
-  activeItem:
+  title?: string
+  activeItem?:
     | 'dashboard'
     | 'reports'
     | 'users'
     | 'activities'
+    | 'posts'
+    | 'categories'
     | 'analytics'
     | 'usages'
     | 'settings'
@@ -83,6 +87,20 @@ const sidebarItems: Array<SidebarItem> = [
     icon: FileText,
     href: '/admin/activities',
     color: 'bg-orange-500',
+  },
+  {
+    id: 'posts',
+    label: 'Blog Posts',
+    icon: Newspaper,
+    href: '/admin/posts',
+    color: 'bg-pink-500',
+  },
+  {
+    id: 'categories',
+    label: 'Categories',
+    icon: Folder,
+    href: '/admin/categories',
+    color: 'bg-cyan-500',
   },
   {
     id: 'reports',

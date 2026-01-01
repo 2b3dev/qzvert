@@ -1,5 +1,8 @@
+import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { FileText, ImageIcon, Tag, X } from 'lucide-react'
+import { FileText, Folder, ImageIcon, Tag, X } from 'lucide-react'
+import { getCategories } from '../../server/categories'
+import type { Category } from '../../types/database'
 import { ImageInput } from '../ui/image-input'
 import { Input } from '../ui/input'
 import { RichTextEditor } from '../ui/rich-text-editor'
@@ -15,6 +18,8 @@ interface BasicInfoSectionProps {
   setTags: React.Dispatch<React.SetStateAction<string[]>>
   tagInput: string
   setTagInput: (input: string) => void
+  categoryId?: string | null
+  setCategoryId?: (categoryId: string | null) => void
 }
 
 export function BasicInfoSection({
@@ -28,7 +33,15 @@ export function BasicInfoSection({
   setTags,
   tagInput,
   setTagInput,
+  categoryId,
+  setCategoryId,
 }: BasicInfoSectionProps) {
+  // Fetch categories
+  const { data: categories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: getCategories,
+  })
+
   const addTag = (tag: string) => {
     const trimmed = tag.trim().toLowerCase()
     if (trimmed && !tags.includes(trimmed)) {
@@ -152,6 +165,36 @@ export function BasicInfoSection({
           Press Enter or comma to add a tag. Backspace to remove last tag.
         </p>
       </motion.div>
+
+      {/* Category */}
+      {setCategoryId && categories && categories.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.18 }}
+          className="mb-6"
+        >
+          <label className="text-sm font-medium text-foreground mb-2 block">
+            <Folder className="w-4 h-4 inline-block mr-1" />
+            Category
+          </label>
+          <select
+            value={categoryId || ''}
+            onChange={(e) => setCategoryId(e.target.value || null)}
+            className="w-full md:w-1/2 h-10 px-3 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+          >
+            <option value="">No category</option>
+            {categories.map((cat: Category) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.parent_id ? `└ ${cat.name}` : cat.name}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground mt-1">
+            Categorize your activity for easier discovery.
+          </p>
+        </motion.div>
+      )}
     </>
   )
 }

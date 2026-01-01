@@ -51,6 +51,7 @@ interface SaveQuestInput {
   quest: GeneratedQuest
   rawContent: string
   themeConfig: ThemeConfig
+  categoryId?: string | null
 }
 
 interface SaveQuestResult {
@@ -86,6 +87,7 @@ export const saveQuest = createServerFn({ method: 'POST' })
           data.themeConfig as unknown as Database['public']['Tables']['activities']['Insert']['theme_config'],
         status: 'draft',
         type: data.quest.type,
+        category_id: data.categoryId || null,
       })
       .select('id')
       .single()
@@ -566,6 +568,7 @@ interface UpdateQuestInput {
   rawContent: string
   themeConfig: ThemeConfig
   status?: ActivityStatus
+  categoryId?: string | null
 }
 
 export const updateQuest = createServerFn({ method: 'POST' })
@@ -596,6 +599,11 @@ export const updateQuest = createServerFn({ method: 'POST' })
     // Add status if provided
     if (data.status) {
       updateData.status = data.status
+    }
+
+    // Add category_id if provided
+    if (data.categoryId !== undefined) {
+      updateData.category_id = data.categoryId
     }
 
     const { error: updateError } = await supabase

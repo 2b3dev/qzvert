@@ -167,13 +167,13 @@ function AdminAnalytics() {
           activitiesData,
         ] = await Promise.all([
           getOverviewStats(),
-          getUserGrowthData({ data: { days: 30 } }),
-          getActivityGrowthData({ data: { days: 30 } }),
+          getUserGrowthData({ days: 30 }),
+          getActivityGrowthData({ days: 30 }),
           getActivityTypeDistribution(),
           getActivityStatusDistribution(),
           getUserRoleDistribution(),
-          getTopCreators({ data: { limit: 5 } }),
-          getTopActivities({ data: { limit: 5 } }),
+          getTopCreators({ limit: 5 }),
+          getTopActivities({ limit: 5 }),
         ])
 
         setOverview(overviewData)

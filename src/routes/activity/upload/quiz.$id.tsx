@@ -69,6 +69,7 @@ function QuizUploadPage() {
   const [availableFrom, setAvailableFrom] = useState<string>('')
   const [availableUntil, setAvailableUntil] = useState<string>('')
   const [ageRange, setAgeRange] = useState<string | null>(null)
+  const [categoryId, setCategoryId] = useState<string | null>(null)
 
   // Load activity
   useEffect(() => {
@@ -125,12 +126,14 @@ function QuizUploadPage() {
             available_from?: string | null
             available_until?: string | null
             age_range?: string | null
+            category_id?: string | null
           }
           setReplayLimit(activityData.replay_limit ?? null)
           setTimeLimitMinutes(activityData.time_limit_minutes ?? null)
           setAvailableFrom(activityData.available_from || '')
           setAvailableUntil(activityData.available_until || '')
           setAgeRange(activityData.age_range ?? null)
+          setCategoryId(activityData.category_id ?? null)
 
           if (activityStatus === 'private_group') {
             try {
@@ -286,6 +289,7 @@ function QuizUploadPage() {
             quest: updatedQuest,
             rawContent: rawContent || '',
             themeConfig,
+            categoryId,
           },
         })
 
@@ -312,6 +316,7 @@ function QuizUploadPage() {
               rawContent: rawContent || '',
               themeConfig,
               status,
+              categoryId,
             },
           })
         }
@@ -346,6 +351,7 @@ function QuizUploadPage() {
             rawContent: rawContent || '',
             themeConfig,
             status,
+            categoryId,
           },
         })
 
@@ -410,6 +416,8 @@ function QuizUploadPage() {
           setTags={setTags}
           tagInput={tagInput}
           setTagInput={setTagInput}
+          categoryId={categoryId}
+          setCategoryId={setCategoryId}
         />
 
         <TotalPointsSection

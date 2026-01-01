@@ -69,6 +69,7 @@ function QuestUploadPage() {
   const [availableFrom, setAvailableFrom] = useState<string>('')
   const [availableUntil, setAvailableUntil] = useState<string>('')
   const [ageRange, setAgeRange] = useState<string | null>(null)
+  const [categoryId, setCategoryId] = useState<string | null>(null)
 
   // Load activity
   useEffect(() => {
@@ -127,12 +128,14 @@ function QuestUploadPage() {
             available_from?: string | null
             available_until?: string | null
             age_range?: string | null
+            category_id?: string | null
           }
           setReplayLimit(activityData.replay_limit ?? null)
           setTimeLimitMinutes(activityData.time_limit_minutes ?? null)
           setAvailableFrom(activityData.available_from || '')
           setAvailableUntil(activityData.available_until || '')
           setAgeRange(activityData.age_range ?? null)
+          setCategoryId(activityData.category_id ?? null)
 
           if (activityStatus === 'private_group') {
             try {
@@ -288,6 +291,7 @@ function QuestUploadPage() {
             quest: updatedQuest,
             rawContent: rawContent || '',
             themeConfig,
+            categoryId,
           },
         })
 
@@ -314,6 +318,7 @@ function QuestUploadPage() {
               rawContent: rawContent || '',
               themeConfig,
               status,
+              categoryId,
             },
           })
         }
@@ -348,6 +353,7 @@ function QuestUploadPage() {
             rawContent: rawContent || '',
             themeConfig,
             status,
+            categoryId,
           },
         })
 
@@ -412,6 +418,8 @@ function QuestUploadPage() {
           setTags={setTags}
           tagInput={tagInput}
           setTagInput={setTagInput}
+          categoryId={categoryId}
+          setCategoryId={setCategoryId}
         />
 
         <TotalPointsSection

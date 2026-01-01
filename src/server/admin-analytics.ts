@@ -134,7 +134,7 @@ export const getUserGrowthData = createServerFn({ method: 'GET' })
   .inputValidator((data: { days?: number }) => data)
   .handler(async ({ data }): Promise<Array<GrowthDataPoint>> => {
     const supabase = getSupabaseFromCookies()
-    const days = data.days || 30
+    const days = data?.days || 30
 
     // Verify admin
     const {
@@ -194,7 +194,7 @@ export const getActivityGrowthData = createServerFn({ method: 'GET' })
   .inputValidator((data: { days?: number }) => data)
   .handler(async ({ data }): Promise<Array<GrowthDataPoint>> => {
     const supabase = getSupabaseFromCookies()
-    const days = data.days || 30
+    const days = data?.days || 30
 
     // Verify admin
     const {
@@ -367,7 +367,7 @@ export const getTopCreators = createServerFn({ method: 'GET' })
   .inputValidator((data: { limit?: number }) => data)
   .handler(async ({ data }): Promise<Array<TopCreator>> => {
     const supabase = getSupabaseFromCookies()
-    const limit = data.limit || 10
+    const limit = data?.limit || 10
 
     // Verify admin
     const {
@@ -451,7 +451,7 @@ export const getTopActivities = createServerFn({ method: 'GET' })
   .inputValidator((data: { limit?: number }) => data)
   .handler(async ({ data }): Promise<Array<TopActivity>> => {
     const supabase = getSupabaseFromCookies()
-    const limit = data.limit || 10
+    const limit = data?.limit || 10
 
     // Verify admin
     const {
