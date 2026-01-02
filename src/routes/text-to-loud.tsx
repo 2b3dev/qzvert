@@ -8,7 +8,6 @@ import {
   GraduationCap,
   History,
   Languages,
-  Lightbulb,
   Loader2,
   Monitor,
   Play,
@@ -19,10 +18,8 @@ import {
   Users,
   Volume2,
   Wand2,
-  X,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import Markdown from 'react-markdown'
 import { toast } from 'sonner'
 import { DefaultLayout } from '../components/layouts/DefaultLayout'
 import type { LanguageOption, TextToLoudRef } from '../components/TextToLoud'
@@ -93,11 +90,17 @@ interface SavedState {
   selectedGender: 'male' | 'female'
 }
 
-// History item interface
+// History item interface - stores all mode contents for instant switching
 interface HistoryItem {
   id: string
   title: string // First 50 chars of content
   originalContent: string
+  // Store processed content for each mode
+  summarizedContent: string
+  summarizedKeyPoints: string[]
+  craftedContent: string
+  craftedKeyPoints: string[]
+  // Current display state
   displayContent: string
   contentMode: 'original' | 'summarized' | 'crafted' | 'translated'
   keyPoints: string[]
@@ -244,11 +247,12 @@ function TextToLoudPage() {
   const [selectedMode, setSelectedMode] = useState<
     'listen' | 'summarize' | 'craft'
   >('listen')
-  const [aiResult, setAiResult] = useState<string>('')
-  const [aiResultKeyPoints, setAiResultKeyPoints] = useState<string[]>([])
 
-  // Translate modal
-  const [showTranslateModal, setShowTranslateModal] = useState(false)
+  // Store processed content for each mode
+  const [summarizedContent, setSummarizedContent] = useState<string>('')
+  const [summarizedKeyPoints, setSummarizedKeyPoints] = useState<string[]>([])
+  const [craftedContent, setCraftedContent] = useState<string>('')
+  const [craftedKeyPoints, setCraftedKeyPoints] = useState<string[]>([])
 
   // Suggested activities
   const [suggestedActivities, setSuggestedActivities] = useState<
@@ -446,7 +450,7 @@ function TextToLoudPage() {
     selectedGender,
   ])
 
-  // Save current content to history
+  // Save current content to history (with all mode contents)
   const saveToHistory = useCallback(() => {
     if (!originalContent.trim() || originalContent.length < 10) return
 
@@ -462,10 +466,16 @@ function TextToLoudPage() {
 
       let updated: HistoryItem[]
       if (existingIndex !== -1) {
-        // Update existing item's lastPlayedAt
+        // Update existing item with all mode contents
         updated = [...prev]
         updated[existingIndex] = {
           ...updated[existingIndex],
+          // Update all mode contents
+          summarizedContent: summarizedContent || updated[existingIndex].summarizedContent,
+          summarizedKeyPoints: summarizedKeyPoints.length > 0 ? summarizedKeyPoints : updated[existingIndex].summarizedKeyPoints,
+          craftedContent: craftedContent || updated[existingIndex].craftedContent,
+          craftedKeyPoints: craftedKeyPoints.length > 0 ? craftedKeyPoints : updated[existingIndex].craftedKeyPoints,
+          // Current display state
           displayContent,
           contentMode,
           keyPoints,
@@ -476,11 +486,17 @@ function TextToLoudPage() {
         updated.unshift(item)
         currentHistoryIdRef.current = item.id
       } else {
-        // Create new history item
+        // Create new history item with all mode contents
         const newItem: HistoryItem = {
           id: generateId(),
           title,
           originalContent,
+          // Store all mode contents
+          summarizedContent,
+          summarizedKeyPoints,
+          craftedContent,
+          craftedKeyPoints,
+          // Current display state
           displayContent,
           contentMode,
           keyPoints,
@@ -497,22 +513,45 @@ function TextToLoudPage() {
     })
   }, [
     originalContent,
+    summarizedContent,
+    summarizedKeyPoints,
+    craftedContent,
+    craftedKeyPoints,
     displayContent,
     contentMode,
     keyPoints,
     originalDetectedLanguage,
   ])
 
-  // Load content from history item
+  // Load content from history item (restore all mode contents)
   const handleLoadHistory = useCallback(
     (item: HistoryItem) => {
       // Stop any current playback first
       textToLoudRef.current?.stop()
 
+      // Restore original content
       setOriginalContent(item.originalContent)
+
+      // Restore all mode contents (so user can switch modes instantly)
+      setSummarizedContent(item.summarizedContent || '')
+      setSummarizedKeyPoints(item.summarizedKeyPoints || [])
+      setCraftedContent(item.craftedContent || '')
+      setCraftedKeyPoints(item.craftedKeyPoints || [])
+
+      // Restore current display state
       setDisplayContent(item.displayContent)
       setContentMode(item.contentMode)
       setKeyPoints(item.keyPoints)
+
+      // Set mode selector to match contentMode
+      if (item.contentMode === 'summarized') {
+        setSelectedMode('summarize')
+      } else if (item.contentMode === 'crafted') {
+        setSelectedMode('craft')
+      } else {
+        setSelectedMode('listen')
+      }
+
       setOriginalDetectedLanguage(item.language)
       setSelectedTargetLanguage(item.language)
       setCharCount(item.originalContent.length)
@@ -665,13 +704,28 @@ function TextToLoudPage() {
   const handleModeSelect = useCallback(
     (mode: 'listen' | 'summarize' | 'craft') => {
       setSelectedMode(mode)
-      // Clear AI result when switching modes
+
+      // Switch display content based on mode and what's available
       if (mode === 'listen') {
-        setAiResult('')
-        setAiResultKeyPoints([])
+        // Always show original content in listen mode
+        setDisplayContent(originalContent)
+        setContentMode('original')
+        setKeyPoints([])
+      } else if (mode === 'summarize' && summarizedContent) {
+        // If we have summarized content, show it
+        setDisplayContent(summarizedContent)
+        setContentMode('summarized')
+        setKeyPoints(summarizedKeyPoints)
+      } else if (mode === 'craft' && craftedContent) {
+        // If we have crafted content, show it
+        setDisplayContent(craftedContent)
+        setContentMode('crafted')
+        setKeyPoints(craftedKeyPoints)
       }
+      // If no processed content for that mode, stay with current display
+      // and show the generate prompt
     },
-    [],
+    [originalContent, summarizedContent, summarizedKeyPoints, craftedContent, craftedKeyPoints],
   )
 
   const handleConfirmGenerate = useCallback(async () => {
@@ -680,27 +734,40 @@ function TextToLoudPage() {
     setIsProcessing(true)
     setProcessingAction(selectedMode)
 
+    // Use target language if different from detected, otherwise use detected language
+    const outputLanguage = selectedTargetLanguage || originalDetectedLanguage
+
     try {
       if (selectedMode === 'summarize') {
         const result = await summarizeContent({
           data: {
             content: originalContent,
-            language: originalDetectedLanguage === 'th' ? 'th' : 'en',
+            language: outputLanguage,
             easyExplainEnabled: canUseEasyExplain && easyExplainEnabled,
           },
         })
-        setAiResult(result.summary)
-        setAiResultKeyPoints([])
+        // Store and display immediately
+        setSummarizedContent(result.summary)
+        setSummarizedKeyPoints([])
+        setDisplayContent(result.summary)
+        setContentMode('summarized')
+        setKeyPoints([])
+        toast.success(t('ttl.summarized'))
       } else if (selectedMode === 'craft') {
         const result = await craftContent({
           data: {
             content: originalContent,
-            language: originalDetectedLanguage === 'th' ? 'th' : 'en',
+            language: outputLanguage,
             easyExplainEnabled: canUseEasyExplain && easyExplainEnabled,
           },
         })
-        setAiResult(result.crafted)
-        setAiResultKeyPoints(result.keyPoints)
+        // Store and display immediately
+        setCraftedContent(result.crafted)
+        setCraftedKeyPoints(result.keyPoints)
+        setDisplayContent(result.crafted)
+        setContentMode('crafted')
+        setKeyPoints(result.keyPoints)
+        toast.success(t('ttl.crafted'))
       }
     } catch (error) {
       console.error('AI generation error:', error)
@@ -712,79 +779,12 @@ function TextToLoudPage() {
   }, [
     selectedMode,
     originalContent,
+    selectedTargetLanguage,
     originalDetectedLanguage,
     t,
     canUseEasyExplain,
     easyExplainEnabled,
   ])
-
-  const handleUseAiResult = () => {
-    if (!aiResult) return
-
-    setDisplayContent(aiResult)
-    setContentMode(selectedMode === 'summarize' ? 'summarized' : 'crafted')
-    setKeyPoints(aiResultKeyPoints)
-    toast.success(
-      selectedMode === 'summarize' ? t('ttl.summarized') : t('ttl.crafted'),
-    )
-
-    // Clear AI result state
-    setAiResult('')
-    setAiResultKeyPoints([])
-  }
-
-  const handleDiscardAiResult = () => {
-    setAiResult('')
-    setAiResultKeyPoints([])
-  }
-
-  const handleTranslateAndPlay = async () => {
-    if (!originalContent.trim()) return
-
-    setShowTranslateModal(false)
-    setIsProcessing(true)
-    setProcessingAction('translate')
-
-    try {
-      // Translate to the selected target language in dropdown
-      const result = await translateContent({
-        data: {
-          content:
-            contentMode === 'original' ? originalContent : displayContent,
-          targetLanguage: selectedTargetLanguage,
-        },
-      })
-      setDisplayContent(result.translated)
-      setContentMode('translated')
-      setKeyPoints([])
-      toast.success(t('ttl.translated'))
-
-      // Auto play after translation
-      setIsReaderMode(true)
-      safeSetTimeout(() => {
-        charIndexRef.current = 0
-        textToLoudRef.current?.play()
-      }, 100)
-    } catch (error) {
-      console.error('Translate error:', error)
-      toast.error(t('ttl.error'))
-    } finally {
-      setIsProcessing(false)
-      setProcessingAction('')
-    }
-  }
-
-  const handlePlayOriginal = useCallback(() => {
-    setShowTranslateModal(false)
-    // Reset to original detected language for TTS
-    setSelectedTargetLanguage(originalDetectedLanguage)
-
-    setIsReaderMode(true)
-    safeSetTimeout(() => {
-      charIndexRef.current = 0
-      textToLoudRef.current?.play()
-    }, 100)
-  }, [originalDetectedLanguage, safeSetTimeout])
 
   const handleBackToOriginal = () => {
     setDisplayContent(originalContent)
@@ -793,14 +793,43 @@ function TextToLoudPage() {
   }
 
   // TTS callbacks
-  const handlePlay = useCallback(() => {
+  const handlePlay = useCallback(async () => {
     // Check if selected language differs from detected language
-    // and content hasn't been translated yet
+    // and content hasn't been translated yet - auto translate
     if (
       selectedTargetLanguage !== originalDetectedLanguage &&
       contentMode !== 'translated'
     ) {
-      setShowTranslateModal(true)
+      // Auto translate before playing
+      setIsProcessing(true)
+      setProcessingAction('translate')
+
+      try {
+        const result = await translateContent({
+          data: {
+            content:
+              contentMode === 'original' ? originalContent : displayContent,
+            targetLanguage: selectedTargetLanguage,
+          },
+        })
+        setDisplayContent(result.translated)
+        setContentMode('translated')
+        setKeyPoints([])
+        toast.success(t('ttl.translated'))
+
+        // Enter reader mode and play after translation
+        setIsReaderMode(true)
+        safeSetTimeout(() => {
+          charIndexRef.current = 0
+          textToLoudRef.current?.play()
+        }, 100)
+      } catch (error) {
+        console.error('Translate error:', error)
+        toast.error(t('ttl.error'))
+      } finally {
+        setIsProcessing(false)
+        setProcessingAction('')
+      }
       return
     }
 
@@ -813,6 +842,10 @@ function TextToLoudPage() {
     selectedTargetLanguage,
     originalDetectedLanguage,
     contentMode,
+    originalContent,
+    displayContent,
+    t,
+    safeSetTimeout,
     saveToHistory,
   ])
 
@@ -841,6 +874,12 @@ function TextToLoudPage() {
     setHighlightIndex(0)
     charIndexRef.current = 0
     textToLoudRef.current?.stop()
+    // Clear stored processed content
+    setSummarizedContent('')
+    setSummarizedKeyPoints([])
+    setCraftedContent('')
+    setCraftedKeyPoints([])
+    setSelectedMode('listen')
     // Clear localStorage
     try {
       localStorage.removeItem(STORAGE_KEY)
@@ -868,6 +907,12 @@ function TextToLoudPage() {
     currentHistoryIdRef.current = null
     setIsReaderMode(false)
     textToLoudRef.current?.stop()
+    // Clear stored processed content
+    setSummarizedContent('')
+    setSummarizedKeyPoints([])
+    setCraftedContent('')
+    setCraftedKeyPoints([])
+    setSelectedMode('listen')
 
     // Clear localStorage for current state
     try {
@@ -901,7 +946,7 @@ function TextToLoudPage() {
               onClick={() => handleModeSelect('listen')}
               disabled={isProcessing || isPlaying}
               className={cn(
-                'flex items-center justify-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium transition-all',
+                'relative flex items-center justify-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium transition-all',
                 selectedMode === 'listen'
                   ? 'bg-primary text-primary-foreground shadow-md'
                   : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground',
@@ -927,6 +972,9 @@ function TextToLoudPage() {
               >
                 <FileText className="w-4 h-4" />
                 {t('ttl.summarize')}
+                {summarizedContent && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-500" />
+                )}
               </button>
               {!aiEnabled && (
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-popover border border-border rounded-lg shadow-lg text-sm text-foreground opacity-0 group-hover/summarize:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
@@ -951,6 +999,9 @@ function TextToLoudPage() {
               >
                 <Wand2 className="w-4 h-4" />
                 {t('ttl.craft')}
+                {craftedContent && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-500" />
+                )}
               </button>
               {!aiEnabled && (
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-popover border border-border rounded-lg shadow-lg text-sm text-foreground opacity-0 group-hover/craft:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
@@ -962,7 +1013,7 @@ function TextToLoudPage() {
           </div>
         </div>
 
-        {/* Mode Description & Action */}
+        {/* Mode Description */}
         {selectedMode === 'listen' && (
           <motion.div
             initial={{ opacity: 0, y: -5 }}
@@ -983,14 +1034,15 @@ function TextToLoudPage() {
           </motion.div>
         )}
 
-        {(selectedMode === 'summarize' || selectedMode === 'craft') &&
-          !aiResult && (
-            <motion.div
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-3 rounded-lg bg-primary/5 border border-primary/20 mb-4"
-            >
-              <div className="flex items-start gap-3">
+        {/* Mode Description for Summarize/Craft with Easy Explain toggle */}
+        {(selectedMode === 'summarize' || selectedMode === 'craft') && (
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-3 rounded-lg bg-primary/5 border border-primary/20 mb-4"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
                 <div className="p-1.5 rounded-md bg-primary/20">
                   {selectedMode === 'summarize' ? (
                     <FileText className="w-4 h-4 text-primary" />
@@ -998,88 +1050,66 @@ function TextToLoudPage() {
                     <Wand2 className="w-4 h-4 text-primary" />
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {selectedMode === 'summarize'
-                      ? t('ttl.summarizeConfirmDesc')
-                      : t('ttl.craftConfirmDesc')}
-                  </p>
-
-                  {/* Easy Explain Toggle */}
-                  <div className="flex items-center justify-between py-2 mb-3 border-t border-b border-border/50">
-                    <div className="flex items-center gap-2">
-                      <Lightbulb className="w-4 h-4 text-yellow-500" />
-                      <span className="text-sm font-medium">Easy Explain</span>
-                      {!canUseEasyExplain && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-xs font-medium text-purple-400">
-                          Plus
-                        </span>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (canUseEasyExplain) {
-                          setEasyExplainEnabled(!easyExplainEnabled)
-                        }
-                      }}
-                      disabled={!canUseEasyExplain}
-                      className={cn(
-                        'relative w-10 h-5 rounded-full transition-colors duration-200',
-                        easyExplainEnabled && canUseEasyExplain
-                          ? 'bg-yellow-500'
-                          : 'bg-muted',
-                        !canUseEasyExplain && 'opacity-50 cursor-not-allowed',
-                      )}
-                    >
-                      <motion.div
-                        className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm"
-                        animate={{
-                          left:
-                            easyExplainEnabled && canUseEasyExplain
-                              ? '1.375rem'
-                              : '0.125rem',
-                        }}
-                        transition={{
-                          type: 'spring',
-                          stiffness: 500,
-                          damping: 30,
-                        }}
-                      />
-                    </button>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-3">
-                    {canUseEasyExplain
-                      ? uiLanguage === 'th'
-                        ? 'AI จะอธิบายเนื้อหาแบบง่ายๆ ใช้การเปรียบเทียบและตัวอย่างจากชีวิตจริง'
-                        : 'AI will explain using simple language, analogies, and real-life examples'
-                      : uiLanguage === 'th'
-                        ? 'อัปเกรดเป็น Plus หรือ Pro เพื่อใช้งาน'
-                        : 'Upgrade to Plus or Pro to use this feature'}
-                  </p>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button
-                      onClick={handleConfirmGenerate}
-                      disabled={isProcessing || !originalContent.trim()}
-                      size="sm"
-                      className="gap-2"
-                    >
-                      {isProcessing ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Sparkles className="w-4 h-4" />
-                      )}
-                      {t('ttl.confirmGenerate')}
-                    </Button>
-                    <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                      ✨ {t('ttl.confirmCredit')}
-                    </span>
-                  </div>
-                </div>
+                <p className="text-sm text-muted-foreground">
+                  {selectedMode === 'summarize'
+                    ? uiLanguage === 'th'
+                      ? 'สรุปเนื้อหาให้กระชับ'
+                      : 'Summarize content'
+                    : uiLanguage === 'th'
+                      ? 'จัดเนื้อหาเป็นบทเรียน'
+                      : 'Craft into lesson'}
+                </p>
               </div>
-            </motion.div>
-          )}
+              {/* Easy Explain Toggle */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {uiLanguage === 'th' ? 'อธิบายง่าย' : 'Easy'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (canUseEasyExplain) {
+                      setEasyExplainEnabled(!easyExplainEnabled)
+                    }
+                  }}
+                  disabled={!canUseEasyExplain}
+                  className={cn(
+                    'relative w-9 h-5 rounded-full transition-colors duration-200',
+                    easyExplainEnabled && canUseEasyExplain
+                      ? 'bg-yellow-500'
+                      : 'bg-muted',
+                    !canUseEasyExplain && 'opacity-50 cursor-not-allowed',
+                  )}
+                  title={
+                    canUseEasyExplain
+                      ? uiLanguage === 'th'
+                        ? 'อธิบายแบบง่ายๆ'
+                        : 'Easy Explain mode'
+                      : uiLanguage === 'th'
+                        ? 'อัปเกรดเป็น Plus เพื่อใช้งาน'
+                        : 'Upgrade to Plus to use'
+                  }
+                >
+                  <motion.div
+                    className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm"
+                    animate={{
+                      left:
+                        easyExplainEnabled && canUseEasyExplain
+                          ? '1.125rem'
+                          : '0.125rem',
+                    }}
+                    transition={{
+                      type: 'spring',
+                      stiffness: 500,
+                      damping: 30,
+                    }}
+                  />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
       </>
     ),
     [
@@ -1087,14 +1117,14 @@ function TextToLoudPage() {
       selectedMode,
       isProcessing,
       isPlaying,
-      aiResult,
-      originalContent,
       aiEnabled,
-      handleConfirmGenerate,
       handleModeSelect,
-      easyExplainEnabled,
-      canUseEasyExplain,
       uiLanguage,
+      summarizedContent,
+      craftedContent,
+      canUseEasyExplain,
+      easyExplainEnabled,
+      setEasyExplainEnabled,
     ],
   )
 
@@ -1208,14 +1238,15 @@ function TextToLoudPage() {
                                   (l) => l.code === item.language,
                                 )?.flag || '🌐'}
                               </span>
-                              {item.contentMode !== 'original' && (
-                                <span className="text-xs px-1.5 py-0.5 rounded bg-primary/20 text-primary">
-                                  {item.contentMode === 'summarized' &&
-                                    (uiLanguage === 'th' ? 'สรุป' : 'Sum')}
-                                  {item.contentMode === 'crafted' &&
-                                    (uiLanguage === 'th' ? 'จัด' : 'Craft')}
-                                  {item.contentMode === 'translated' &&
-                                    (uiLanguage === 'th' ? 'แปล' : 'Trans')}
+                              {/* Show badges for available modes */}
+                              {item.summarizedContent && (
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-500">
+                                  {uiLanguage === 'th' ? 'สรุป' : 'Sum'}
+                                </span>
+                              )}
+                              {item.craftedContent && (
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-500">
+                                  {uiLanguage === 'th' ? 'จัด' : 'Craft'}
                                 </span>
                               )}
                               <button
@@ -1403,86 +1434,51 @@ function TextToLoudPage() {
                       }}
                     />
 
-                    {/* AI Result Display */}
-                    {aiResult && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="rounded-xl border-2 border-emerald-500/30 bg-linear-to-br from-emerald-500/5 to-primary/5 overflow-hidden"
-                      >
-                        <div className="p-3 bg-emerald-500/10 border-b border-emerald-500/20 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Sparkles className="w-4 h-4 text-emerald-500" />
-                            <span className="font-medium text-emerald-700 dark:text-emerald-400">
-                              {t('ttl.aiResult')}
-                            </span>
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
-                              {selectedMode === 'summarize'
-                                ? t('ttl.summarize')
-                                : t('ttl.craft')}
-                            </span>
-                          </div>
-                          <button
-                            onClick={handleDiscardAiResult}
-                            className="p-1 rounded hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                        <div className="p-4 max-h-[300px] overflow-auto">
-                          <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground prose-li:text-foreground prose-strong:text-foreground">
-                            <Markdown>{aiResult}</Markdown>
-                          </div>
-                        </div>
-                        {/* Key Points if available */}
-                        {aiResultKeyPoints.length > 0 && (
-                          <div className="p-3 border-t border-emerald-500/20 bg-emerald-500/5">
-                            <h5 className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mb-2 flex items-center gap-1">
-                              <Sparkles className="w-3 h-3" />
-                              {t('ttl.keyPoints')}
-                            </h5>
-                            <ul className="space-y-1">
-                              {aiResultKeyPoints.map((point, i) => (
-                                <li
-                                  key={i}
-                                  className="text-xs text-muted-foreground flex items-start gap-1.5"
-                                >
-                                  <span className="text-emerald-500 mt-0.5">
-                                    •
-                                  </span>
-                                  {point}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                        <div className="p-3 border-t border-emerald-500/20 flex items-center gap-2">
-                          <Button
-                            onClick={handleUseAiResult}
-                            size="sm"
-                            className="gap-2 bg-emerald-500 hover:bg-emerald-600"
-                          >
-                            <Check className="w-4 h-4" />
-                            {t('ttl.useThisVersion')}
-                          </Button>
-                          <Button
-                            onClick={handleDiscardAiResult}
-                            variant="outline"
-                            size="sm"
-                          >
-                            {t('ttl.discardResult')}
-                          </Button>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {/* Play Button & History - only show when not in reader mode */}
+                    {/* Play Button & Generate - only show when not in reader mode */}
                     {!isReaderMode && (
-                      <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="flex flex-wrap items-center gap-2">
+                          {/* Generate/Regenerate button for summarize/craft modes */}
+                          {selectedMode !== 'listen' && (
+                            <Button
+                              onClick={handleConfirmGenerate}
+                              disabled={isProcessing || !originalContent.trim()}
+                              variant={
+                                (selectedMode === 'summarize' && summarizedContent) ||
+                                (selectedMode === 'craft' && craftedContent)
+                                  ? 'outline'
+                                  : 'default'
+                              }
+                              className="gap-2"
+                            >
+                              {isProcessing ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (selectedMode === 'summarize' && summarizedContent) ||
+                                (selectedMode === 'craft' && craftedContent) ? (
+                                <RotateCcw className="w-4 h-4" />
+                              ) : (
+                                <Sparkles className="w-4 h-4" />
+                              )}
+                              {(selectedMode === 'summarize' && summarizedContent) ||
+                              (selectedMode === 'craft' && craftedContent)
+                                ? uiLanguage === 'th'
+                                  ? 'สร้างใหม่'
+                                  : 'Regenerate'
+                                : uiLanguage === 'th'
+                                  ? 'สร้าง'
+                                  : 'Generate'}
+                            </Button>
+                          )}
+
+                          {/* Loud Now button - disabled if mode needs content but doesn't have it */}
                           <Button
                             onClick={() => textToLoudRef.current?.play()}
-                            disabled={!displayContent.trim()}
+                            disabled={
+                              !displayContent.trim() ||
+                              isProcessing ||
+                              (selectedMode === 'summarize' && !summarizedContent) ||
+                              (selectedMode === 'craft' && !craftedContent)
+                            }
                             className="gap-2 bg-linear-to-r from-primary to-emerald-500 hover:from-primary/90 hover:to-emerald-500/90"
                           >
                             <Play className="w-4 h-4" />
@@ -1572,22 +1568,15 @@ function TextToLoudPage() {
                                             (l) => l.code === item.language,
                                           )?.flag || '🌐'}
                                         </span>
-                                        {item.contentMode !== 'original' && (
-                                          <span className="text-xs px-1.5 py-0.5 rounded bg-primary/20 text-primary">
-                                            {item.contentMode ===
-                                              'summarized' &&
-                                              (uiLanguage === 'th'
-                                                ? 'สรุป'
-                                                : 'Summary')}
-                                            {item.contentMode === 'crafted' &&
-                                              (uiLanguage === 'th'
-                                                ? 'ปรับแต่ง'
-                                                : 'Crafted')}
-                                            {item.contentMode ===
-                                              'translated' &&
-                                              (uiLanguage === 'th'
-                                                ? 'แปล'
-                                                : 'Translated')}
+                                        {/* Show badges for available modes */}
+                                        {item.summarizedContent && (
+                                          <span className="text-xs px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-500">
+                                            {uiLanguage === 'th' ? 'สรุป' : 'Sum'}
+                                          </span>
+                                        )}
+                                        {item.craftedContent && (
+                                          <span className="text-xs px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-500">
+                                            {uiLanguage === 'th' ? 'จัด' : 'Craft'}
                                           </span>
                                         )}
                                       </div>
@@ -1689,77 +1678,6 @@ function TextToLoudPage() {
           </div>
         </section>
       </div>
-      {/* Translation Confirmation Modal */}
-      {showTranslateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-background/80 backdrop-blur-sm"
-            onClick={() => setShowTranslateModal(false)}
-          />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="relative w-full max-w-md bg-card rounded-2xl border border-border shadow-xl p-6"
-          >
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
-                <Languages className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">
-                {t('ttl.translateModalTitle')}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {t('ttl.translateModalDescription')}
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              {/* Translate and play option */}
-              <Button
-                onClick={handleTranslateAndPlay}
-                disabled={isProcessing}
-                className="w-full gap-2 bg-primary hover:bg-primary/90"
-              >
-                {isProcessing && processingAction === 'translate' ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Languages className="w-4 h-4" />
-                )}
-                {t('ttl.translateAndPlay', {
-                  language:
-                    SUPPORTED_LANGUAGES.find(
-                      (l) => l.code === selectedTargetLanguage,
-                    )?.name || 'English',
-                })}
-              </Button>
-
-              {/* Play in original language */}
-              <Button
-                onClick={handlePlayOriginal}
-                variant="outline"
-                className="w-full gap-2"
-              >
-                <Play className="w-4 h-4" />
-                {t('ttl.playOriginal', {
-                  language:
-                    SUPPORTED_LANGUAGES.find(
-                      (l) => l.code === originalDetectedLanguage,
-                    )?.name || 'English',
-                })}
-              </Button>
-
-              {/* Cancel */}
-              <Button
-                onClick={() => setShowTranslateModal(false)}
-                variant="ghost"
-                className="w-full"
-              >
-                {t('common.cancel')}
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      )}
     </DefaultLayout>
   )
 }

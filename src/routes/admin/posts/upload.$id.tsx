@@ -1,11 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import {
+  Archive,
   ArrowLeft,
+  Calendar,
+  Check,
+  ChevronDown,
   Eye,
+  FileText,
+  FolderOpen,
   Globe,
   Loader2,
   Save,
+  Send,
   Settings,
   Trash2,
 } from 'lucide-react'
@@ -13,6 +20,13 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { AdminLayout } from '../../../components/layouts/AdminLayout'
 import { Button } from '../../../components/ui/button'
+import { DateTimePicker } from '../../../components/ui/date-time-picker'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../../../components/ui/dropdown-menu'
 import { ImageInput } from '../../../components/ui/image-input'
 import { Input } from '../../../components/ui/input'
 import { RichTextEditor } from '../../../components/ui/rich-text-editor'
@@ -30,6 +44,38 @@ import type {
   PostStatus,
   PostUpdate,
 } from '../../../types/database'
+
+const POST_STATUS_OPTIONS: {
+  value: PostStatus
+  label: string
+  icon: React.ReactNode
+  color: string
+}[] = [
+  {
+    value: 'draft',
+    label: 'Draft',
+    icon: <FileText className="w-4 h-4" />,
+    color: 'text-muted-foreground',
+  },
+  {
+    value: 'published',
+    label: 'Published',
+    icon: <Send className="w-4 h-4" />,
+    color: 'text-emerald-500',
+  },
+  {
+    value: 'scheduled',
+    label: 'Scheduled',
+    icon: <Calendar className="w-4 h-4" />,
+    color: 'text-blue-500',
+  },
+  {
+    value: 'archived',
+    label: 'Archived',
+    icon: <Archive className="w-4 h-4" />,
+    color: 'text-amber-500',
+  },
+]
 
 export const Route = createFileRoute('/admin/posts/upload/$id')({
   beforeLoad: async () => {
@@ -205,7 +251,7 @@ function PostEditor() {
     <AdminLayout>
       <div className="h-full flex flex-col">
         {/* Header */}
-        <div className="border-b px-6 py-4 flex items-center justify-between shrink-0">
+        <div className="border-b border-border px-6 py-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -246,7 +292,11 @@ function PostEditor() {
             )}
             <Button
               onClick={() => saveMutation.mutate()}
-              disabled={saveMutation.isPending || !title.trim()}
+              disabled={
+                saveMutation.isPending ||
+                !title.trim() ||
+                (status === 'scheduled' && !publishedAt)
+              }
             >
               {saveMutation.isPending ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -263,12 +313,21 @@ function PostEditor() {
           <div className="max-w-4xl mx-auto p-6 space-y-6">
             {/* Title */}
             <div>
+              <label className="text-sm font-medium mb-2 flex items-center gap-1">
+                Title
+                <span className="text-destructive">*</span>
+              </label>
               <Input
                 placeholder="Post title"
                 value={title}
                 onChange={(e) => handleTitleChange(e.target.value)}
-                className="text-2xl font-bold h-auto py-3 border-0 border-b rounded-none focus-visible:ring-0 px-0"
+                className="text-2xl font-bold h-auto py-3 border-0 border-b border-border rounded-none focus-visible:ring-0 px-0"
               />
+              {!title.trim() && (
+                <p className="text-xs text-destructive mt-1">
+                  Title is required to create a post
+                </p>
+              )}
             </div>
 
             {/* Slug */}
@@ -302,7 +361,7 @@ function PostEditor() {
                 onChange={(e) => setExcerpt(e.target.value)}
                 placeholder="Brief summary of the post..."
                 rows={2}
-                className="w-full px-3 py-2 text-sm border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-none"
               />
             </div>
 
@@ -317,7 +376,7 @@ function PostEditor() {
             </div>
 
             {/* Settings Panel */}
-            <div className="border rounded-lg">
+            <div className="border border-border rounded-lg">
               <button
                 type="button"
                 onClick={() => setShowSettings(!showSettings)}
@@ -338,35 +397,80 @@ function PostEditor() {
               </button>
 
               {showSettings && (
-                <div className="p-4 pt-0 space-y-4 border-t">
+                <div className="p-4 pt-0 space-y-4 border-t border-border">
                   {/* Status & Schedule */}
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium mb-2 block">
                         Status
                       </label>
-                      <select
-                        value={status}
-                        onChange={(e) =>
-                          setStatus(e.target.value as PostStatus)
-                        }
-                        className="w-full h-10 px-3 border rounded-lg bg-background"
-                      >
-                        <option value="draft">Draft</option>
-                        <option value="published">Published</option>
-                        <option value="scheduled">Scheduled</option>
-                        <option value="archived">Archived</option>
-                      </select>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-between"
+                          >
+                            <span className="flex items-center gap-2">
+                              <span
+                                className={
+                                  POST_STATUS_OPTIONS.find(
+                                    (opt) => opt.value === status,
+                                  )?.color
+                                }
+                              >
+                                {
+                                  POST_STATUS_OPTIONS.find(
+                                    (opt) => opt.value === status,
+                                  )?.icon
+                                }
+                              </span>
+                              {
+                                POST_STATUS_OPTIONS.find(
+                                  (opt) => opt.value === status,
+                                )?.label
+                              }
+                            </span>
+                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-48">
+                          {POST_STATUS_OPTIONS.map((option) => (
+                            <DropdownMenuItem
+                              key={option.value}
+                              onClick={() => setStatus(option.value)}
+                              className="flex items-center justify-between"
+                            >
+                              <span className="flex items-center gap-2">
+                                <span className={option.color}>
+                                  {option.icon}
+                                </span>
+                                {option.label}
+                              </span>
+                              {status === option.value && (
+                                <Check className="w-4 h-4 text-primary" />
+                              )}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                     <div>
-                      <label className="text-sm font-medium mb-2 block">
+                      <label className="text-sm font-medium mb-2 flex items-center gap-1">
                         Publish Date
+                        {status === 'scheduled' && (
+                          <span className="text-destructive">*</span>
+                        )}
                       </label>
-                      <Input
-                        type="datetime-local"
+                      <DateTimePicker
                         value={publishedAt}
-                        onChange={(e) => setPublishedAt(e.target.value)}
+                        onChange={setPublishedAt}
+                        placeholder="Select date and time"
                       />
+                      {status === 'scheduled' && !publishedAt && (
+                        <p className="text-xs text-destructive mt-1">
+                          Publish date is required for scheduled posts
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -375,18 +479,48 @@ function PostEditor() {
                     <label className="text-sm font-medium mb-2 block">
                       Category
                     </label>
-                    <select
-                      value={categoryId || ''}
-                      onChange={(e) => setCategoryId(e.target.value || null)}
-                      className="w-full h-10 px-3 border rounded-lg bg-background"
-                    >
-                      <option value="">No category</option>
-                      {categories?.map((cat) => (
-                        <option key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </option>
-                      ))}
-                    </select>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-between"
+                        >
+                          <span className="flex items-center gap-2">
+                            <FolderOpen className="w-4 h-4 text-muted-foreground" />
+                            {categoryId
+                              ? categories?.find((cat) => cat.id === categoryId)
+                                  ?.name || 'Unknown'
+                              : 'No category'}
+                          </span>
+                          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-56">
+                        <DropdownMenuItem
+                          onClick={() => setCategoryId(null)}
+                          className="flex items-center justify-between"
+                        >
+                          <span className="text-muted-foreground">
+                            No category
+                          </span>
+                          {!categoryId && (
+                            <Check className="w-4 h-4 text-primary" />
+                          )}
+                        </DropdownMenuItem>
+                        {categories?.map((cat) => (
+                          <DropdownMenuItem
+                            key={cat.id}
+                            onClick={() => setCategoryId(cat.id)}
+                            className="flex items-center justify-between"
+                          >
+                            {cat.name}
+                            {categoryId === cat.id && (
+                              <Check className="w-4 h-4 text-primary" />
+                            )}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
 
                   {/* Tags */}
@@ -465,7 +599,7 @@ function PostEditor() {
                   </div>
 
                   {/* SEO */}
-                  <div className="pt-4 border-t">
+                  <div className="pt-4 border-t border-border">
                     <h4 className="text-sm font-medium mb-3">SEO Settings</h4>
                     <div className="space-y-3">
                       <div>
@@ -487,7 +621,7 @@ function PostEditor() {
                           onChange={(e) => setMetaDescription(e.target.value)}
                           placeholder={excerpt || 'Meta description...'}
                           rows={2}
-                          className="w-full px-3 py-2 text-sm border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                          className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                         />
                       </div>
                     </div>

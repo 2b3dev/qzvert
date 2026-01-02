@@ -21,15 +21,31 @@ interface GeminiResponse {
   }
 }
 
+// Language code to name mapping
+const languageNames: Record<string, string> = {
+  th: 'Thai',
+  en: 'English',
+  zh: 'Chinese',
+  ja: 'Japanese',
+  ko: 'Korean',
+  es: 'Spanish',
+  fr: 'French',
+  de: 'German',
+  pt: 'Portuguese',
+  ru: 'Russian',
+  vi: 'Vietnamese',
+  id: 'Indonesian',
+}
+
 interface SummarizeInput {
   content: string
-  language: 'th' | 'en'
+  language: string
   easyExplainEnabled?: boolean
 }
 
 interface CraftInput {
   content: string
-  language: 'th' | 'en'
+  language: string
   easyExplainEnabled?: boolean
 }
 
@@ -127,10 +143,8 @@ async function logUsage(
 export const summarizeContent = createServerFn({ method: 'POST' })
   .inputValidator((data: SummarizeInput) => data)
   .handler(async ({ data }) => {
-    const languageInstruction =
-      data.language === 'th'
-        ? 'ตอบเป็นภาษาไทยเท่านั้น'
-        : 'Respond in English only.'
+    const targetLangName = languageNames[data.language] || 'English'
+    const languageInstruction = `Respond in ${targetLangName} only.`
 
     // Easy Explain Mode (Feynman Technique) instruction
     const easyExplainInstruction = data.easyExplainEnabled
@@ -173,10 +187,8 @@ Summary:`
 export const craftContent = createServerFn({ method: 'POST' })
   .inputValidator((data: CraftInput) => data)
   .handler(async ({ data }) => {
-    const languageInstruction =
-      data.language === 'th'
-        ? 'ตอบเป็นภาษาไทยเท่านั้น'
-        : 'Respond in English only.'
+    const targetLangName = languageNames[data.language] || 'English'
+    const languageInstruction = `Respond in ${targetLangName} only.`
 
     // Easy Explain Mode (Feynman Technique) instruction
     const easyExplainInstruction = data.easyExplainEnabled
@@ -267,21 +279,6 @@ JSON array of key points:`
 export const translateContent = createServerFn({ method: 'POST' })
   .inputValidator((data: TranslateInput) => data)
   .handler(async ({ data }) => {
-    const languageNames: Record<string, string> = {
-      th: 'Thai',
-      en: 'English',
-      zh: 'Chinese',
-      ja: 'Japanese',
-      ko: 'Korean',
-      es: 'Spanish',
-      fr: 'French',
-      de: 'German',
-      pt: 'Portuguese',
-      ru: 'Russian',
-      vi: 'Vietnamese',
-      id: 'Indonesian',
-    }
-
     const targetLangName = languageNames[data.targetLanguage] || 'English'
 
     const prompt = `Translate the following content to ${targetLangName}.

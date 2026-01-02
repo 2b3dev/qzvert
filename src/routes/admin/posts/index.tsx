@@ -1,10 +1,13 @@
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
+import { motion } from 'framer-motion'
 import {
+  Calendar,
   ChevronDown,
   Edit,
   ExternalLink,
   Eye,
+  FileCheck,
   FileText,
   Filter,
   MoreVertical,
@@ -390,32 +393,100 @@ function AdminPosts() {
 
         {/* Stats */}
         {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-            <div className="bg-card border rounded-lg p-4">
-              <div className="text-2xl font-bold">{stats.total}</div>
-              <div className="text-sm text-muted-foreground">Total</div>
-            </div>
-            <div className="bg-card border rounded-lg p-4">
-              <div className="text-2xl font-bold text-green-600">
-                {stats.published}
-              </div>
-              <div className="text-sm text-muted-foreground">Published</div>
-            </div>
-            <div className="bg-card border rounded-lg p-4">
-              <div className="text-2xl font-bold text-yellow-600">
-                {stats.draft}
-              </div>
-              <div className="text-sm text-muted-foreground">Draft</div>
-            </div>
-            <div className="bg-card border rounded-lg p-4">
-              <div className="text-2xl font-bold text-blue-600">
-                {stats.scheduled}
-              </div>
-              <div className="text-sm text-muted-foreground">Scheduled</div>
-            </div>
-            <div className="bg-card border rounded-lg p-4">
-              <div className="text-2xl font-bold">{stats.totalViews}</div>
-              <div className="text-sm text-muted-foreground">Total Views</div>
+          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-4 mb-6">
+            <h3 className="text-xs font-semibold text-foreground mb-3">
+              Overview
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              {/* Total Posts */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-1.5 rounded-lg bg-purple-500">
+                    <FileText className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Total</p>
+                </div>
+                <p className="text-2xl font-bold text-foreground">
+                  {stats.total}
+                </p>
+              </motion.div>
+
+              {/* Published */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-1.5 rounded-lg bg-emerald-500">
+                    <FileCheck className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Published</p>
+                </div>
+                <p className="text-2xl font-bold text-foreground">
+                  {stats.published}
+                </p>
+              </motion.div>
+
+              {/* Draft */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-1.5 rounded-lg bg-amber-500">
+                    <FileText className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Draft</p>
+                </div>
+                <p className="text-2xl font-bold text-foreground">
+                  {stats.draft}
+                </p>
+              </motion.div>
+
+              {/* Scheduled */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+                className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-1.5 rounded-lg bg-blue-500">
+                    <Calendar className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Scheduled</p>
+                </div>
+                <p className="text-2xl font-bold text-foreground">
+                  {stats.scheduled}
+                </p>
+              </motion.div>
+
+              {/* Total Views */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-1.5 rounded-lg bg-pink-500">
+                    <Eye className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Views</p>
+                </div>
+                <p className="text-2xl font-bold text-foreground">
+                  {stats.totalViews.toLocaleString()}
+                </p>
+              </motion.div>
             </div>
           </div>
         )}

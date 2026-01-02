@@ -90,7 +90,7 @@ const sidebarItems: Array<SidebarItem> = [
   },
   {
     id: 'posts',
-    label: 'Blog Posts',
+    label: 'Posts',
     icon: Newspaper,
     href: '/admin/posts',
     color: 'bg-pink-500',
