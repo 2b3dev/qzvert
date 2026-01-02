@@ -20,7 +20,7 @@ export default function Footer() {
   ]
 
   const toolsLinks = [
-    { to: '/text-to-loud', label: t('footer.textToLoud') },
+    { to: '/extract-media', label: t('footer.extractMedia') },
   ]
 
   const companyLinks = [

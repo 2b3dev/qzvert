@@ -79,7 +79,7 @@
     "product": "Products",
     "tools": "Tools",
     "textToSpeech": "Text to Speech",
-    "textToLoud": "Text to Loud",
+    "extractMedia": "Extract Media",
     "company": "Company",
     "aboutUs": "About Us",
     "privacyPolicy": "Privacy Policy",
@@ -842,6 +842,51 @@
     "translateModalDescription": "The selected language differs from the content language. Would you like to translate the content first?",
     "translateAndPlay": "Translate to {{language}} & Play",
     "playOriginal": "Play in Original ({{language}})"
+  },
+  "extractMedia": {
+    "badge": "Extract Media",
+    "title1": "Extract Content from",
+    "title2": "Any Media",
+    "subtitle": "Upload files, paste URLs, or drop content. AI will extract, summarize, and read it aloud for you.",
+    "inputLabel": "What would you like to extract?",
+    "urlPlaceholder": "Paste URL (YouTube, Website)",
+    "dropzone": "Drop files here or click to upload",
+    "browseFiles": "Browse Files",
+    "or": "or",
+    "maxSize": "Max 50MB",
+    "supportedTypes": "PDF, Excel, Word, Images",
+    "extracting": "Extracting content...",
+    "extracted": "Content extracted successfully",
+    "fileTypes": {
+      "youtube": "YouTube",
+      "web": "Website",
+      "pdf": "PDF",
+      "excel": "Excel/CSV",
+      "doc": "Document",
+      "image": "Image (OCR)"
+    },
+    "history": {
+      "title": "History",
+      "newExtraction": "New Extraction",
+      "noHistory": "No history yet",
+      "noHistoryHint": "Extract content to save here",
+      "clearAll": "Clear All",
+      "cloudStored": "Synced to cloud"
+    },
+    "actions": {
+      "copy": "Copy",
+      "copied": "Copied!",
+      "export": "Export",
+      "showOriginal": "Show Original",
+      "hideOriginal": "Hide Original",
+      "listenNow": "Listen Now"
+    },
+    "errors": {
+      "unsupportedFile": "Unsupported file type",
+      "fileTooLarge": "File must be less than 50MB",
+      "extractionFailed": "Failed to extract content",
+      "noContent": "No content to display"
+    }
   },
   "terms": {
     "hero": {

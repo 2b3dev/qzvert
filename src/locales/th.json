@@ -79,7 +79,7 @@
     "product": "ผลิตภัณฑ์",
     "tools": "เครื่องมือ",
     "textToSpeech": "แปลงข้อความเป็นเสียง",
-    "textToLoud": "Text to Loud",
+    "extractMedia": "ดึงเนื้อหา",
     "company": "บริษัท",
     "aboutUs": "เกี่ยวกับเรา",
     "privacyPolicy": "นโยบายความเป็นส่วนตัว",
@@ -843,6 +843,51 @@
     "translateModalDescription": "ภาษาที่เลือกไม่ตรงกับภาษาของเนื้อหา ต้องการแปลเนื้อหาก่อนหรือไม่?",
     "translateAndPlay": "แปลเป็น{{language}}และเล่น",
     "playOriginal": "เล่นภาษาเดิม ({{language}})"
+  },
+  "extractMedia": {
+    "badge": "ดึงเนื้อหา",
+    "title1": "ดึงเนื้อหาจาก",
+    "title2": "สื่อทุกชนิด",
+    "subtitle": "อัปโหลดไฟล์ วาง URL หรือลากไฟล์มาวาง AI จะดึง สรุป และอ่านให้ฟัง",
+    "inputLabel": "อยากดึงเนื้อหาจากอะไร?",
+    "urlPlaceholder": "วาง URL (YouTube, เว็บไซต์)",
+    "dropzone": "ลากไฟล์มาวางหรือคลิกเพื่ออัปโหลด",
+    "browseFiles": "เลือกไฟล์",
+    "or": "หรือ",
+    "maxSize": "ไม่เกิน 50MB",
+    "supportedTypes": "PDF, Excel, Word, รูปภาพ",
+    "extracting": "กำลังดึงเนื้อหา...",
+    "extracted": "ดึงเนื้อหาสำเร็จ",
+    "fileTypes": {
+      "youtube": "YouTube",
+      "web": "เว็บไซต์",
+      "pdf": "PDF",
+      "excel": "Excel/CSV",
+      "doc": "เอกสาร",
+      "image": "รูปภาพ (OCR)"
+    },
+    "history": {
+      "title": "ประวัติ",
+      "newExtraction": "เริ่มใหม่",
+      "noHistory": "ยังไม่มีประวัติ",
+      "noHistoryHint": "ดึงเนื้อหาเพื่อบันทึกที่นี่",
+      "clearAll": "ล้างทั้งหมด",
+      "cloudStored": "ซิงค์กับคลาวด์"
+    },
+    "actions": {
+      "copy": "คัดลอก",
+      "copied": "คัดลอกแล้ว!",
+      "export": "ส่งออก",
+      "showOriginal": "แสดงต้นฉบับ",
+      "hideOriginal": "ซ่อนต้นฉบับ",
+      "listenNow": "ฟังเลย"
+    },
+    "errors": {
+      "unsupportedFile": "ไฟล์ประเภทนี้ไม่รองรับ",
+      "fileTooLarge": "ไฟล์ต้องไม่เกิน 50MB",
+      "extractionFailed": "ดึงเนื้อหาไม่สำเร็จ",
+      "noContent": "ไม่มีเนื้อหาที่จะแสดง"
+    }
   },
   "terms": {
     "hero": {

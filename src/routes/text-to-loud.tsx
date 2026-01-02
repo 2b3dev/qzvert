@@ -1,10 +1,11 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import {
   ArrowLeft,
   Check,
   Clock,
   FileText,
+  Globe,
   GraduationCap,
   History,
   Languages,
@@ -18,6 +19,7 @@ import {
   Users,
   Volume2,
   Wand2,
+  Youtube,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -37,11 +39,20 @@ import { useTranslation } from '../hooks/useTranslation'
 import { cn } from '../lib/utils'
 import { getSuggestedActivities } from '../server/activities'
 import { isAIGenerationEnabled } from '../server/admin-settings'
+import {
+  detectInputType,
+  extractContent,
+  type InputType,
+} from '../server/content-extractor'
 import { craftContent, summarizeContent, translateContent } from '../server/ttl'
 import { useAuthStore } from '../stores/auth-store'
 import { useProfileStore } from '../stores/profile-store'
 
 export const Route = createFileRoute('/text-to-loud')({
+  // Redirect to /extract-media
+  beforeLoad: () => {
+    throw redirect({ to: '/extract-media' })
+  },
   component: TextToLoudPage,
 })
 
@@ -271,6 +282,15 @@ function TextToLoudPage() {
 
   // AI generation setting
   const [aiEnabled, setAiEnabled] = useState(true)
+
+  // Input type detection
+  const [detectedInputType, setDetectedInputType] = useState<InputType>('text')
+  const [isExtractingContent, setIsExtractingContent] = useState(false)
+  const [contentMetadata, setContentMetadata] = useState<{
+    title?: string
+    author?: string
+    duration?: string
+  } | null>(null)
 
   // Easy Explain Mode (Feynman Technique)
   const [easyExplainEnabled, setEasyExplainEnabled] = useState(false)
@@ -665,7 +685,7 @@ function TextToLoudPage() {
     }
     setCharCount(newText.length)
 
-    // Debounce language detection
+    // Debounce language detection and input type detection
     if (detectTimeoutRef.current) {
       clearTimeout(detectTimeoutRef.current)
     }
@@ -674,6 +694,10 @@ function TextToLoudPage() {
       // Always update detected language and dropdown
       setOriginalDetectedLanguage(detected)
       setSelectedTargetLanguage(detected)
+
+      // Detect input type (URL, text, etc.)
+      const inputTypeResult = detectInputType(newText)
+      setDetectedInputType(inputTypeResult.type)
     }, 1000)
 
     // Debounce suggestions
@@ -684,6 +708,50 @@ function TextToLoudPage() {
       fetchSuggestions(newText)
     }, 500)
   }
+
+  // Handle URL content extraction
+  const handleExtractContent = useCallback(async () => {
+    if (detectedInputType !== 'youtube' && detectedInputType !== 'web') {
+      return
+    }
+
+    setIsExtractingContent(true)
+    try {
+      const result = await extractContent({
+        data: { input: originalContent, type: detectedInputType },
+      })
+
+      // Update with extracted content
+      setOriginalContent(result.content)
+      setDisplayContent(result.content)
+      setCharCount(result.content.length)
+      setContentMetadata(result.metadata || null)
+      setDetectedInputType('text') // Reset to text after extraction
+
+      // Re-detect language from extracted content
+      const detected = detectLanguage(result.content)
+      setOriginalDetectedLanguage(detected)
+      setSelectedTargetLanguage(detected)
+
+      // Show success message with metadata
+      const sourceLabel = result.type === 'youtube' ? 'YouTube' : 'Web'
+      const title = result.metadata?.title
+      toast.success(
+        title
+          ? `${sourceLabel}: ${title.slice(0, 50)}${title.length > 50 ? '...' : ''}`
+          : `Extracted content from ${sourceLabel}`,
+      )
+    } catch (error) {
+      console.error('Content extraction error:', error)
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to extract content from URL',
+      )
+    } finally {
+      setIsExtractingContent(false)
+    }
+  }, [detectedInputType, originalContent, detectLanguage])
 
   // Handle language selection (dropdown)
   const handleLanguageChange = (langCode: string) => {
@@ -880,6 +948,9 @@ function TextToLoudPage() {
     setCraftedContent('')
     setCraftedKeyPoints([])
     setSelectedMode('listen')
+    // Clear input type detection
+    setDetectedInputType('text')
+    setContentMetadata(null)
     // Clear localStorage
     try {
       localStorage.removeItem(STORAGE_KEY)
@@ -913,6 +984,9 @@ function TextToLoudPage() {
     setCraftedContent('')
     setCraftedKeyPoints([])
     setSelectedMode('listen')
+    // Clear input type detection
+    setDetectedInputType('text')
+    setContentMetadata(null)
 
     // Clear localStorage for current state
     try {
@@ -1344,29 +1418,93 @@ function TextToLoudPage() {
                             readOnly={contentMode !== 'original'}
                           />
                           {/* Info bar below textarea */}
-                          <div className="flex items-center justify-end gap-2 mt-2 px-1">
-                            {displayContent.length > 0 && (
-                              <span className="text-xs bg-muted px-2 py-1 rounded-full">
-                                {detectedLanguageDisplay.flag}{' '}
-                                {detectedLanguageDisplay.name}
+                          <div className="flex items-center justify-between gap-2 mt-2 px-1">
+                            {/* Left side - Input type detection */}
+                            <div className="flex items-center gap-2">
+                              {(detectedInputType === 'youtube' ||
+                                detectedInputType === 'web') && (
+                                <motion.div
+                                  initial={{ opacity: 0, scale: 0.9 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  className="flex items-center gap-2"
+                                >
+                                  <span
+                                    className={cn(
+                                      'flex items-center gap-1.5 text-xs px-2 py-1 rounded-full',
+                                      detectedInputType === 'youtube'
+                                        ? 'bg-red-500/20 text-red-500'
+                                        : 'bg-blue-500/20 text-blue-500',
+                                    )}
+                                  >
+                                    {detectedInputType === 'youtube' ? (
+                                      <Youtube className="w-3 h-3" />
+                                    ) : (
+                                      <Globe className="w-3 h-3" />
+                                    )}
+                                    {detectedInputType === 'youtube'
+                                      ? 'YouTube'
+                                      : 'Web'}
+                                  </span>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={handleExtractContent}
+                                    disabled={isExtractingContent}
+                                    className="h-6 text-xs px-2"
+                                  >
+                                    {isExtractingContent ? (
+                                      <>
+                                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                        {uiLanguage === 'th'
+                                          ? 'กำลังดึง...'
+                                          : 'Extracting...'}
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Sparkles className="w-3 h-3 mr-1" />
+                                        {uiLanguage === 'th'
+                                          ? 'ดึงเนื้อหา'
+                                          : 'Extract'}
+                                      </>
+                                    )}
+                                  </Button>
+                                </motion.div>
+                              )}
+                              {contentMetadata?.title && (
+                                <span
+                                  className="text-xs text-muted-foreground truncate max-w-[200px]"
+                                  title={contentMetadata.title}
+                                >
+                                  {contentMetadata.title}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Right side - Language & char count */}
+                            <div className="flex items-center gap-2">
+                              {displayContent.length > 0 && (
+                                <span className="text-xs bg-muted px-2 py-1 rounded-full">
+                                  {detectedLanguageDisplay.flag}{' '}
+                                  {detectedLanguageDisplay.name}
+                                </span>
+                              )}
+                              <span className="text-xs text-muted-foreground">
+                                {contentMode === 'original'
+                                  ? charCount
+                                  : displayContent.length}{' '}
+                                {t('tools.tts.characters')}
                               </span>
-                            )}
-                            <span className="text-xs text-muted-foreground">
-                              {contentMode === 'original'
-                                ? charCount
-                                : displayContent.length}{' '}
-                              {t('tools.tts.characters')}
-                            </span>
-                            {(originalContent.length > 0 ||
-                              displayContent.length > 0) && (
-                              <button
-                                onClick={handleClear}
-                                className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                                title={t('tools.tts.clear')}
-                              >
-                                <RotateCcw className="w-4 h-4" />
-                              </button>
-                            )}
+                              {(originalContent.length > 0 ||
+                                displayContent.length > 0) && (
+                                <button
+                                  onClick={handleClear}
+                                  className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                  title={t('tools.tts.clear')}
+                                >
+                                  <RotateCcw className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       )}

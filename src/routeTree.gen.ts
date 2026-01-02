@@ -16,6 +16,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ExtractMediaRouteImport } from './routes/extract-media'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DeleteAccountRouteImport } from './routes/delete-account'
 import { Route as CreateRouteImport } from './routes/create'
@@ -77,6 +78,11 @@ const PricingRoute = PricingRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExtractMediaRoute = ExtractMediaRouteImport.update({
+  id: '/extract-media',
+  path: '/extract-media',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExploreRoute = ExploreRouteImport.update({
@@ -222,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/create': typeof CreateRoute
   '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
+  '/extract-media': typeof ExtractMediaRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -258,6 +265,7 @@ export interface FileRoutesByTo {
   '/create': typeof CreateRoute
   '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
+  '/extract-media': typeof ExtractMediaRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -295,6 +303,7 @@ export interface FileRoutesById {
   '/create': typeof CreateRoute
   '/delete-account': typeof DeleteAccountRoute
   '/explore': typeof ExploreRoute
+  '/extract-media': typeof ExtractMediaRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -333,6 +342,7 @@ export interface FileRouteTypes {
     | '/create'
     | '/delete-account'
     | '/explore'
+    | '/extract-media'
     | '/login'
     | '/pricing'
     | '/privacy'
@@ -369,6 +379,7 @@ export interface FileRouteTypes {
     | '/create'
     | '/delete-account'
     | '/explore'
+    | '/extract-media'
     | '/login'
     | '/pricing'
     | '/privacy'
@@ -405,6 +416,7 @@ export interface FileRouteTypes {
     | '/create'
     | '/delete-account'
     | '/explore'
+    | '/extract-media'
     | '/login'
     | '/pricing'
     | '/privacy'
@@ -442,6 +454,7 @@ export interface RootRouteChildren {
   CreateRoute: typeof CreateRoute
   DeleteAccountRoute: typeof DeleteAccountRoute
   ExploreRoute: typeof ExploreRoute
+  ExtractMediaRoute: typeof ExtractMediaRoute
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -521,6 +534,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/extract-media': {
+      id: '/extract-media'
+      path: '/extract-media'
+      fullPath: '/extract-media'
+      preLoaderRoute: typeof ExtractMediaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/explore': {
@@ -722,6 +742,7 @@ const rootRouteChildren: RootRouteChildren = {
   CreateRoute: CreateRoute,
   DeleteAccountRoute: DeleteAccountRoute,
   ExploreRoute: ExploreRoute,
+  ExtractMediaRoute: ExtractMediaRoute,
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,

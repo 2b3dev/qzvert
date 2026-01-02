@@ -861,3 +861,82 @@ export interface CommentUpdate {
   status?: CommentStatus
   updated_at?: string
 }
+
+// ============================================
+// Extract Media Types
+// ============================================
+
+export type ExtractionInputType =
+  | 'youtube'
+  | 'web'
+  | 'pdf'
+  | 'excel'
+  | 'doc'
+  | 'image'
+  | 'text'
+
+export interface ExtractedContent {
+  id: string
+  user_id: string
+
+  // Input
+  input_type: ExtractionInputType
+  original_input: string // URL, filename, or raw text
+  source_file_path: string | null // Path in Supabase Storage if file was uploaded
+
+  // Extracted
+  extracted_text: string
+
+  // AI processed
+  summarized_content: string | null
+  crafted_content: string | null
+  key_points: string[] | null
+
+  // Metadata
+  title: string | null
+  author: string | null
+  duration: string | null // For videos
+  page_count: number | null // For PDFs/docs
+  word_count: number | null
+  language: string | null // Detected language code
+
+  // Timestamps
+  created_at: string
+  updated_at: string
+  last_accessed_at: string
+}
+
+export interface ExtractedContentInsert {
+  id?: string
+  user_id: string
+  input_type: ExtractionInputType
+  original_input: string
+  source_file_path?: string | null
+  extracted_text: string
+  summarized_content?: string | null
+  crafted_content?: string | null
+  key_points?: string[] | null
+  title?: string | null
+  author?: string | null
+  duration?: string | null
+  page_count?: number | null
+  word_count?: number | null
+  language?: string | null
+}
+
+export interface ExtractedContentUpdate {
+  summarized_content?: string | null
+  crafted_content?: string | null
+  key_points?: string[] | null
+  last_accessed_at?: string
+}
+
+// Extraction metadata returned from extractors
+export interface ExtractionMetadata {
+  title?: string
+  author?: string
+  duration?: string
+  pageCount?: number
+  wordCount?: number
+  language?: string
+}
