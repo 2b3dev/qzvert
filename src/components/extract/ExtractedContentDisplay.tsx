@@ -24,6 +24,12 @@ import Markdown from 'react-markdown'
 import { cn } from '../../lib/utils'
 import type { ExtractedContent, ExtractionInputType } from '../../types/database'
 import { Button } from '../ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu'
 
 export type ContentMode = 'original' | 'summarized' | 'crafted' | 'translated'
 
@@ -156,7 +162,6 @@ export function ExtractedContentDisplay({
 }: ExtractedContentDisplayProps) {
   const [copied, setCopied] = useState(false)
   const [showOriginal, setShowOriginal] = useState(false)
-  const [showLangDropdown, setShowLangDropdown] = useState(false)
 
   const t = {
     original: translations?.original || 'Original',
@@ -230,58 +235,43 @@ export function ExtractedContentDisplay({
           <Languages className="w-3.5 h-3.5" />
           {t.targetLanguage}
         </label>
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setShowLangDropdown(!showLangDropdown)}
-            className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border border-input bg-background hover:bg-accent/50 transition-colors"
-          >
-            <span className="flex items-center gap-2">
-              <span className="text-lg">{selectedLang?.flag || '🌐'}</span>
-              <span className="text-sm font-medium">
-                {selectedLang?.name || targetLanguage}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border border-input bg-background hover:bg-accent/50 transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <span className="text-lg">{selectedLang?.flag || '🌐'}</span>
+                <span className="text-sm font-medium">
+                  {selectedLang?.name || targetLanguage}
+                </span>
               </span>
-            </span>
-            <ChevronDown
-              className={cn(
-                'w-4 h-4 text-muted-foreground transition-transform',
-                showLangDropdown && 'rotate-180',
-              )}
-            />
-          </button>
-
-          <AnimatePresence>
-            {showLangDropdown && (
-              <motion.div
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -5 }}
-                className="absolute z-50 top-full left-0 right-0 mt-1 max-h-60 overflow-auto rounded-lg border border-border bg-popover shadow-lg"
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="start"
+            className="w-[var(--radix-dropdown-menu-trigger-width)] max-h-64 overflow-y-auto"
+          >
+            {availableLanguages.map((lang) => (
+              <DropdownMenuItem
+                key={lang.code}
+                onClick={() => onTargetLanguageChange(lang.code)}
+                className={cn(
+                  'flex items-center gap-2 cursor-pointer',
+                  targetLanguage === lang.code && 'bg-primary/10 text-primary',
+                )}
               >
-                {availableLanguages.map((lang) => (
-                  <button
-                    key={lang.code}
-                    type="button"
-                    onClick={() => {
-                      onTargetLanguageChange(lang.code)
-                      setShowLangDropdown(false)
-                    }}
-                    className={cn(
-                      'w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent/50 transition-colors',
-                      targetLanguage === lang.code && 'bg-primary/10 text-primary',
-                    )}
-                  >
-                    <span className="text-lg">{lang.flag}</span>
-                    <span>{lang.name}</span>
-                    {targetLanguage === lang.code && (
-                      <Check className="w-4 h-4 ml-auto" />
-                    )}
-                  </button>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                <span className="text-lg">{lang.flag}</span>
+                <span>{lang.name}</span>
+                {targetLanguage === lang.code && (
+                  <Check className="w-4 h-4 ml-auto" />
+                )}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Mode Selector */}

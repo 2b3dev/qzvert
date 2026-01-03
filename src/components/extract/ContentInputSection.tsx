@@ -22,6 +22,12 @@ import { useCallback, useRef, useState } from 'react'
 import { cn } from '../../lib/utils'
 import type { ExtractionInputType } from '../../types/database'
 import { Button } from '../ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu'
 
 export type InputSourceType = 'text' | 'file'
 export type ProcessMode = 'original' | 'summarize' | 'lesson'
@@ -149,22 +155,19 @@ export function ContentInputSection({
 }: ContentInputSectionProps) {
   const [inputSource, setInputSource] = useState<InputSourceType>('text')
   const [textInput, setTextInput] = useState('')
-  const [urlInput, setUrlInput] = useState('')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [fileBase64, setFileBase64] = useState<string | null>(null)
   const [fileType, setFileType] = useState<ExtractionInputType | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [showLangDropdown, setShowLangDropdown] = useState(false)
-  const [detectedUrlType, setDetectedUrlType] = useState<'youtube' | 'web' | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const t = {
-    textTab: translations?.textTab || 'Text / Clipboard',
-    fileTab: translations?.fileTab || 'File / URL',
-    textTabDesc: translations?.textTabDesc || 'Paste or type text content',
-    fileTabDesc: translations?.fileTabDesc || 'Upload file or paste URL',
+    textTab: translations?.textTab || 'Text / URL',
+    fileTab: translations?.fileTab || 'File',
+    textTabDesc: translations?.textTabDesc || 'Paste text or URL',
+    fileTabDesc: translations?.fileTabDesc || 'Upload file',
     pasteFromClipboard: translations?.pasteFromClipboard || 'Paste from Clipboard',
     textPlaceholder: translations?.textPlaceholder || 'Paste or type your text here...',
     urlPlaceholder: translations?.urlPlaceholder || 'Paste URL (YouTube, Website)',
@@ -204,10 +207,24 @@ export function ContentInputSection({
     return null
   }
 
-  // Detect URL type
-  const detectUrlType = (url: string): 'youtube' | 'web' | null => {
-    const trimmed = url.trim()
+  // Detect URL type - only check if starts with http/https
+  const detectUrlType = (text: string): 'youtube' | 'web' | null => {
+    const trimmed = text.trim()
     if (!trimmed) return null
+
+    // Only check URLs that start with http:// or https://
+    if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+      return null
+    }
+
+    // Validate it's a proper URL
+    try {
+      new URL(trimmed)
+    } catch {
+      return null
+    }
+
+    // Check for YouTube patterns
     const youtubePatterns = [
       /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=[\w-]+/,
       /(?:https?:\/\/)?(?:www\.)?youtu\.be\/[\w-]+/,
@@ -217,8 +234,8 @@ export function ContentInputSection({
     for (const pattern of youtubePatterns) {
       if (pattern.test(trimmed)) return 'youtube'
     }
-    if (/^https?:\/\/[^\s]+$/.test(trimmed)) return 'web'
-    return null
+
+    return 'web'
   }
 
   // Handle paste from clipboard
@@ -284,13 +301,6 @@ export function ContentInputSection({
     if (file) handleFile(file)
   }
 
-  // Handle URL input change
-  const handleUrlChange = (value: string) => {
-    setUrlInput(value)
-    setError(null)
-    setDetectedUrlType(detectUrlType(value))
-  }
-
   // Clear file selection
   const clearFile = () => {
     setSelectedFile(null)
@@ -304,8 +314,8 @@ export function ContentInputSection({
     if (inputSource === 'text') {
       return textInput.trim().length > 0
     }
-    // File tab - either file or URL
-    return (selectedFile && fileBase64 && fileType) || (urlInput.trim() && detectedUrlType)
+    // File tab - file only
+    return selectedFile && fileBase64 && fileType
   }
 
   // Handle extract
@@ -313,13 +323,29 @@ export function ContentInputSection({
     if (!canExtract()) return
 
     if (inputSource === 'text') {
-      onExtract({
-        type: 'text',
-        content: textInput.trim(),
-        mode: selectedMode,
-        targetLanguage,
-        easyExplainEnabled: canUseEasyExplain && easyExplainEnabled,
-      })
+      const trimmedText = textInput.trim()
+      const urlType = detectUrlType(trimmedText)
+
+      // Check if input is a URL (starts with http/https)
+      if (urlType) {
+        onExtract({
+          type: 'url',
+          content: trimmedText,
+          inputType: urlType,
+          mode: selectedMode,
+          targetLanguage,
+          easyExplainEnabled: canUseEasyExplain && easyExplainEnabled,
+        })
+      } else {
+        // Plain text
+        onExtract({
+          type: 'text',
+          content: trimmedText,
+          mode: selectedMode,
+          targetLanguage,
+          easyExplainEnabled: canUseEasyExplain && easyExplainEnabled,
+        })
+      }
     } else if (selectedFile && fileBase64 && fileType) {
       onExtract({
         type: 'file',
@@ -327,15 +353,6 @@ export function ContentInputSection({
         file: selectedFile,
         base64Data: fileBase64,
         inputType: fileType,
-        mode: selectedMode,
-        targetLanguage,
-        easyExplainEnabled: canUseEasyExplain && easyExplainEnabled,
-      })
-    } else if (urlInput.trim() && detectedUrlType) {
-      onExtract({
-        type: 'url',
-        content: urlInput.trim(),
-        inputType: detectedUrlType,
         mode: selectedMode,
         targetLanguage,
         easyExplainEnabled: canUseEasyExplain && easyExplainEnabled,
@@ -438,9 +455,8 @@ export function ContentInputSection({
                 isLoading && 'opacity-50 cursor-not-allowed',
               )}
             />
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>{textInput.length.toLocaleString()} characters</span>
-              <span>{textInput.trim().split(/\s+/).filter(Boolean).length.toLocaleString()} words</span>
+            <div className="text-xs text-muted-foreground text-right">
+              {textInput.length.toLocaleString()} characters
             </div>
           </motion.div>
         ) : (
@@ -451,60 +467,7 @@ export function ContentInputSection({
             exit={{ opacity: 0, y: -10 }}
             className="space-y-4"
           >
-            {/* URL Input */}
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">{t.fileTabDesc}</p>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <input
-                    type="url"
-                    value={urlInput}
-                    onChange={(e) => handleUrlChange(e.target.value)}
-                    placeholder={t.urlPlaceholder}
-                    disabled={isLoading || !!selectedFile}
-                    className={cn(
-                      'w-full px-4 py-3 pr-24 rounded-xl border border-input bg-background text-sm',
-                      'focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary',
-                      'transition-colors placeholder:text-muted-foreground',
-                      (isLoading || selectedFile) && 'opacity-50 cursor-not-allowed',
-                    )}
-                  />
-                  <AnimatePresence>
-                    {detectedUrlType && !selectedFile && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        className="absolute right-3 top-1/2 -translate-y-1/2"
-                      >
-                        <span
-                          className={cn(
-                            'flex items-center gap-1.5 text-xs px-2 py-1 rounded-full',
-                            detectedUrlType === 'youtube'
-                              ? 'bg-red-500/20 text-red-500'
-                              : 'bg-blue-500/20 text-blue-500',
-                          )}
-                        >
-                          {detectedUrlType === 'youtube' ? (
-                            <Youtube className="w-3 h-3" />
-                          ) : (
-                            <Globe className="w-3 h-3" />
-                          )}
-                          {detectedUrlType === 'youtube' ? t.youtube : t.web}
-                        </span>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="flex items-center gap-4">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-xs text-muted-foreground uppercase">{t.or}</span>
-              <div className="flex-1 h-px bg-border" />
-            </div>
+            <p className="text-sm text-muted-foreground">{t.fileTabDesc}</p>
 
             {/* File Drop Zone */}
             <input
@@ -549,14 +512,14 @@ export function ContentInputSection({
                   isDragging
                     ? 'border-primary bg-primary/10 scale-[1.02]'
                     : 'border-border bg-muted/30',
-                  (isLoading || urlInput) && 'opacity-50 cursor-not-allowed pointer-events-none',
+                  isLoading && 'opacity-50 cursor-not-allowed pointer-events-none',
                 )}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                onClick={() => !isLoading && !urlInput && fileInputRef.current?.click()}
-                whileHover={!isLoading && !urlInput ? { scale: 1.01 } : undefined}
-                whileTap={!isLoading && !urlInput ? { scale: 0.99 } : undefined}
+                onClick={() => !isLoading && fileInputRef.current?.click()}
+                whileHover={!isLoading ? { scale: 1.01 } : undefined}
+                whileTap={!isLoading ? { scale: 0.99 } : undefined}
               >
                 <div className="flex flex-col items-center justify-center gap-3 p-6">
                   <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -594,57 +557,40 @@ export function ContentInputSection({
             <Languages className="w-3.5 h-3.5" />
             {t.targetLanguage}
           </label>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowLangDropdown(!showLangDropdown)}
-              disabled={isLoading}
-              className={cn(
-                'w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border border-input bg-background hover:bg-accent/50 transition-colors',
-                isLoading && 'opacity-50 cursor-not-allowed',
-              )}
-            >
-              <span className="flex items-center gap-2">
-                <span className="text-lg">{selectedLang?.flag || '🌐'}</span>
-                <span className="text-sm font-medium">{selectedLang?.name || targetLanguage}</span>
-              </span>
-              <ChevronDown
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                disabled={isLoading}
                 className={cn(
-                  'w-4 h-4 text-muted-foreground transition-transform',
-                  showLangDropdown && 'rotate-180',
+                  'w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border border-input bg-background hover:bg-accent/50 transition-colors',
+                  isLoading && 'opacity-50 cursor-not-allowed',
                 )}
-              />
-            </button>
-            <AnimatePresence>
-              {showLangDropdown && (
-                <motion.div
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -5 }}
-                  className="absolute z-50 top-full left-0 right-0 mt-1 max-h-48 overflow-auto rounded-lg border border-border bg-popover shadow-lg"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="text-lg">{selectedLang?.flag || '🌐'}</span>
+                  <span className="text-sm font-medium">{selectedLang?.name || targetLanguage}</span>
+                </span>
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)] max-h-64 overflow-y-auto">
+              {availableLanguages.map((lang) => (
+                <DropdownMenuItem
+                  key={lang.code}
+                  onClick={() => onTargetLanguageChange(lang.code)}
+                  className={cn(
+                    'flex items-center gap-2 cursor-pointer',
+                    targetLanguage === lang.code && 'bg-primary/10 text-primary',
+                  )}
                 >
-                  {availableLanguages.map((lang) => (
-                    <button
-                      key={lang.code}
-                      type="button"
-                      onClick={() => {
-                        onTargetLanguageChange(lang.code)
-                        setShowLangDropdown(false)
-                      }}
-                      className={cn(
-                        'w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent/50 transition-colors',
-                        targetLanguage === lang.code && 'bg-primary/10 text-primary',
-                      )}
-                    >
-                      <span className="text-lg">{lang.flag}</span>
-                      <span>{lang.name}</span>
-                      {targetLanguage === lang.code && <Check className="w-4 h-4 ml-auto" />}
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                  <span className="text-lg">{lang.flag}</span>
+                  <span>{lang.name}</span>
+                  {targetLanguage === lang.code && <Check className="w-4 h-4 ml-auto" />}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Mode Selector */}

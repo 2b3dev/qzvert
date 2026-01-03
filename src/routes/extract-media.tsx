@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import {
   Clock,
-  GraduationCap,
   History,
   Loader2,
   Play,
@@ -25,7 +24,7 @@ import { DefaultLayout } from '../components/layouts/DefaultLayout'
 import type { TextToLoudRef } from '../components/TextToLoud'
 import { TextToLoud } from '../components/TextToLoud'
 import { Button } from '../components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Card, CardContent } from '../components/ui/card'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -106,10 +105,7 @@ function HeroSection({ t }: { t: (key: string) => string }) {
       <div className="absolute bottom-20 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
 
       <div className="relative max-w-4xl mx-auto text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm font-medium mb-6">
-          <Sparkles className="w-4 h-4" />
-          {t('extractMedia.badge')}
-        </div>
+
 
         <h1 className="text-2xl md:text-4xl font-black mb-4 leading-tight">
           <span className="text-foreground">{t('extractMedia.title1')}</span>
@@ -141,7 +137,9 @@ function ExtractMediaPage() {
   const [currentHistoryId, setCurrentHistoryId] = useState<string | null>(null)
 
   // Current extraction state
-  const [currentContent, setCurrentContent] = useState<ExtractedContent | null>(null)
+  const [currentContent, setCurrentContent] = useState<ExtractedContent | null>(
+    null,
+  )
   const [displayContent, setDisplayContent] = useState('')
   const [contentMode, setContentMode] = useState<ContentMode>('original')
   const [keyPoints, setKeyPoints] = useState<string[]>([])
@@ -158,15 +156,20 @@ function ExtractMediaPage() {
   const [processingAction, setProcessingAction] = useState('')
 
   // Mode selection
-  const [selectedMode, setSelectedMode] = useState<'original' | 'summarize' | 'lesson'>('original')
+  const [selectedMode, setSelectedMode] = useState<
+    'original' | 'summarize' | 'lesson'
+  >('original')
 
   // TTS state
   const [isReaderMode, setIsReaderMode] = useState(false)
   const [selectedTargetLanguage, setSelectedTargetLanguage] = useState('en')
   const [detectedLanguage, setDetectedLanguage] = useState('en')
-  const [selectedGender, setSelectedGender] = useState<'male' | 'female'>('female')
+  const [selectedGender, setSelectedGender] = useState<'male' | 'female'>(
+    'female',
+  )
   const [rate, setRate] = useState(1)
-  const [availableLanguages, setAvailableLanguages] = useState<LanguageOption[]>(SUPPORTED_LANGUAGES)
+  const [availableLanguages, setAvailableLanguages] =
+    useState<LanguageOption[]>(SUPPORTED_LANGUAGES)
   const [highlightIndex, setHighlightIndex] = useState(0)
 
   // AI settings
@@ -179,7 +182,9 @@ function ExtractMediaPage() {
     profile?.role === 'admin'
 
   // Suggestions
-  const [suggestedActivities, setSuggestedActivities] = useState<SuggestedActivity[]>([])
+  const [suggestedActivities, setSuggestedActivities] = useState<
+    SuggestedActivity[]
+  >([])
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
 
   // Mobile history dropdown
@@ -312,7 +317,10 @@ function ExtractMediaPage() {
           setCurrentContent(saved)
           setCurrentHistoryId(saved.id)
           setDisplayContent(saved.extracted_text)
-          setHistory((prev) => [saved, ...prev.filter((h) => h.id !== saved.id)])
+          setHistory((prev) => [
+            saved,
+            ...prev.filter((h) => h.id !== saved.id),
+          ])
         } else {
           // Guest mode - just display content
           setDisplayContent(result.content)
@@ -353,7 +361,9 @@ function ExtractMediaPage() {
       } catch (error) {
         console.error('URL extraction error:', error)
         toast.error(
-          error instanceof Error ? error.message : 'Failed to extract content from URL',
+          error instanceof Error
+            ? error.message
+            : 'Failed to extract content from URL',
         )
       } finally {
         setIsExtracting(false)
@@ -400,7 +410,10 @@ function ExtractMediaPage() {
           setCurrentContent(saved)
           setCurrentHistoryId(saved.id)
           setDisplayContent(saved.extracted_text)
-          setHistory((prev) => [saved, ...prev.filter((h) => h.id !== saved.id)])
+          setHistory((prev) => [
+            saved,
+            ...prev.filter((h) => h.id !== saved.id),
+          ])
         } else {
           // Guest mode
           setDisplayContent(result.text)
@@ -437,7 +450,9 @@ function ExtractMediaPage() {
       } catch (error) {
         console.error('File extraction error:', error)
         toast.error(
-          error instanceof Error ? error.message : 'Failed to extract content from file',
+          error instanceof Error
+            ? error.message
+            : 'Failed to extract content from file',
         )
       } finally {
         setIsExtracting(false)
@@ -447,42 +462,45 @@ function ExtractMediaPage() {
   )
 
   // Handle history item selection
-  const handleHistorySelect = useCallback((item: ExtractedContent) => {
-    textToLoudRef.current?.stop()
+  const handleHistorySelect = useCallback(
+    (item: ExtractedContent) => {
+      textToLoudRef.current?.stop()
 
-    setCurrentContent(item)
-    setCurrentHistoryId(item.id)
-    setDisplayContent(item.extracted_text)
-    setContentMode('original')
-    setKeyPoints([])
+      setCurrentContent(item)
+      setCurrentHistoryId(item.id)
+      setDisplayContent(item.extracted_text)
+      setContentMode('original')
+      setKeyPoints([])
 
-    // Restore cached content
-    setSummarizedContent(item.summarized_content || '')
-    setSummarizedKeyPoints(item.key_points || [])
-    setCraftedContent(item.crafted_content || '')
-    setCraftedKeyPoints(item.key_points || [])
+      // Restore cached content
+      setSummarizedContent(item.summarized_content || '')
+      setSummarizedKeyPoints(item.key_points || [])
+      setCraftedContent(item.crafted_content || '')
+      setCraftedKeyPoints(item.key_points || [])
 
-    // Set mode based on what's available
-    if (item.crafted_content) {
-      setSelectedMode('lesson')
-      setDisplayContent(item.crafted_content)
-      setContentMode('crafted')
-      setKeyPoints(item.key_points || [])
-    } else if (item.summarized_content) {
-      setSelectedMode('summarize')
-      setDisplayContent(item.summarized_content)
-      setContentMode('summarized')
-    } else {
-      setSelectedMode('original')
-    }
+      // Set mode based on what's available
+      if (item.crafted_content) {
+        setSelectedMode('lesson')
+        setDisplayContent(item.crafted_content)
+        setContentMode('crafted')
+        setKeyPoints(item.key_points || [])
+      } else if (item.summarized_content) {
+        setSelectedMode('summarize')
+        setDisplayContent(item.summarized_content)
+        setContentMode('summarized')
+      } else {
+        setSelectedMode('original')
+      }
 
-    setDetectedLanguage(item.language || 'en')
-    setSelectedTargetLanguage(item.language || 'en')
-    setIsReaderMode(false)
-    setShowMobileHistory(false)
+      setDetectedLanguage(item.language || 'en')
+      setSelectedTargetLanguage(item.language || 'en')
+      setIsReaderMode(false)
+      setShowMobileHistory(false)
 
-    fetchSuggestions(item.extracted_text)
-  }, [fetchSuggestions])
+      fetchSuggestions(item.extracted_text)
+    },
+    [fetchSuggestions],
+  )
 
   // Handle history deletion
   const handleHistoryDelete = useCallback(
@@ -498,7 +516,9 @@ function ExtractMediaPage() {
           setContentMode('original')
         }
 
-        toast.success(uiLanguage === 'th' ? 'ลบเรียบร้อย' : 'Deleted successfully')
+        toast.success(
+          uiLanguage === 'th' ? 'ลบเรียบร้อย' : 'Deleted successfully',
+        )
       } catch (error) {
         console.error('Delete error:', error)
         toast.error(uiLanguage === 'th' ? 'ลบไม่สำเร็จ' : 'Failed to delete')
@@ -519,10 +539,14 @@ function ExtractMediaPage() {
       setCurrentHistoryId(null)
       setDisplayContent('')
 
-      toast.success(uiLanguage === 'th' ? 'ล้างประวัติทั้งหมดแล้ว' : 'All history cleared')
+      toast.success(
+        uiLanguage === 'th' ? 'ล้างประวัติทั้งหมดแล้ว' : 'All history cleared',
+      )
     } catch (error) {
       console.error('Clear all error:', error)
-      toast.error(uiLanguage === 'th' ? 'ล้างไม่สำเร็จ' : 'Failed to clear history')
+      toast.error(
+        uiLanguage === 'th' ? 'ล้างไม่สำเร็จ' : 'Failed to clear history',
+      )
     }
   }, [history, uiLanguage])
 
@@ -601,7 +625,10 @@ function ExtractMediaPage() {
 
             setCurrentContent(saved)
             setCurrentHistoryId(saved.id)
-            setHistory((prev) => [saved, ...prev.filter((h) => h.id !== saved.id)])
+            setHistory((prev) => [
+              saved,
+              ...prev.filter((h) => h.id !== saved.id),
+            ])
             textContent.id = saved.id
           } catch (error) {
             console.error('Failed to save extraction:', error)
@@ -617,12 +644,24 @@ function ExtractMediaPage() {
         setSummarizedContent('')
         setCraftedContent('')
 
-        toast.success(uiLanguage === 'th' ? 'ดึงข้อความสำเร็จ' : 'Text extracted successfully')
+        toast.success(
+          uiLanguage === 'th'
+            ? 'ดึงข้อความสำเร็จ'
+            : 'Text extracted successfully',
+        )
         fetchSuggestions(data.content)
       } else if (data.type === 'url' && data.inputType) {
         // URL extraction (YouTube or web)
-        await handleUrlExtract(data.content, data.inputType as 'youtube' | 'web')
-      } else if (data.type === 'file' && data.file && data.base64Data && data.inputType) {
+        await handleUrlExtract(
+          data.content,
+          data.inputType as 'youtube' | 'web',
+        )
+      } else if (
+        data.type === 'file' &&
+        data.file &&
+        data.base64Data &&
+        data.inputType
+      ) {
         // File extraction
         await handleFileExtract(
           data.file,
@@ -665,7 +704,13 @@ function ExtractMediaPage() {
         setKeyPoints(craftedKeyPoints)
       }
     },
-    [currentContent, summarizedContent, summarizedKeyPoints, craftedContent, craftedKeyPoints],
+    [
+      currentContent,
+      summarizedContent,
+      summarizedKeyPoints,
+      craftedContent,
+      craftedKeyPoints,
+    ],
   )
 
   // Handle AI generation
@@ -705,7 +750,9 @@ function ExtractMediaPage() {
           )
           setHistory((prev) =>
             prev.map((h) =>
-              h.id === currentContent.id ? { ...h, summarized_content: result.summary } : h,
+              h.id === currentContent.id
+                ? { ...h, summarized_content: result.summary }
+                : h,
             ),
           )
         }
@@ -740,13 +787,21 @@ function ExtractMediaPage() {
           // Update local state
           setCurrentContent((prev) =>
             prev
-              ? { ...prev, crafted_content: result.crafted, key_points: result.keyPoints }
+              ? {
+                  ...prev,
+                  crafted_content: result.crafted,
+                  key_points: result.keyPoints,
+                }
               : null,
           )
           setHistory((prev) =>
             prev.map((h) =>
               h.id === currentContent.id
-                ? { ...h, crafted_content: result.crafted, key_points: result.keyPoints }
+                ? {
+                    ...h,
+                    crafted_content: result.crafted,
+                    key_points: result.keyPoints,
+                  }
                 : h,
             ),
           )
@@ -853,14 +908,21 @@ function ExtractMediaPage() {
                   onNewExtraction={handleNewExtraction}
                   translations={{
                     title: uiLanguage === 'th' ? 'ประวัติ' : 'History',
-                    newExtraction: uiLanguage === 'th' ? 'เริ่มใหม่' : 'New Extraction',
-                    noHistory: uiLanguage === 'th' ? 'ยังไม่มีประวัติ' : 'No history yet',
+                    newExtraction:
+                      uiLanguage === 'th' ? 'เริ่มใหม่' : 'New Extraction',
+                    noHistory:
+                      uiLanguage === 'th'
+                        ? 'ยังไม่มีประวัติ'
+                        : 'No history yet',
                     noHistoryHint:
                       uiLanguage === 'th'
                         ? 'ดึงเนื้อหาเพื่อบันทึก'
                         : 'Extract content to save here',
                     clearAll: uiLanguage === 'th' ? 'ล้างทั้งหมด' : 'Clear All',
-                    cloudStored: uiLanguage === 'th' ? 'ซิงค์กับคลาวด์' : 'Synced to cloud',
+                    cloudStored:
+                      uiLanguage === 'th'
+                        ? 'ซิงค์กับคลาวด์'
+                        : 'Synced to cloud',
                   }}
                 />
               </div>
@@ -873,76 +935,69 @@ function ExtractMediaPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
-                <Card className="border-primary/20 overflow-hidden">
-                  <CardHeader className="bg-linear-to-r from-primary/10 to-emerald-500/10 border-b border-border">
-                    <CardTitle className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <GraduationCap className="w-5 h-5 text-primary" />
-                        {t('extractMedia.inputLabel')}
-                      </div>
-
-                      {/* Mobile: History & New buttons */}
-                      <div className="flex items-center gap-2 lg:hidden">
-                        <Button
-                          onClick={handleNewExtraction}
-                          size="sm"
-                          variant="outline"
-                          className="gap-1"
-                        >
-                          <Plus className="w-4 h-4" />
-                          {uiLanguage === 'th' ? 'ใหม่' : 'New'}
-                        </Button>
-
-                        {history.length > 0 && (
-                          <DropdownMenu
-                            open={showMobileHistory}
-                            onOpenChange={setShowMobileHistory}
-                          >
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="sm" className="gap-1">
-                                <History className="w-4 h-4" />
-                                <span className="px-1 py-0.5 text-xs rounded-full bg-muted">
-                                  {history.length}
-                                </span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-auto">
-                              {history.map((item) => (
-                                <DropdownMenuItem
-                                  key={item.id}
-                                  onClick={() => handleHistorySelect(item)}
-                                  className="flex items-start gap-2 p-2 cursor-pointer"
-                                >
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium truncate">
-                                      {item.title || item.extracted_text.slice(0, 50)}
-                                    </p>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                        <Clock className="w-3 h-3" />
-                                        {new Date(item.created_at).toLocaleDateString()}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      handleHistoryDelete(item.id)
-                                    }}
-                                    className="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                </DropdownMenuItem>
-                              ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </div>
-                    </CardTitle>
-                  </CardHeader>
-
+                <Card className="border-primary/20">
                   <CardContent className="p-6 space-y-6">
+                    {/* Mobile: History & New buttons */}
+                    <div className="flex items-center justify-end gap-2 lg:hidden">
+                      <Button
+                        onClick={handleNewExtraction}
+                        size="sm"
+                        variant="outline"
+                        className="gap-1"
+                      >
+                        <Plus className="w-4 h-4" />
+                        {uiLanguage === 'th' ? 'ใหม่' : 'New'}
+                      </Button>
+
+                      {history.length > 0 && (
+                        <DropdownMenu
+                          open={showMobileHistory}
+                          onOpenChange={setShowMobileHistory}
+                        >
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="gap-1">
+                              <History className="w-4 h-4" />
+                              <span className="px-1 py-0.5 text-xs rounded-full bg-muted">
+                                {history.length}
+                              </span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-80 max-h-96 overflow-auto"
+                          >
+                            {history.map((item) => (
+                              <DropdownMenuItem
+                                key={item.id}
+                                onClick={() => handleHistorySelect(item)}
+                                className="flex items-start gap-2 p-2 cursor-pointer"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate">
+                                    {item.title || item.extracted_text.slice(0, 50)}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <Clock className="w-3 h-3" />
+                                      {new Date(item.created_at).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleHistoryDelete(item.id)
+                                  }}
+                                  className="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
                     {/* Content Input Section - show when no content */}
                     {!displayContent && (
                       <ContentInputSection
@@ -954,20 +1009,43 @@ function ExtractMediaPage() {
                         selectedMode={selectedMode}
                         onModeChange={handleModeChange}
                         easyExplainEnabled={easyExplainEnabled}
-                        onEasyExplainToggle={() => setEasyExplainEnabled(!easyExplainEnabled)}
+                        onEasyExplainToggle={() =>
+                          setEasyExplainEnabled(!easyExplainEnabled)
+                        }
                         canUseEasyExplain={canUseEasyExplain}
                         aiEnabled={aiEnabled}
                         translations={{
-                          textTab: uiLanguage === 'th' ? 'ข้อความ / คลิปบอร์ด' : 'Text / Clipboard',
-                          fileTab: uiLanguage === 'th' ? 'ไฟล์ / URL' : 'File / URL',
-                          textTabDesc: uiLanguage === 'th' ? 'วางหรือพิมพ์ข้อความ' : 'Paste or type text content',
-                          fileTabDesc: uiLanguage === 'th' ? 'อัปโหลดไฟล์หรือวาง URL' : 'Upload file or paste URL',
-                          pasteFromClipboard: uiLanguage === 'th' ? 'วางจากคลิปบอร์ด' : 'Paste from Clipboard',
-                          textPlaceholder: uiLanguage === 'th' ? 'วางหรือพิมพ์ข้อความที่นี่...' : 'Paste or type your text here...',
-                          urlPlaceholder: uiLanguage === 'th' ? 'วาง URL (YouTube, เว็บไซต์)' : 'Paste URL (YouTube, Website)',
-                          dropzone: uiLanguage === 'th' ? 'ลากไฟล์มาวางหรือคลิกเพื่ออัปโหลด' : 'Drop files here or click to upload',
-                          browseFiles: uiLanguage === 'th' ? 'เลือกไฟล์' : 'Browse Files',
-                          maxSize: uiLanguage === 'th' ? 'ไม่เกิน 50MB' : 'Max 50MB',
+                          textTab:
+                            uiLanguage === 'th'
+                              ? 'ข้อความ / URL'
+                              : 'Text / URL',
+                          fileTab: uiLanguage === 'th' ? 'ไฟล์' : 'File',
+                          textTabDesc:
+                            uiLanguage === 'th'
+                              ? 'วางข้อความหรือ URL'
+                              : 'Paste text or URL',
+                          fileTabDesc:
+                            uiLanguage === 'th' ? 'อัปโหลดไฟล์' : 'Upload file',
+                          pasteFromClipboard:
+                            uiLanguage === 'th'
+                              ? 'วางจากคลิปบอร์ด'
+                              : 'Paste from Clipboard',
+                          textPlaceholder:
+                            uiLanguage === 'th'
+                              ? 'วางข้อความหรือ URL ที่นี่...'
+                              : 'Paste text or URL here...',
+                          urlPlaceholder:
+                            uiLanguage === 'th'
+                              ? 'วาง URL (YouTube, เว็บไซต์)'
+                              : 'Paste URL (YouTube, Website)',
+                          dropzone:
+                            uiLanguage === 'th'
+                              ? 'ลากไฟล์มาวางหรือคลิกเพื่ออัปโหลด'
+                              : 'Drop files here or click to upload',
+                          browseFiles:
+                            uiLanguage === 'th' ? 'เลือกไฟล์' : 'Browse Files',
+                          maxSize:
+                            uiLanguage === 'th' ? 'ไม่เกิน 50MB' : 'Max 50MB',
                           supportedTypes: 'PDF, Excel, Word, Images',
                           youtube: 'YouTube',
                           web: uiLanguage === 'th' ? 'เว็บ' : 'Web',
@@ -975,18 +1053,40 @@ function ExtractMediaPage() {
                           excel: 'Excel',
                           doc: uiLanguage === 'th' ? 'เอกสาร' : 'Document',
                           image: uiLanguage === 'th' ? 'รูปภาพ' : 'Image',
-                          selectMode: uiLanguage === 'th' ? 'โหมดผลลัพธ์' : 'Output Mode',
-                          original: uiLanguage === 'th' ? 'ต้นฉบับ' : 'Original',
+                          selectMode:
+                            uiLanguage === 'th' ? 'โหมดผลลัพธ์' : 'Output Mode',
+                          original:
+                            uiLanguage === 'th' ? 'ต้นฉบับ' : 'Original',
                           summarize: uiLanguage === 'th' ? 'สรุป' : 'Summarize',
                           lesson: uiLanguage === 'th' ? 'บทเรียน' : 'Lesson',
-                          originalDesc: uiLanguage === 'th' ? 'ดึงข้อความตามต้นฉบับ' : 'Extract text as-is',
-                          summarizeDesc: uiLanguage === 'th' ? 'AI สรุปเนื้อหา' : 'AI summarizes content',
-                          lessonDesc: uiLanguage === 'th' ? 'AI จัดเป็นบทเรียน' : 'AI crafts into lesson',
-                          targetLanguage: uiLanguage === 'th' ? 'ภาษาเป้าหมาย' : 'Target Language',
-                          easyExplain: uiLanguage === 'th' ? 'อธิบายง่าย' : 'Easy Explain',
-                          easyExplainUpgrade: uiLanguage === 'th' ? 'อัปเกรดเป็น Plus' : 'Upgrade to Plus',
-                          extract: uiLanguage === 'th' ? 'ดึงเนื้อหา' : 'Extract',
-                          extracting: uiLanguage === 'th' ? 'กำลังดึง...' : 'Extracting...',
+                          originalDesc:
+                            uiLanguage === 'th'
+                              ? 'ดึงข้อความตามต้นฉบับ'
+                              : 'Extract text as-is',
+                          summarizeDesc:
+                            uiLanguage === 'th'
+                              ? 'AI สรุปเนื้อหา'
+                              : 'AI summarizes content',
+                          lessonDesc:
+                            uiLanguage === 'th'
+                              ? 'AI จัดเป็นบทเรียน'
+                              : 'AI crafts into lesson',
+                          targetLanguage:
+                            uiLanguage === 'th'
+                              ? 'ภาษาเป้าหมาย'
+                              : 'Target Language',
+                          easyExplain:
+                            uiLanguage === 'th' ? 'อธิบายง่าย' : 'Easy Explain',
+                          easyExplainUpgrade:
+                            uiLanguage === 'th'
+                              ? 'อัปเกรดเป็น Plus'
+                              : 'Upgrade to Plus',
+                          extract:
+                            uiLanguage === 'th' ? 'ดึงเนื้อหา' : 'Extract',
+                          extracting:
+                            uiLanguage === 'th'
+                              ? 'กำลังดึง...'
+                              : 'Extracting...',
                           or: uiLanguage === 'th' ? 'หรือ' : 'or',
                         }}
                       />
@@ -1014,41 +1114,65 @@ function ExtractMediaPage() {
                           aiEnabled={aiEnabled}
                           canUseEasyExplain={canUseEasyExplain}
                           easyExplainEnabled={easyExplainEnabled}
-                          onEasyExplainToggle={() => setEasyExplainEnabled(!easyExplainEnabled)}
+                          onEasyExplainToggle={() =>
+                            setEasyExplainEnabled(!easyExplainEnabled)
+                          }
                           translations={{
-                            original: uiLanguage === 'th' ? 'ต้นฉบับ' : 'Original',
+                            original:
+                              uiLanguage === 'th' ? 'ต้นฉบับ' : 'Original',
                             summarize: t('ttl.summarize'),
                             lesson: uiLanguage === 'th' ? 'บทเรียน' : 'Lesson',
-                            generate: uiLanguage === 'th' ? 'สร้าง' : 'Generate',
-                            regenerate: uiLanguage === 'th' ? 'สร้างใหม่' : 'Regenerate',
+                            generate:
+                              uiLanguage === 'th' ? 'สร้าง' : 'Generate',
+                            regenerate:
+                              uiLanguage === 'th' ? 'สร้างใหม่' : 'Regenerate',
                             backToOriginal: t('ttl.backToOriginal'),
                             selectMode: t('ttl.selectModeLabel'),
                             originalDesc:
-                              uiLanguage === 'th' ? 'ดูข้อความต้นฉบับ' : 'View original extracted text',
+                              uiLanguage === 'th'
+                                ? 'ดูข้อความต้นฉบับ'
+                                : 'View original extracted text',
                             summarizeDesc:
-                              uiLanguage === 'th' ? 'สรุปเนื้อหาให้กระชับ' : 'Summarize content',
+                              uiLanguage === 'th'
+                                ? 'สรุปเนื้อหาให้กระชับ'
+                                : 'Summarize content',
                             lessonDesc:
-                              uiLanguage === 'th' ? 'จัดเนื้อหาเป็นบทเรียน' : 'Craft into structured lesson',
+                              uiLanguage === 'th'
+                                ? 'จัดเนื้อหาเป็นบทเรียน'
+                                : 'Craft into structured lesson',
                             keyPoints: t('ttl.keyPoints'),
                             viewingSummary: t('ttl.viewingSummary'),
-                            viewingLesson: uiLanguage === 'th' ? 'กำลังดูบทเรียน' : 'Viewing Lesson',
+                            viewingLesson:
+                              uiLanguage === 'th'
+                                ? 'กำลังดูบทเรียน'
+                                : 'Viewing Lesson',
                             viewingTranslated: t('ttl.viewingTranslated'),
                             characters: t('tools.tts.characters'),
                             words: uiLanguage === 'th' ? 'คำ' : 'words',
                             copy: t('tools.tts.copy'),
-                            copied: uiLanguage === 'th' ? 'คัดลอกแล้ว!' : 'Copied!',
+                            copied:
+                              uiLanguage === 'th' ? 'คัดลอกแล้ว!' : 'Copied!',
                             export: uiLanguage === 'th' ? 'ส่งออก' : 'Export',
                             showOriginal:
-                              uiLanguage === 'th' ? 'แสดงต้นฉบับ' : 'Show Original',
+                              uiLanguage === 'th'
+                                ? 'แสดงต้นฉบับ'
+                                : 'Show Original',
                             hideOriginal:
-                              uiLanguage === 'th' ? 'ซ่อนต้นฉบับ' : 'Hide Original',
-                            easyExplain: uiLanguage === 'th' ? 'อธิบายง่าย' : 'Easy Explain',
+                              uiLanguage === 'th'
+                                ? 'ซ่อนต้นฉบับ'
+                                : 'Hide Original',
+                            easyExplain:
+                              uiLanguage === 'th'
+                                ? 'อธิบายง่าย'
+                                : 'Easy Explain',
                             easyExplainUpgrade:
                               uiLanguage === 'th'
                                 ? 'อัปเกรดเป็น Plus เพื่อใช้งาน'
                                 : 'Upgrade to Plus to use',
                             targetLanguage:
-                              uiLanguage === 'th' ? 'ภาษาเป้าหมาย' : 'Target Language',
+                              uiLanguage === 'th'
+                                ? 'ภาษาเป้าหมาย'
+                                : 'Target Language',
                           }}
                         />
 
@@ -1076,7 +1200,10 @@ function ExtractMediaPage() {
                             showFloatControls={true}
                             showPlayButton={false}
                             translations={{
-                              settings: uiLanguage === 'th' ? 'ตั้งค่าเสียง' : 'Voice Settings',
+                              settings:
+                                uiLanguage === 'th'
+                                  ? 'ตั้งค่าเสียง'
+                                  : 'Voice Settings',
                               language: t('tools.tts.languageLabel'),
                               speed: t('tools.tts.speedLabel'),
                               playing: t('tools.tts.playing'),
@@ -1094,7 +1221,8 @@ function ExtractMediaPage() {
                                 disabled={
                                   !displayContent.trim() ||
                                   isProcessing ||
-                                  (selectedMode === 'summarize' && !summarizedContent) ||
+                                  (selectedMode === 'summarize' &&
+                                    !summarizedContent) ||
                                   (selectedMode === 'lesson' && !craftedContent)
                                 }
                                 className="gap-2 bg-linear-to-r from-primary to-emerald-500 hover:from-primary/90 hover:to-emerald-500/90"
@@ -1136,7 +1264,11 @@ function ExtractMediaPage() {
                               key={activity.id}
                               whileHover={{ scale: 1.02 }}
                               className="group cursor-pointer"
-                              onClick={() => navigate({ to: `/activity/play/${activity.id}` })}
+                              onClick={() =>
+                                navigate({
+                                  to: `/activity/play/${activity.id}`,
+                                })
+                              }
                             >
                               <Card className="overflow-hidden h-full hover:border-primary/50 transition-colors">
                                 <div
@@ -1152,7 +1284,9 @@ function ExtractMediaPage() {
                                       className="w-full h-full object-cover"
                                     />
                                   ) : (
-                                    <span className="text-4xl">{style.icon}</span>
+                                    <span className="text-4xl">
+                                      {style.icon}
+                                    </span>
                                   )}
                                 </div>
                                 <CardContent className="p-3">
