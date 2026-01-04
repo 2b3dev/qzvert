@@ -1,18 +1,15 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import {
+  AlertTriangle,
   ChevronDown,
   ChevronUp,
   Coins,
-  FileUp,
-  HardDrive,
-  Info,
   Loader2,
   RotateCcw,
   Save,
   Settings,
   Sparkles,
-  ToggleRight,
   TrendingUp,
   Users,
   Zap,
@@ -22,6 +19,7 @@ import { toast } from 'sonner'
 import { AdminLayout } from '../../components/layouts/AdminLayout'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
+import { NumberInput } from '../../components/ui/number-input'
 import { cn } from '../../lib/utils'
 import {
   checkAdminAccess,
@@ -31,7 +29,6 @@ import {
   updateSystemSettings,
   type SystemSettings,
 } from '../../server/admin-settings'
-import { getProfitPreviewAllTiers } from '../../server/credit-calculator'
 import type {
   CreditSettings,
   TokenEstimationRatios,
@@ -98,7 +95,7 @@ function CollapsibleSection({
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
   return (
-    <div className="border border-border/30 rounded-xl overflow-hidden">
+    <div className="border border-border/30 rounded-xl overflow-hidden mb-6">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between p-4 bg-muted/20 hover:bg-muted/30 transition-colors"
@@ -135,17 +132,33 @@ function AdminSettings() {
     DEFAULT_CREDIT_SETTINGS,
   )
   const [savingCredits, setSavingCredits] = useState(false)
-  const [profitPreview, setProfitPreview] = useState<
-    Array<{
-      tier: UserRole
-      actualCostTHB: number
-      chargeTHB: number
-      profitTHB: number
-      credits: number
-    }>
-  >([])
-  const [previewInputTokens, setPreviewInputTokens] = useState(1000)
-  const [previewOutputTokens, setPreviewOutputTokens] = useState(400)
+
+  // Tier pricing in user-friendly format (price per credit in THB)
+  const [tierPricePerCredit, setTierPricePerCredit] = useState<Record<UserRole, number>>({
+    user: 0.10,    // ฿0.10 per credit for free tier
+    plus: 0.08,    // ฿0.08 per credit
+    pro: 0.06,     // ฿0.06 per credit
+    ultra: 0.04,   // ฿0.04 per credit
+    admin: 0,      // Free for admin
+  })
+
+  // Monthly credits per tier (editable)
+  const [tierMonthlyCredits, setTierMonthlyCredits] = useState<Record<UserRole, number>>({
+    user: 3,       // Free tier gets 3 credits/month
+    plus: 30,      // Hero tier
+    pro: 100,      // Legend tier
+    ultra: 500,    // Enterprise tier
+    admin: 0,      // Unlimited (shown as ∞)
+  })
+
+  // Package price per tier (editable) - THB per month
+  const [tierPackagePrice, setTierPackagePrice] = useState<Record<UserRole, number>>({
+    user: 0,       // Free
+    plus: 290,     // Hero
+    pro: 790,      // Legend
+    ultra: 2990,   // Enterprise
+    admin: 0,      // Free
+  })
 
   useEffect(() => {
     const fetchData = async () => {
@@ -157,6 +170,37 @@ function AdminSettings() {
         ])
         setSettings(settingsData)
         setCreditSettings(creditData)
+
+        // Convert from markup/fixed to price per credit
+        const conversionRate = creditData.creditConversionRate || 100
+        const newPrices: Record<UserRole, number> = {} as Record<UserRole, number>
+
+        for (const tier of ['user', 'plus', 'pro', 'ultra', 'admin'] as UserRole[]) {
+          if (creditData.tierPricingConfig.mode === 'fixed') {
+            // Fixed mode: price per 1K tokens → price per credit
+            // 1K tokens ≈ X credits, so price per credit = fixed / (1000 * tokens_per_credit_ratio)
+            newPrices[tier] = creditData.tierPricingConfig.tiers[tier].fixed / 100
+          } else {
+            // Markup mode: calculate from actual cost
+            // This is approximate, will be calculated properly
+            newPrices[tier] = tier === 'admin' ? 0 :
+              tier === 'user' ? 0.10 :
+              tier === 'plus' ? 0.08 :
+              tier === 'pro' ? 0.06 :
+              0.04
+          }
+        }
+        setTierPricePerCredit(newPrices)
+
+        // Load tier monthly credits if saved
+        if (settingsData.tierMonthlyCredits) {
+          setTierMonthlyCredits(settingsData.tierMonthlyCredits as Record<UserRole, number>)
+        }
+
+        // Load tier package prices if saved
+        if (settingsData.tierPackagePrice) {
+          setTierPackagePrice(settingsData.tierPackagePrice as Record<UserRole, number>)
+        }
       } catch (error) {
         console.error('Failed to fetch settings:', error)
         toast.error('Failed to load settings')
@@ -168,25 +212,58 @@ function AdminSettings() {
     fetchData()
   }, [])
 
-  // Fetch profit preview when tokens change
-  useEffect(() => {
-    const fetchProfitPreview = async () => {
-      try {
-        const preview = await getProfitPreviewAllTiers({
-          data: {
-            inputTokens: previewInputTokens,
-            outputTokens: previewOutputTokens,
-          },
-        })
-        setProfitPreview(preview)
-      } catch (error) {
-        console.error('Failed to fetch profit preview:', error)
-      }
-    }
+  // Calculate all credit metrics from API pricing
+  // Admin sets: tokensPerCredit (how many tokens = 1 credit)
+  const calculateCreditMetrics = () => {
+    // Weighted average price per token (assume 60% input, 40% output for typical usage)
+    const inputRatio = 0.6
+    const outputRatio = 0.4
+    const weightedPricePerTokenUSD = (
+      (creditSettings.geminiInputPrice * inputRatio) +
+      (creditSettings.geminiOutputPrice * outputRatio)
+    ) / 1_000_000
 
-    const timer = setTimeout(fetchProfitPreview, 300)
-    return () => clearTimeout(timer)
-  }, [previewInputTokens, previewOutputTokens, creditSettings])
+    // Cost in THB per token
+    const thbPerToken = weightedPricePerTokenUSD * creditSettings.usdToThbRate
+
+    // How many tokens can ฿1 buy at cost?
+    const tokensPerBaht = 1 / thbPerToken
+
+    // Admin-defined: 1 credit = X tokens (default 500 ≈ 1 typical request)
+    const tokensPerCredit = creditSettings.tokensPerCredit || 500
+
+    // Calculate how much ฿ that costs
+    const thbPerCredit = tokensPerCredit * thbPerToken
+
+    // How many credits can you get for ฿1?
+    const creditsPerBaht = Math.round(1 / thbPerCredit)
+
+    return {
+      creditsPerBaht,
+      tokensPerBaht: Math.round(tokensPerBaht),
+      tokensPerCredit,
+      thbPerCredit,
+      usdPerCredit: thbPerCredit / creditSettings.usdToThbRate,
+    }
+  }
+
+  // Get calculated conversion rate
+  const calculatedRate = calculateCreditMetrics()
+
+  // Use calculated rate for cost calculations
+  const calculateCostPerCredit = () => {
+    const thbPerCredit = calculatedRate.thbPerCredit
+    const usdPerCredit = calculatedRate.usdPerCredit
+    const tokensPerCredit = calculatedRate.tokensPerCredit
+
+    return {
+      thbPerCredit,
+      usdPerCredit,
+      tokensPerCredit,
+      actualCostThbPerCredit: thbPerCredit,
+      actualCostUsdPerCredit: usdPerCredit,
+    }
+  }
 
   const handleSaveAll = async () => {
     if (!settings) return
@@ -194,10 +271,38 @@ function AdminSettings() {
     setSaving(true)
     setSavingCredits(true)
     try {
+      // Convert price per credit back to tier config
+      const updatedTierConfig = { ...creditSettings.tierPricingConfig }
+      updatedTierConfig.mode = 'fixed' // Use fixed mode for simplicity
+
+      for (const tier of ['user', 'plus', 'pro', 'ultra', 'admin'] as UserRole[]) {
+        // Convert price per credit to price per 1K tokens
+        // If 1 credit = ฿X, then price per 1K tokens = X * 100 (approx)
+        updatedTierConfig.tiers[tier] = {
+          ...updatedTierConfig.tiers[tier],
+          fixed: tierPricePerCredit[tier] * 100,
+          markup: 0, // Not used in fixed mode
+        }
+      }
+
+      const updatedCreditSettings = {
+        ...creditSettings,
+        tierPricingConfig: updatedTierConfig,
+      }
+
+      // Include tierMonthlyCredits and tierPackagePrice in settings
+      const settingsWithCredits = {
+        ...settings,
+        tierMonthlyCredits,
+        tierPackagePrice,
+      }
+
       await Promise.all([
-        updateSystemSettings({ data: settings }),
-        saveAllCreditSettings({ data: creditSettings }),
+        updateSystemSettings({ data: settingsWithCredits }),
+        saveAllCreditSettings({ data: updatedCreditSettings }),
       ])
+
+      setCreditSettings(updatedCreditSettings)
       toast.success('Settings saved successfully')
     } catch (error) {
       console.error('Failed to save settings:', error)
@@ -208,8 +313,29 @@ function AdminSettings() {
     }
   }
 
-  const resetCreditSettingsToDefaults = () => {
+  const resetToDefaults = () => {
     setCreditSettings(DEFAULT_CREDIT_SETTINGS)
+    setTierPricePerCredit({
+      user: 0.10,
+      plus: 0.08,
+      pro: 0.06,
+      ultra: 0.04,
+      admin: 0,
+    })
+    setTierMonthlyCredits({
+      user: 3,
+      plus: 30,
+      pro: 100,
+      ultra: 500,
+      admin: 0,
+    })
+    setTierPackagePrice({
+      user: 0,
+      plus: 290,
+      pro: 790,
+      ultra: 2990,
+      admin: 0,
+    })
     toast.success('Reset to default values (not saved yet)')
   }
 
@@ -226,42 +352,36 @@ function AdminSettings() {
     })
   }
 
-  const updateTierPricing = (
-    tier: UserRole,
-    field: 'markup' | 'fixed',
-    value: number,
-  ) => {
-    setCreditSettings({
-      ...creditSettings,
-      tierPricingConfig: {
-        ...creditSettings.tierPricingConfig,
-        tiers: {
-          ...creditSettings.tierPricingConfig.tiers,
-          [tier]: {
-            ...creditSettings.tierPricingConfig.tiers[tier],
-            [field]: value,
-          },
-        },
-      },
-    })
-  }
-
-  const updatePricingMode = (mode: 'markup' | 'fixed') => {
-    setCreditSettings({
-      ...creditSettings,
-      tierPricingConfig: {
-        ...creditSettings.tierPricingConfig,
-        mode,
-      },
-    })
-  }
-
-  const tierLabels: Record<UserRole, { name: string; color: string; bg: string }> = {
-    user: { name: 'Free', color: 'text-gray-400', bg: 'bg-gray-500/20' },
-    plus: { name: 'Plus', color: 'text-blue-400', bg: 'bg-blue-500/20' },
-    pro: { name: 'Pro', color: 'text-purple-400', bg: 'bg-purple-500/20' },
-    ultra: { name: 'Ultra', color: 'text-amber-400', bg: 'bg-amber-500/20' },
-    admin: { name: 'Admin', color: 'text-red-400', bg: 'bg-red-500/20' },
+  const tierLabels: Record<UserRole, {
+    name: string
+    color: string
+    bg: string
+  }> = {
+    user: {
+      name: 'Free',
+      color: 'text-gray-400',
+      bg: 'bg-gray-500/20',
+    },
+    plus: {
+      name: 'Plus',
+      color: 'text-blue-400',
+      bg: 'bg-blue-500/20',
+    },
+    pro: {
+      name: 'Pro',
+      color: 'text-purple-400',
+      bg: 'bg-purple-500/20',
+    },
+    ultra: {
+      name: 'Ultra',
+      color: 'text-amber-400',
+      bg: 'bg-amber-500/20',
+    },
+    admin: {
+      name: 'Admin',
+      color: 'text-red-400',
+      bg: 'bg-red-500/20',
+    },
   }
 
   const updateSetting = <K extends keyof SystemSettings>(
@@ -282,34 +402,17 @@ function AdminSettings() {
     )
   }
 
-  // Calculate estimated credits per request for display
-  const avgTokens = previewInputTokens + previewOutputTokens
-  const freeUserPreview = profitPreview.find((p) => p.tier === 'user')
-  const estimatedCreditsPerRequest = freeUserPreview?.credits || 1
+  const costInfo = calculateCostPerCredit()
 
   return (
     <AdminLayout title="Settings" activeItem="settings">
       <div className="space-y-6 max-w-4xl">
-        {/* Header with Save All button */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Settings</h1>
-            <p className="text-sm text-muted-foreground">
-              Configure your platform settings
-            </p>
-          </div>
-          <Button
-            onClick={handleSaveAll}
-            disabled={saving || savingCredits}
-            className="rounded-xl px-6"
-          >
-            {saving || savingCredits ? (
-              <Loader2 className="w-4 h-4 animate-spin mr-2" />
-            ) : (
-              <Save className="w-4 h-4 mr-2" />
-            )}
-            Save All
-          </Button>
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Settings</h1>
+          <p className="text-sm text-muted-foreground">
+            Configure your platform settings
+          </p>
         </div>
 
         {/* General Settings */}
@@ -400,468 +503,483 @@ function AdminSettings() {
                   AI Credits & Pricing
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  Configure credit system and tier pricing
+                  ตั้งราคาและดูต้นทุน-กำไรแต่ละ tier
                 </p>
               </div>
             </div>
-            <button
-              onClick={resetCreditSettingsToDefaults}
-              className="px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors flex items-center gap-1"
-            >
-              <RotateCcw className="w-3 h-3" />
-              Reset
-            </button>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Enable AI</span>
+                <Toggle
+                  checked={settings?.enableAIGeneration ?? true}
+                  onChange={(checked) => updateSetting('enableAIGeneration', checked)}
+                />
+              </div>
+              <button
+                onClick={resetToDefaults}
+                className="px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors flex items-center gap-1"
+              >
+                <RotateCcw className="w-3 h-3" />
+                Reset
+              </button>
+            </div>
           </div>
 
-          {/* Quick Settings - Most Important */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            {/* Free Credits for New Users */}
-            <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-500/10 to-green-500/10 border border-emerald-500/20">
-              <div className="flex items-center gap-2 mb-2">
-                <Users className="w-4 h-4 text-emerald-500" />
-                <span className="text-sm font-medium text-foreground">
-                  New User Credits
-                </span>
-              </div>
-              <Input
-                type="number"
-                min={0}
-                value={settings?.aiCreditsPerUser || 100}
-                onChange={(e) =>
-                  updateSetting('aiCreditsPerUser', parseInt(e.target.value) || 0)
-                }
-                className="bg-card/50 border-border/50 rounded-xl text-lg font-bold"
-              />
-              <p className="text-xs text-muted-foreground mt-2">
-                ~{Math.floor((settings?.aiCreditsPerUser || 100) / estimatedCreditsPerRequest)} free requests
-              </p>
+          {/* API Pricing - moved to top */}
+          <div className="mb-6 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
+            <div className="flex items-center gap-2 mb-4">
+              <Zap className="w-4 h-4 text-purple-400" />
+              <span className="text-sm font-medium text-purple-400">API Pricing (Gemini 2.0 Flash)</span>
             </div>
-
-            {/* Credits per THB */}
-            <div className="p-4 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20">
-              <div className="flex items-center gap-2 mb-2">
-                <Coins className="w-4 h-4 text-amber-500" />
-                <span className="text-sm font-medium text-foreground">
-                  Credits per ฿1
-                </span>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  Input ($/1M tokens)
+                </label>
+                <NumberInput
+                  step={0.01}
+                  min={0}
+                  allowDecimal
+                  decimalPlaces={2}
+                  value={creditSettings.geminiInputPrice}
+                  onChange={(value) =>
+                    setCreditSettings({
+                      ...creditSettings,
+                      geminiInputPrice: value || 0.1,
+                    })
+                  }
+                  className="bg-card/50 border-border/50 rounded-xl"
+                />
               </div>
-              <Input
-                type="number"
-                min={1}
-                value={creditSettings.creditConversionRate}
-                onChange={(e) =>
-                  setCreditSettings({
-                    ...creditSettings,
-                    creditConversionRate: parseInt(e.target.value) || 100,
-                  })
-                }
-                className="bg-card/50 border-border/50 rounded-xl text-lg font-bold"
-              />
-              <p className="text-xs text-muted-foreground mt-2">
-                1 credit = ฿{(1 / creditSettings.creditConversionRate).toFixed(4)}
-              </p>
-            </div>
-
-            {/* USD to THB */}
-            <div className="p-4 rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="w-4 h-4 text-blue-500" />
-                <span className="text-sm font-medium text-foreground">
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  Output ($/1M tokens)
+                </label>
+                <NumberInput
+                  step={0.01}
+                  min={0}
+                  allowDecimal
+                  decimalPlaces={2}
+                  value={creditSettings.geminiOutputPrice}
+                  onChange={(value) =>
+                    setCreditSettings({
+                      ...creditSettings,
+                      geminiOutputPrice: value || 0.4,
+                    })
+                  }
+                  className="bg-card/50 border-border/50 rounded-xl"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
                   USD → THB Rate
-                </span>
+                </label>
+                <NumberInput
+                  step={0.1}
+                  min={0}
+                  allowDecimal
+                  decimalPlaces={1}
+                  value={creditSettings.usdToThbRate}
+                  onChange={(value) =>
+                    setCreditSettings({
+                      ...creditSettings,
+                      usdToThbRate: value || 35,
+                    })
+                  }
+                  className="bg-card/50 border-border/50 rounded-xl"
+                />
               </div>
-              <Input
-                type="number"
-                step="0.1"
-                min={0}
-                value={creditSettings.usdToThbRate}
-                onChange={(e) =>
-                  setCreditSettings({
-                    ...creditSettings,
-                    usdToThbRate: parseFloat(e.target.value) || 35,
-                  })
-                }
-                className="bg-card/50 border-border/50 rounded-xl text-lg font-bold"
-              />
-              <p className="text-xs text-muted-foreground mt-2">
-                $1 = ฿{creditSettings.usdToThbRate}
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  Tokens per Credit
+                </label>
+                <NumberInput
+                  step={50}
+                  min={1}
+                  value={creditSettings.tokensPerCredit || 500}
+                  onChange={(value) =>
+                    setCreditSettings({
+                      ...creditSettings,
+                      tokensPerCredit: value || 500,
+                    })
+                  }
+                  className="bg-card/50 border-border/50 rounded-xl"
+                />
+              </div>
+            </div>
+            {/* Calculated values */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 rounded-lg bg-muted/30">
+              <div className="text-center">
+                <div className="text-xs text-muted-foreground mb-1">1 Credit =</div>
+                <div className="font-mono font-bold text-foreground">
+                  {calculatedRate.tokensPerCredit.toLocaleString()} <span className="text-xs font-normal text-muted-foreground">tokens</span>
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-xs text-muted-foreground mb-1">1 Credit =</div>
+                <div className="font-mono font-bold text-foreground">
+                  ฿{calculatedRate.thbPerCredit.toFixed(4)}
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-xs text-muted-foreground mb-1">฿1 =</div>
+                <div className="font-mono font-bold text-foreground">
+                  {calculatedRate.creditsPerBaht.toLocaleString()} <span className="text-xs font-normal text-muted-foreground">credits</span>
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-xs text-muted-foreground mb-1">฿1 =</div>
+                <div className="font-mono font-bold text-foreground">
+                  {calculatedRate.tokensPerBaht.toLocaleString()} <span className="text-xs font-normal text-muted-foreground">tokens</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Token Estimation Ratios - Collapsible */}
+          <CollapsibleSection
+            title="Token Estimation Ratios"
+            description="Output/Input ratio for each mode"
+            icon={Sparkles}
+            iconBg="bg-pink-500"
+            defaultOpen={false}
+          >
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  Summarize (%)
+                </label>
+                <NumberInput
+                  step={5}
+                  min={0}
+                  max={200}
+                  value={creditSettings.tokenEstimationRatios.summarize}
+                  onChange={(value) => updateTokenRatio('summarize', value)}
+                  className="bg-card/50 border-border/50 rounded-xl"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  Lesson (%)
+                </label>
+                <NumberInput
+                  step={5}
+                  min={0}
+                  max={200}
+                  value={creditSettings.tokenEstimationRatios.lesson}
+                  onChange={(value) => updateTokenRatio('lesson', value)}
+                  className="bg-card/50 border-border/50 rounded-xl"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  Translate (%)
+                </label>
+                <NumberInput
+                  step={5}
+                  min={0}
+                  max={200}
+                  value={creditSettings.tokenEstimationRatios.translate}
+                  onChange={(value) => updateTokenRatio('translate', value)}
+                  className="bg-card/50 border-border/50 rounded-xl"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  Easy Explain (+%)
+                </label>
+                <NumberInput
+                  step={5}
+                  min={0}
+                  max={100}
+                  value={creditSettings.tokenEstimationRatios.easyExplainModifier}
+                  onChange={(value) => updateTokenRatio('easyExplainModifier', value)}
+                  className="bg-card/50 border-border/50 rounded-xl"
+                />
+              </div>
+            </div>
+          </CollapsibleSection>
+
+          {/* New User Credits - Collapsible */}
+          <CollapsibleSection
+            title="Free Credits for New Users"
+            description="จำนวน credits ที่ user ใหม่ได้รับ"
+            icon={Users}
+            iconBg="bg-emerald-500"
+            defaultOpen={false}
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Credits ที่จะถูกเพิ่มให้ user ใหม่อัตโนมัติเมื่อสมัคร
               </p>
+              <div className="flex items-center gap-2">
+                <NumberInput
+                  min={0}
+                  value={settings?.aiCreditsPerUser || 100}
+                  onChange={(value) => updateSetting('aiCreditsPerUser', value)}
+                  className="w-24 bg-card/50 border-border/50 rounded-xl text-right font-bold"
+                />
+                <span className="text-sm text-muted-foreground">credits</span>
+              </div>
             </div>
-          </div>
+          </CollapsibleSection>
 
-          {/* Tier Pricing - Simplified */}
+          {/* Tier Pricing Table */}
           <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-foreground">
-                Tier Pricing
-              </h3>
-              <div className="flex items-center gap-2 text-xs">
-                <label className="flex items-center gap-1.5 cursor-pointer px-3 py-1.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                  <input
-                    type="radio"
-                    name="pricingMode"
-                    checked={creditSettings.tierPricingConfig.mode === 'markup'}
-                    onChange={() => updatePricingMode('markup')}
-                    className="w-3 h-3"
-                  />
-                  <span>Markup %</span>
-                </label>
-                <label className="flex items-center gap-1.5 cursor-pointer px-3 py-1.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                  <input
-                    type="radio"
-                    name="pricingMode"
-                    checked={creditSettings.tierPricingConfig.mode === 'fixed'}
-                    onChange={() => updatePricingMode('fixed')}
-                    className="w-3 h-3"
-                  />
-                  <span>Fixed ฿/1K</span>
-                </label>
-              </div>
+            <h3 className="text-sm font-medium text-foreground mb-4">
+              ราคาและกำไรแต่ละ Tier
+            </h3>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border/50">
+                    <th className="text-left py-3 px-3 font-medium text-muted-foreground">Tier</th>
+                    <th className="text-center py-3 px-3 font-medium text-muted-foreground">แพ็กเกจ/เดือน</th>
+                    <th className="text-center py-3 px-3 font-medium text-muted-foreground">
+                      <div className="flex flex-col">
+                        <span>ต้นทุน API</span>
+                        <span className="text-xs text-muted-foreground/60">(คำนวณ)</span>
+                      </div>
+                    </th>
+                    <th className="text-center py-3 px-3 font-medium text-muted-foreground">Credits</th>
+                    <th className="text-center py-3 px-3 font-medium text-muted-foreground">
+                      <div className="flex items-center justify-center gap-1">
+                        ราคา/Credit
+                        <span className="text-xs text-muted-foreground/60">(฿)</span>
+                      </div>
+                    </th>
+                    <th className="text-center py-3 px-3 font-medium text-muted-foreground">ต้นทุน/Credit</th>
+                    <th className="text-center py-3 px-3 font-medium text-muted-foreground">กำไร/Credit</th>
+                    <th className="text-center py-3 px-3 font-medium text-muted-foreground">Margin</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(['user', 'plus', 'pro', 'ultra', 'admin'] as UserRole[]).map((tier) => {
+                    const tierInfo = tierLabels[tier]
+                    const pricePerCredit = tierPricePerCredit[tier]
+                    const monthlyCredits = tierMonthlyCredits[tier]
+
+                    // Cost per credit = actual THB value of 1 credit (from API pricing)
+                    const costPerCredit = tier === 'admin' ? 0 : costInfo.thbPerCredit
+                    const profitPerCredit = pricePerCredit - costPerCredit
+                    const marginPercent = pricePerCredit > 0 ? ((profitPerCredit / pricePerCredit) * 100) : 0
+                    const isProfit = profitPerCredit >= 0
+
+                    // Calculate API cost for this tier's credits
+                    const apiCostForTier = monthlyCredits * costInfo.thbPerCredit
+
+                    return (
+                      <tr key={tier} className="border-b border-border/30 hover:bg-muted/20">
+                        <td className="py-3 px-3">
+                          <div className="flex items-center gap-2">
+                            <div className={cn('w-2 h-2 rounded-full', tierInfo.bg.replace('/20', ''))} />
+                            <span className={cn('font-medium', tierInfo.color)}>
+                              {tierInfo.name}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          {tier === 'user' || tier === 'admin' ? (
+                            <span className="text-muted-foreground">Free</span>
+                          ) : (
+                            <div className="flex items-center justify-center gap-1">
+                              <span className="text-muted-foreground">฿</span>
+                              <NumberInput
+                                min={0}
+                                value={tierPackagePrice[tier]}
+                                onChange={(value) =>
+                                  setTierPackagePrice({
+                                    ...tierPackagePrice,
+                                    [tier]: value,
+                                  })
+                                }
+                                className="w-20 h-8 bg-card/50 border-border/50 rounded-lg text-sm text-center"
+                              />
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          {tier === 'admin' ? (
+                            <span className="text-muted-foreground">-</span>
+                          ) : (
+                            <span className="text-purple-400 font-mono text-xs">
+                              ฿{apiCostForTier.toFixed(2)}
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          {tier === 'admin' ? (
+                            <span className="text-amber-500 font-medium">∞</span>
+                          ) : (
+                            <NumberInput
+                              min={0}
+                              value={tierMonthlyCredits[tier]}
+                              onChange={(value) =>
+                                setTierMonthlyCredits({
+                                  ...tierMonthlyCredits,
+                                  [tier]: value,
+                                })
+                              }
+                              className="w-16 h-8 bg-card/50 border-border/50 rounded-lg text-sm text-center mx-auto text-amber-500 font-medium"
+                            />
+                          )}
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          {tier === 'admin' || tier === 'user' ? (
+                            <span className="text-muted-foreground">-</span>
+                          ) : (
+                            <NumberInput
+                              step={0.01}
+                              min={0}
+                              allowDecimal
+                              decimalPlaces={2}
+                              value={pricePerCredit}
+                              onChange={(value) =>
+                                setTierPricePerCredit({
+                                  ...tierPricePerCredit,
+                                  [tier]: value,
+                                })
+                              }
+                              className="w-20 h-8 bg-card/50 border-border/50 rounded-lg text-sm text-center mx-auto"
+                            />
+                          )}
+                        </td>
+                        <td className="py-3 px-3 text-center text-muted-foreground">
+                          {tier === 'admin' || tier === 'user' ? '-' : `฿${costPerCredit.toFixed(4)}`}
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          {tier === 'admin' || tier === 'user' ? (
+                            '-'
+                          ) : (
+                            <span className={cn(
+                              'font-medium',
+                              isProfit ? 'text-emerald-500' : 'text-red-500'
+                            )}>
+                              {isProfit ? '+' : ''}฿{profitPerCredit.toFixed(4)}
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          {tier === 'admin' || tier === 'user' ? (
+                            '-'
+                          ) : (
+                            <span className={cn(
+                              'text-xs font-medium px-2 py-0.5 rounded-full',
+                              isProfit ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+                            )}>
+                              {marginPercent.toFixed(0)}%
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              {(['user', 'plus', 'pro', 'ultra', 'admin'] as UserRole[]).map((tier) => {
-                const preview = profitPreview.find((p) => p.tier === tier)
-                return (
-                  <div
-                    key={tier}
-                    className={cn(
-                      'p-3 rounded-xl border',
-                      tierLabels[tier].bg,
-                      'border-border/30',
-                    )}
-                  >
-                    <div className={cn('text-sm font-medium mb-2', tierLabels[tier].color)}>
-                      {tierLabels[tier].name}
-                    </div>
-                    {creditSettings.tierPricingConfig.mode === 'markup' ? (
-                      <div className="flex items-center gap-1">
-                        <Input
-                          type="number"
-                          min={0}
-                          value={creditSettings.tierPricingConfig.tiers[tier].markup}
-                          onChange={(e) =>
-                            updateTierPricing(tier, 'markup', parseInt(e.target.value) || 0)
-                          }
-                          className="h-8 bg-card/50 border-border/50 rounded-lg text-sm"
-                        />
-                        <span className="text-xs text-muted-foreground">%</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs text-muted-foreground">฿</span>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min={0}
-                          value={creditSettings.tierPricingConfig.tiers[tier].fixed}
-                          onChange={(e) =>
-                            updateTierPricing(tier, 'fixed', parseFloat(e.target.value) || 0)
-                          }
-                          className="h-8 bg-card/50 border-border/50 rounded-lg text-sm"
-                        />
-                      </div>
-                    )}
-                    {preview && (
-                      <div className="mt-2 text-xs">
-                        <span className="text-amber-500 font-medium">{preview.credits}</span>
-                        <span className="text-muted-foreground"> credits</span>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Profit Preview */}
-          <div className="p-4 rounded-xl bg-muted/20 border border-border/30">
-            <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="w-4 h-4 text-emerald-500" />
-              <span className="text-sm font-medium">Profit Preview</span>
-              <div className="flex-1" />
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-muted-foreground">Tokens:</span>
-                <Input
-                  type="number"
-                  min={0}
-                  value={previewInputTokens}
-                  onChange={(e) => setPreviewInputTokens(parseInt(e.target.value) || 0)}
-                  className="w-20 h-7 bg-card/50 border-border/50 rounded-lg text-xs"
-                  placeholder="Input"
-                />
-                <span className="text-muted-foreground">+</span>
-                <Input
-                  type="number"
-                  min={0}
-                  value={previewOutputTokens}
-                  onChange={(e) => setPreviewOutputTokens(parseInt(e.target.value) || 0)}
-                  className="w-20 h-7 bg-card/50 border-border/50 rounded-lg text-xs"
-                  placeholder="Output"
-                />
-              </div>
-            </div>
-
-            {profitPreview.length > 0 && (
-              <div className="grid grid-cols-5 gap-2 text-xs">
-                {profitPreview.map((row) => (
-                  <div
-                    key={row.tier}
-                    className="p-2 rounded-lg bg-card/50 text-center"
-                  >
-                    <div className={cn('font-medium mb-1', tierLabels[row.tier].color)}>
-                      {tierLabels[row.tier].name}
-                    </div>
-                    <div className="text-muted-foreground">
-                      Cost: ฿{row.actualCostTHB.toFixed(4)}
-                    </div>
-                    <div className={cn(
-                      'font-medium',
-                      row.profitTHB >= 0 ? 'text-emerald-500' : 'text-red-500',
-                    )}>
-                      {row.profitTHB >= 0 ? '+' : ''}฿{row.profitTHB.toFixed(4)}
-                    </div>
-                  </div>
-                ))}
+            {/* Warning if any tier has negative margin */}
+            {(['user', 'plus', 'pro', 'ultra'] as UserRole[]).some(tier => {
+              return tierPricePerCredit[tier] < costInfo.thbPerCredit
+            }) && (
+              <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-red-400">
+                  บาง tier มีราคาต่ำกว่าต้นทุน! ควรปรับราคาให้สูงกว่าต้นทุนเพื่อไม่ให้ขาดทุน
+                </p>
               </div>
             )}
           </div>
 
-          {/* Advanced Settings - Collapsible */}
-          <div className="mt-6 space-y-3">
-            <CollapsibleSection
-              title="API Pricing"
-              description="Gemini API token prices"
-              icon={Zap}
-              iconBg="bg-purple-500"
-              defaultOpen={false}
-            >
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1">
-                    Input Price ($/1M tokens)
-                  </label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min={0}
-                    value={creditSettings.geminiInputPrice}
-                    onChange={(e) =>
-                      setCreditSettings({
-                        ...creditSettings,
-                        geminiInputPrice: parseFloat(e.target.value) || 0.1,
-                      })
-                    }
-                    className="bg-card/50 border-border/50 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1">
-                    Output Price ($/1M tokens)
-                  </label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min={0}
-                    value={creditSettings.geminiOutputPrice}
-                    onChange={(e) =>
-                      setCreditSettings({
-                        ...creditSettings,
-                        geminiOutputPrice: parseFloat(e.target.value) || 0.4,
-                      })
-                    }
-                    className="bg-card/50 border-border/50 rounded-xl"
-                  />
-                </div>
-              </div>
-              <div className="mt-3 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-xs text-blue-400 flex items-start gap-2">
-                <Info className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>
-                  Gemini 2.0 Flash: $0.10/1M input, $0.40/1M output.
-                  These values are used for cost estimation.
-                </span>
-              </div>
-            </CollapsibleSection>
+          {/* Profit Preview (Worst Case) */}
+          <div className="p-4 rounded-xl bg-muted/20 border border-border/30">
+            <div className="flex items-center gap-2 mb-3">
+              <TrendingUp className="w-4 h-4 text-emerald-500" />
+              <span className="text-sm font-medium">กำไรต่อ User (Worst Case - ใช้ credits หมด)</span>
+            </div>
 
-            <CollapsibleSection
-              title="Token Estimation Ratios"
-              description="Output/Input ratio by mode"
-              icon={Sparkles}
-              iconBg="bg-pink-500"
-              defaultOpen={false}
-            >
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1">
-                    Summarize
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      step="0.05"
-                      min={0}
-                      max={2}
-                      value={creditSettings.tokenEstimationRatios.summarize}
-                      onChange={(e) =>
-                        updateTokenRatio('summarize', parseFloat(e.target.value) || 0)
-                      }
-                      className="bg-card/50 border-border/50 rounded-xl"
-                    />
-                    <span className="text-xs text-muted-foreground w-10">
-                      {Math.round(creditSettings.tokenEstimationRatios.summarize * 100)}%
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1">
-                    Lesson
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      step="0.05"
-                      min={0}
-                      max={2}
-                      value={creditSettings.tokenEstimationRatios.lesson}
-                      onChange={(e) =>
-                        updateTokenRatio('lesson', parseFloat(e.target.value) || 0)
-                      }
-                      className="bg-card/50 border-border/50 rounded-xl"
-                    />
-                    <span className="text-xs text-muted-foreground w-10">
-                      {Math.round(creditSettings.tokenEstimationRatios.lesson * 100)}%
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1">
-                    Translate
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      step="0.05"
-                      min={0}
-                      max={2}
-                      value={creditSettings.tokenEstimationRatios.translate}
-                      onChange={(e) =>
-                        updateTokenRatio('translate', parseFloat(e.target.value) || 0)
-                      }
-                      className="bg-card/50 border-border/50 rounded-xl"
-                    />
-                    <span className="text-xs text-muted-foreground w-10">
-                      {Math.round(creditSettings.tokenEstimationRatios.translate * 100)}%
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1">
-                    Easy Explain (+)
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      step="0.05"
-                      min={0}
-                      max={1}
-                      value={creditSettings.tokenEstimationRatios.easyExplainModifier}
-                      onChange={(e) =>
-                        updateTokenRatio('easyExplainModifier', parseFloat(e.target.value) || 0)
-                      }
-                      className="bg-card/50 border-border/50 rounded-xl"
-                    />
-                    <span className="text-xs text-muted-foreground w-10">
-                      +{Math.round(creditSettings.tokenEstimationRatios.easyExplainModifier * 100)}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </CollapsibleSection>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {(['user', 'plus', 'pro', 'ultra'] as UserRole[]).map((tier) => {
+                const tierInfo = tierLabels[tier]
+                const packagePrice = tierPackagePrice[tier]
+                const monthlyCredits = tierMonthlyCredits[tier]
+                // Worst case: user uses all credits
+                const maxApiCost = monthlyCredits * costInfo.thbPerCredit
+                const profit = packagePrice - maxApiCost
+                const marginPercent = packagePrice > 0 ? (profit / packagePrice) * 100 : 0
 
-            <CollapsibleSection
-              title="Usage Limits"
-              description="Max activities, questions, file size"
-              icon={HardDrive}
-              iconBg="bg-blue-500"
-              defaultOpen={false}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1">
-                    Max Activities per User
-                  </label>
-                  <Input
-                    type="number"
-                    value={settings?.maxActivitiesPerUser || 100}
-                    onChange={(e) =>
-                      updateSetting('maxActivitiesPerUser', parseInt(e.target.value) || 100)
-                    }
-                    min={1}
-                    className="bg-card/50 border-border/50 rounded-xl"
-                  />
+                return (
+                  <div key={tier} className={cn('p-3 rounded-lg', tierInfo.bg)}>
+                    <div className={cn('text-xs font-medium mb-1', tierInfo.color)}>
+                      {tierInfo.name}
+                    </div>
+                    <div className="text-lg font-bold text-foreground">
+                      {tier === 'user' ? 'Free' : `฿${packagePrice.toLocaleString()}`}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      ต้นทุน max: ฿{maxApiCost.toFixed(2)}
+                    </div>
+                    <div className={cn(
+                      'text-xs font-medium',
+                      profit >= 0 ? 'text-emerald-500' : 'text-red-500'
+                    )}>
+                      {tier === 'user' ? (
+                        <span className="text-amber-500">ขาดทุน: ฿{maxApiCost.toFixed(2)}</span>
+                      ) : (
+                        <>กำไร: {profit >= 0 ? '+' : ''}฿{profit.toFixed(2)} ({marginPercent.toFixed(0)}%)</>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Free Tier Cost Summary */}
+            {(() => {
+              const freeCredits = tierMonthlyCredits.user
+              const costPerFreeUser = freeCredits * costInfo.thbPerCredit
+              const userCounts = [100, 1000, 10000, 100000]
+
+              return (
+                <div className="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <p className="text-xs font-medium text-amber-400 mb-2">
+                    Free Tier Cost Analysis (ขาดทุน ฿{costPerFreeUser.toFixed(4)}/user/เดือน)
+                  </p>
+                  <div className="flex flex-wrap gap-3 text-xs">
+                    {userCounts.map((count) => (
+                      <div key={count} className="text-amber-300/80">
+                        <span className="text-amber-400">{count.toLocaleString()}</span> users = ฿{(costPerFreeUser * count).toFixed(2)}/เดือน
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1">
-                    Max Questions per Activity
-                  </label>
-                  <Input
-                    type="number"
-                    value={settings?.maxQuestionsPerActivity || 50}
-                    onChange={(e) =>
-                      updateSetting('maxQuestionsPerActivity', parseInt(e.target.value) || 50)
-                    }
-                    min={1}
-                    className="bg-card/50 border-border/50 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
-                    <FileUp className="w-3 h-3" />
-                    Max File Upload (MB)
-                  </label>
-                  <Input
-                    type="number"
-                    value={settings?.maxFileUploadSizeMB || 5}
-                    onChange={(e) =>
-                      updateSetting('maxFileUploadSizeMB', parseInt(e.target.value) || 5)
-                    }
-                    min={1}
-                    className="bg-card/50 border-border/50 rounded-xl"
-                  />
-                </div>
-              </div>
-            </CollapsibleSection>
+              )
+            })()}
           </div>
+
         </motion.div>
 
-        {/* Feature Toggles */}
+        {/* Save Button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6"
+          className="flex justify-end"
         >
-          <div className="flex items-center gap-2 mb-6">
-            <div className="p-2 rounded-xl bg-emerald-500">
-              <ToggleRight className="w-4 h-4 text-white" />
-            </div>
-            <h2 className="text-lg font-semibold text-foreground">Features</h2>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between py-3 px-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
-              <div>
-                <p className="font-medium text-foreground">Enable AI Generation</p>
-                <p className="text-sm text-muted-foreground">
-                  Allow AI-powered content generation
-                </p>
-              </div>
-              <Toggle
-                checked={settings?.enableAIGeneration ?? true}
-                onChange={(checked) => updateSetting('enableAIGeneration', checked)}
-              />
-            </div>
-          </div>
+          <Button
+            onClick={handleSaveAll}
+            disabled={saving || savingCredits}
+            className="rounded-xl px-8 py-3"
+            size="lg"
+          >
+            {saving || savingCredits ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            ) : (
+              <Save className="w-4 h-4 mr-2" />
+            )}
+            Save Settings
+          </Button>
         </motion.div>
       </div>
     </AdminLayout>

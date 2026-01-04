@@ -36,6 +36,7 @@ export const getCreditSettings = createServerFn({ method: 'GET' }).handler(
         'usd_to_thb_rate',
         'gemini_input_price',
         'gemini_output_price',
+        'tokens_per_credit',
       ])
 
     const settingsMap: Record<string, unknown> = {}
@@ -64,6 +65,8 @@ export const getCreditSettings = createServerFn({ method: 'GET' }).handler(
         (settingsMap['gemini_input_price'] as number) || defaults.geminiInputPrice,
       geminiOutputPrice:
         (settingsMap['gemini_output_price'] as number) || defaults.geminiOutputPrice,
+      tokensPerCredit:
+        (settingsMap['tokens_per_credit'] as number) || defaults.tokensPerCredit,
     }
   },
 )
@@ -87,23 +90,23 @@ export const estimateTokens = createServerFn({ method: 'POST' })
     // Approximate token count: characters / 4 (rough estimate for multilingual)
     const inputTokens = Math.ceil(data.content.length / 4)
 
-    // Output ratios by mode
+    // Output ratios by mode (convert from 0-100 scale to 0-1)
     const outputRatios: Record<CreditProcessMode, number> = {
       original: 0,
-      summarize: ratios.summarize,
-      lesson: ratios.lesson,
-      translate: ratios.translate,
+      summarize: ratios.summarize / 100,
+      lesson: ratios.lesson / 100,
+      translate: ratios.translate / 100,
     }
 
     let estimatedOutputTokens = Math.ceil(inputTokens * outputRatios[data.mode])
 
-    // Easy Explain modifier: +20% additional output
+    // Easy Explain modifier: +X% additional output (convert from 0-100 to 0-1)
     if (
       data.easyExplainEnabled &&
       (data.mode === 'summarize' || data.mode === 'lesson')
     ) {
       estimatedOutputTokens = Math.ceil(
-        estimatedOutputTokens * (1 + ratios.easyExplainModifier),
+        estimatedOutputTokens * (1 + ratios.easyExplainModifier / 100),
       )
     }
 

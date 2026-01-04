@@ -27,14 +27,15 @@ export interface SystemSettings {
   maintenanceMode: boolean
   maintenanceMessage: string
 
-  // Limits
-  maxActivitiesPerUser: number
-  maxQuestionsPerActivity: number
-  maxFileUploadSizeMB: number
-
   // AI
   aiCreditsPerUser: number
   aiCreditsPerGeneration: number
+
+  // Tier Monthly Credits (credits given per month for each tier)
+  tierMonthlyCredits: Record<string, number>
+
+  // Tier Package Prices (THB per month for each tier)
+  tierPackagePrice: Record<string, number>
 
   // Features
   enablePublicActivities: boolean
@@ -49,11 +50,10 @@ const keyMapping: Record<keyof SystemSettings, string> = {
   siteDescription: 'site_description',
   maintenanceMode: 'maintenance_mode',
   maintenanceMessage: 'maintenance_message',
-  maxActivitiesPerUser: 'max_activities_per_user',
-  maxQuestionsPerActivity: 'max_questions_per_activity',
-  maxFileUploadSizeMB: 'max_file_upload_size_mb',
   aiCreditsPerUser: 'ai_credits_per_user',
   aiCreditsPerGeneration: 'ai_credits_per_generation',
+  tierMonthlyCredits: 'tier_monthly_credits',
+  tierPackagePrice: 'tier_package_price',
   enablePublicActivities: 'enable_public_activities',
   enableUserRegistration: 'enable_user_registration',
   enableAIGeneration: 'enable_ai_generation',
@@ -79,12 +79,24 @@ const defaultSettings: SystemSettings = {
   maintenanceMessage:
     'We are currently performing maintenance. Please check back soon.',
 
-  maxActivitiesPerUser: 100,
-  maxQuestionsPerActivity: 50,
-  maxFileUploadSizeMB: 5,
-
   aiCreditsPerUser: 100,
   aiCreditsPerGeneration: 10,
+
+  tierMonthlyCredits: {
+    user: 3,      // Explorer (Free)
+    plus: 30,     // Hero
+    pro: 100,     // Legend
+    ultra: 500,   // Enterprise
+    admin: 0,     // Unlimited
+  },
+
+  tierPackagePrice: {
+    user: 0,      // Free
+    plus: 290,    // Hero ฿290/month
+    pro: 790,     // Legend ฿790/month
+    ultra: 2990,  // Enterprise ฿2990/month
+    admin: 0,     // Free
+  },
 
   enablePublicActivities: true,
   enableUserRegistration: true,
@@ -1340,6 +1352,7 @@ export const getAllCreditSettings = createServerFn({
       'usd_to_thb_rate',
       'gemini_input_price',
       'gemini_output_price',
+      'tokens_per_credit',
     ])
 
   const settingsMap: Record<string, unknown> = {}
@@ -1369,6 +1382,8 @@ export const getAllCreditSettings = createServerFn({
       (settingsMap['gemini_input_price'] as number) || defaults.geminiInputPrice,
     geminiOutputPrice:
       (settingsMap['gemini_output_price'] as number) || defaults.geminiOutputPrice,
+    tokensPerCredit:
+      (settingsMap['tokens_per_credit'] as number) || defaults.tokensPerCredit,
   }
 })
 
@@ -1433,6 +1448,12 @@ export const saveAllCreditSettings = createServerFn({ method: 'POST' })
         key: 'gemini_output_price',
         value: data.geminiOutputPrice,
         description: 'Gemini API output price per 1M tokens',
+        updated_by: user.id,
+      },
+      {
+        key: 'tokens_per_credit',
+        value: data.tokensPerCredit,
+        description: 'Number of tokens per 1 credit',
         updated_by: user.id,
       },
     ]

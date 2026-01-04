@@ -977,10 +977,10 @@ export interface TierPricingConfig {
 }
 
 export interface TokenEstimationRatios {
-  summarize: number           // 0.40 = 40% of input
-  lesson: number              // 0.85 = 85% of input
-  translate: number           // 1.0 = 100% of input
-  easyExplainModifier: number // 0.20 = +20% additional
+  summarize: number           // 40 = 40% of input
+  lesson: number              // 85 = 85% of input
+  translate: number           // 100 = 100% of input
+  easyExplainModifier: number // 20 = +20% additional
 }
 
 export interface CreditSettings {
@@ -990,14 +990,15 @@ export interface CreditSettings {
   usdToThbRate: number          // USD to THB exchange rate
   geminiInputPrice: number      // $ per 1M input tokens
   geminiOutputPrice: number     // $ per 1M output tokens
+  tokensPerCredit: number       // How many tokens = 1 credit (e.g., 50 = 50 tokens per credit)
 }
 
 // Default values for credit settings
 export const DEFAULT_TOKEN_ESTIMATION_RATIOS: TokenEstimationRatios = {
-  summarize: 0.40,
-  lesson: 0.85,
-  translate: 1.0,
-  easyExplainModifier: 0.20,
+  summarize: 40,        // 40% of input
+  lesson: 85,           // 85% of input
+  translate: 100,       // 100% of input
+  easyExplainModifier: 20, // +20% additional
 }
 
 export const DEFAULT_TIER_PRICING_CONFIG: TierPricingConfig = {
@@ -1014,8 +1015,9 @@ export const DEFAULT_TIER_PRICING_CONFIG: TierPricingConfig = {
 export const DEFAULT_CREDIT_SETTINGS: CreditSettings = {
   tokenEstimationRatios: DEFAULT_TOKEN_ESTIMATION_RATIOS,
   tierPricingConfig: DEFAULT_TIER_PRICING_CONFIG,
-  creditConversionRate: 100,  // 1 THB = 100 credits
+  creditConversionRate: 100,  // 1 THB = 100 credits (legacy, calculated now)
   usdToThbRate: 35,           // 1 USD = 35 THB
   geminiInputPrice: 0.10,     // $0.10 per 1M input tokens
   geminiOutputPrice: 0.40,    // $0.40 per 1M output tokens
+  tokensPerCredit: 500,       // 1 credit ≈ 1 typical AI request (~500 tokens)
 }
