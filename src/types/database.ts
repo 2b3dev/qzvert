@@ -940,3 +940,82 @@ export interface ExtractionMetadata {
   wordCount?: number
   language?: string
 }
+
+// ============================================
+// AI Credit Calculation Types
+// ============================================
+
+export type CreditProcessMode = 'original' | 'summarize' | 'lesson' | 'translate'
+
+export interface TokenEstimation {
+  inputTokens: number
+  estimatedOutputTokens: number
+  totalTokens: number
+  mode: CreditProcessMode
+  easyExplainApplied: boolean
+}
+
+export interface CreditCalculation {
+  tokens: TokenEstimation
+  actualCostUSD: number       // Actual API cost in USD
+  actualCostTHB: number       // Actual API cost in THB
+  tierMarkup: number          // Markup % or fixed price depending on mode
+  finalCostTHB: number        // Final cost after markup in THB
+  creditsRequired: number     // Number of credits required
+  profitMarginTHB: number     // Profit margin in THB (admin only)
+  pricingMode: 'markup' | 'fixed'
+}
+
+export interface TierPricing {
+  markup: number   // Markup percentage (e.g., 200 = 200%)
+  fixed: number    // Fixed price per 1K tokens in THB
+}
+
+export interface TierPricingConfig {
+  mode: 'markup' | 'fixed'
+  tiers: Record<UserRole, TierPricing>
+}
+
+export interface TokenEstimationRatios {
+  summarize: number           // 0.40 = 40% of input
+  lesson: number              // 0.85 = 85% of input
+  translate: number           // 1.0 = 100% of input
+  easyExplainModifier: number // 0.20 = +20% additional
+}
+
+export interface CreditSettings {
+  tokenEstimationRatios: TokenEstimationRatios
+  tierPricingConfig: TierPricingConfig
+  creditConversionRate: number  // Credits per THB (e.g., 100 = 1 THB = 100 credits)
+  usdToThbRate: number          // USD to THB exchange rate
+  geminiInputPrice: number      // $ per 1M input tokens
+  geminiOutputPrice: number     // $ per 1M output tokens
+}
+
+// Default values for credit settings
+export const DEFAULT_TOKEN_ESTIMATION_RATIOS: TokenEstimationRatios = {
+  summarize: 0.40,
+  lesson: 0.85,
+  translate: 1.0,
+  easyExplainModifier: 0.20,
+}
+
+export const DEFAULT_TIER_PRICING_CONFIG: TierPricingConfig = {
+  mode: 'markup',
+  tiers: {
+    user: { markup: 200, fixed: 0.50 },
+    plus: { markup: 150, fixed: 0.30 },
+    pro: { markup: 100, fixed: 0.20 },
+    ultra: { markup: 80, fixed: 0.15 },
+    admin: { markup: 0, fixed: 0 },
+  },
+}
+
+export const DEFAULT_CREDIT_SETTINGS: CreditSettings = {
+  tokenEstimationRatios: DEFAULT_TOKEN_ESTIMATION_RATIOS,
+  tierPricingConfig: DEFAULT_TIER_PRICING_CONFIG,
+  creditConversionRate: 100,  // 1 THB = 100 credits
+  usdToThbRate: 35,           // 1 USD = 35 THB
+  geminiInputPrice: 0.10,     // $0.10 per 1M input tokens
+  geminiOutputPrice: 0.40,    // $0.40 per 1M output tokens
+}

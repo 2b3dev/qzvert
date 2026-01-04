@@ -1,7 +1,16 @@
 import { createServerFn } from '@tanstack/react-start'
 import { getCookies, setCookie } from '@tanstack/react-start/server'
 import { createSupabaseServerClient } from '../lib/supabase'
-import type { AIAction, AIUsageStats } from '../types/database'
+import type {
+  AIAction,
+  AIUsageStats,
+  TierPricingConfig,
+  TokenEstimationRatios,
+  CreditSettings,
+  DEFAULT_TIER_PRICING_CONFIG,
+  DEFAULT_TOKEN_ESTIMATION_RATIOS,
+  DEFAULT_CREDIT_SETTINGS,
+} from '../types/database'
 
 const getSupabaseFromCookies = () => {
   return createSupabaseServerClient(getCookies, setCookie)
@@ -1121,6 +1130,321 @@ export const saveGeminiPricingSettings = createServerFn({ method: 'POST' })
     if (error) {
       console.error('Failed to save pricing settings:', error)
       throw new Error('Failed to save settings')
+    }
+
+    return { success: true }
+  })
+
+// ============================================
+// AI Credit Configuration Settings
+// ============================================
+
+// Get token estimation ratios (admin only)
+export const getTokenEstimationRatios = createServerFn({
+  method: 'GET',
+}).handler(async (): Promise<TokenEstimationRatios> => {
+  const supabase = getSupabaseFromCookies()
+
+  // Verify admin
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+  if (userError || !user) {
+    throw new Error('Authentication required')
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.role !== 'admin') {
+    throw new Error('Admin access required')
+  }
+
+  const { data: setting } = await supabase
+    .from('system_settings')
+    .select('value')
+    .eq('key', 'token_estimation_ratios')
+    .single()
+
+  if (!setting) {
+    const defaults = await import('../types/database').then(
+      (m) => m.DEFAULT_TOKEN_ESTIMATION_RATIOS,
+    )
+    return defaults
+  }
+
+  return setting.value as TokenEstimationRatios
+})
+
+// Save token estimation ratios (admin only)
+export const saveTokenEstimationRatios = createServerFn({ method: 'POST' })
+  .inputValidator((data: TokenEstimationRatios) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    const supabase = getSupabaseFromCookies()
+
+    // Verify admin
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+    if (userError || !user) {
+      throw new Error('Authentication required')
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.role !== 'admin') {
+      throw new Error('Admin access required')
+    }
+
+    const { error } = await supabase.from('system_settings').upsert(
+      {
+        key: 'token_estimation_ratios',
+        value: data,
+        description: 'Token estimation ratios for output prediction',
+        updated_by: user.id,
+      },
+      { onConflict: 'key' },
+    )
+
+    if (error) {
+      throw new Error('Failed to save token estimation ratios')
+    }
+
+    return { success: true }
+  })
+
+// Get tier pricing configuration (admin only)
+export const getTierPricingConfig = createServerFn({
+  method: 'GET',
+}).handler(async (): Promise<TierPricingConfig> => {
+  const supabase = getSupabaseFromCookies()
+
+  // Verify admin
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+  if (userError || !user) {
+    throw new Error('Authentication required')
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.role !== 'admin') {
+    throw new Error('Admin access required')
+  }
+
+  const { data: setting } = await supabase
+    .from('system_settings')
+    .select('value')
+    .eq('key', 'tier_pricing_config')
+    .single()
+
+  if (!setting) {
+    const defaults = await import('../types/database').then(
+      (m) => m.DEFAULT_TIER_PRICING_CONFIG,
+    )
+    return defaults
+  }
+
+  return setting.value as TierPricingConfig
+})
+
+// Save tier pricing configuration (admin only)
+export const saveTierPricingConfig = createServerFn({ method: 'POST' })
+  .inputValidator((data: TierPricingConfig) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    const supabase = getSupabaseFromCookies()
+
+    // Verify admin
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+    if (userError || !user) {
+      throw new Error('Authentication required')
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.role !== 'admin') {
+      throw new Error('Admin access required')
+    }
+
+    const { error } = await supabase.from('system_settings').upsert(
+      {
+        key: 'tier_pricing_config',
+        value: data,
+        description: 'Tier-based pricing configuration for credit calculation',
+        updated_by: user.id,
+      },
+      { onConflict: 'key' },
+    )
+
+    if (error) {
+      throw new Error('Failed to save tier pricing config')
+    }
+
+    return { success: true }
+  })
+
+// Get all credit settings (admin only)
+export const getAllCreditSettings = createServerFn({
+  method: 'GET',
+}).handler(async (): Promise<CreditSettings> => {
+  const supabase = getSupabaseFromCookies()
+
+  // Verify admin
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+  if (userError || !user) {
+    throw new Error('Authentication required')
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.role !== 'admin') {
+    throw new Error('Admin access required')
+  }
+
+  const { data: settings } = await supabase
+    .from('system_settings')
+    .select('key, value')
+    .in('key', [
+      'token_estimation_ratios',
+      'tier_pricing_config',
+      'credit_conversion_rate',
+      'usd_to_thb_rate',
+      'gemini_input_price',
+      'gemini_output_price',
+    ])
+
+  const settingsMap: Record<string, unknown> = {}
+  if (settings) {
+    for (const s of settings) {
+      settingsMap[s.key] = s.value
+    }
+  }
+
+  const defaults = await import('../types/database').then(
+    (m) => m.DEFAULT_CREDIT_SETTINGS,
+  )
+
+  return {
+    tokenEstimationRatios:
+      (settingsMap['token_estimation_ratios'] as TokenEstimationRatios) ||
+      defaults.tokenEstimationRatios,
+    tierPricingConfig:
+      (settingsMap['tier_pricing_config'] as TierPricingConfig) ||
+      defaults.tierPricingConfig,
+    creditConversionRate:
+      (settingsMap['credit_conversion_rate'] as number) ||
+      defaults.creditConversionRate,
+    usdToThbRate:
+      (settingsMap['usd_to_thb_rate'] as number) || defaults.usdToThbRate,
+    geminiInputPrice:
+      (settingsMap['gemini_input_price'] as number) || defaults.geminiInputPrice,
+    geminiOutputPrice:
+      (settingsMap['gemini_output_price'] as number) || defaults.geminiOutputPrice,
+  }
+})
+
+// Save all credit settings (admin only)
+export const saveAllCreditSettings = createServerFn({ method: 'POST' })
+  .inputValidator((data: CreditSettings) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    const supabase = getSupabaseFromCookies()
+
+    // Verify admin
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+    if (userError || !user) {
+      throw new Error('Authentication required')
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.role !== 'admin') {
+      throw new Error('Admin access required')
+    }
+
+    // Upsert all settings
+    const settingsToUpsert = [
+      {
+        key: 'token_estimation_ratios',
+        value: data.tokenEstimationRatios,
+        description: 'Token estimation ratios for output prediction',
+        updated_by: user.id,
+      },
+      {
+        key: 'tier_pricing_config',
+        value: data.tierPricingConfig,
+        description: 'Tier-based pricing configuration',
+        updated_by: user.id,
+      },
+      {
+        key: 'credit_conversion_rate',
+        value: data.creditConversionRate,
+        description: 'Credits per THB conversion rate',
+        updated_by: user.id,
+      },
+      {
+        key: 'usd_to_thb_rate',
+        value: data.usdToThbRate,
+        description: 'USD to THB exchange rate',
+        updated_by: user.id,
+      },
+      {
+        key: 'gemini_input_price',
+        value: data.geminiInputPrice,
+        description: 'Gemini API input price per 1M tokens',
+        updated_by: user.id,
+      },
+      {
+        key: 'gemini_output_price',
+        value: data.geminiOutputPrice,
+        description: 'Gemini API output price per 1M tokens',
+        updated_by: user.id,
+      },
+    ]
+
+    for (const setting of settingsToUpsert) {
+      const { error } = await supabase
+        .from('system_settings')
+        .upsert(setting, { onConflict: 'key' })
+
+      if (error) {
+        throw new Error(`Failed to save ${setting.key}: ${error.message}`)
+      }
     }
 
     return { success: true }

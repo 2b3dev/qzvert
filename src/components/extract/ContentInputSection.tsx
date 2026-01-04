@@ -5,6 +5,7 @@ import {
   Check,
   ChevronDown,
   ClipboardPaste,
+  Coins,
   FileSpreadsheet,
   FileText,
   FileUp,
@@ -14,14 +15,16 @@ import {
   Loader2,
   Sparkles,
   Upload,
+  Volume2,
   Wand2,
   X,
   Youtube,
 } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
 import { cn } from '../../lib/utils'
-import type { ExtractionInputType } from '../../types/database'
+import type { CreditProcessMode, ExtractionInputType } from '../../types/database'
 import { Button } from '../ui/button'
+import { CreditPreview } from './CreditPreview'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -193,6 +196,8 @@ export function ContentInputSection({
     easyExplainUpgrade: translations?.easyExplainUpgrade || 'Upgrade to Plus',
     extract: translations?.extract || 'Extract',
     extracting: translations?.extracting || 'Extracting...',
+    loudNow: translations?.loudNow || 'Loud Now',
+    louding: translations?.louding || 'Processing...',
     or: translations?.or || 'or',
   }
 
@@ -700,17 +705,37 @@ export function ContentInputSection({
         )}
       </AnimatePresence>
 
-      {/* Step 4: Extract Button */}
+      {/* Credit Preview - show when content exists and not original mode */}
+      {textInput.trim() && selectedMode !== 'original' && (
+        <CreditPreview
+          content={textInput}
+          mode={selectedMode as CreditProcessMode}
+          easyExplainEnabled={easyExplainEnabled}
+          className="mb-3"
+        />
+      )}
+
+      {/* Step 4: Extract/Loud Button */}
       <Button
         onClick={handleExtract}
         disabled={!canExtract()}
         size="lg"
-        className="w-full gap-2 bg-gradient-to-r from-primary to-emerald-500 hover:from-primary/90 hover:to-emerald-500/90"
+        className={cn(
+          'w-full gap-2',
+          selectedMode === 'original'
+            ? 'bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-500/90 hover:to-purple-500/90'
+            : 'bg-gradient-to-r from-primary to-emerald-500 hover:from-primary/90 hover:to-emerald-500/90',
+        )}
       >
         {isLoading ? (
           <>
             <Loader2 className="w-5 h-5 animate-spin" />
-            {t.extracting}
+            {selectedMode === 'original' ? t.louding : t.extracting}
+          </>
+        ) : selectedMode === 'original' ? (
+          <>
+            <Volume2 className="w-5 h-5" />
+            {t.loudNow}
           </>
         ) : (
           <>

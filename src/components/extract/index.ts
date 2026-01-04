@@ -1,6 +1,9 @@
 export { ContentInputSection } from './ContentInputSection'
 export type { ContentInputSectionProps, InputSourceType, ProcessMode } from './ContentInputSection'
 
+export { CreditPreview } from './CreditPreview'
+export type { CreditPreviewProps } from './CreditPreview'
+
 export { ExtractedContentDisplay } from './ExtractedContentDisplay'
 export type { ContentMode, ExtractedContentDisplayProps, LanguageOption } from './ExtractedContentDisplay'
 

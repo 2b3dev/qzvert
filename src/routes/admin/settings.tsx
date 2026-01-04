@@ -2,12 +2,16 @@ import { createFileRoute, redirect } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import {
   Calculator,
+  ChevronDown,
+  Coins,
   Loader2,
+  RotateCcw,
   Save,
   Server,
   Settings,
   Sparkles,
   ToggleRight,
+  TrendingUp,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
@@ -19,13 +23,27 @@ import {
   checkAdminAccess,
   GEMINI_FREE_TIER,
   GEMINI_PRICING,
+  getAllCreditSettings,
   getGeminiPricingSettings,
   getSystemSettings,
+  saveAllCreditSettings,
   saveGeminiPricingSettings,
   updateSystemSettings,
   type GeminiPricingSettings,
   type SystemSettings,
 } from '../../server/admin-settings'
+import { getProfitPreviewAllTiers } from '../../server/credit-calculator'
+import type {
+  CreditSettings,
+  TierPricingConfig,
+  TokenEstimationRatios,
+  UserRole,
+} from '../../types/database'
+import {
+  DEFAULT_CREDIT_SETTINGS,
+  DEFAULT_TIER_PRICING_CONFIG,
+  DEFAULT_TOKEN_ESTIMATION_RATIOS,
+} from '../../types/database'
 
 export const Route = createFileRoute('/admin/settings')({
   beforeLoad: async () => {
@@ -86,19 +104,38 @@ function AdminSettings() {
     GEMINI_FREE_TIER.requestsPerDay.toString(),
   )
 
+  // AI Credit Configuration state
+  const [creditSettings, setCreditSettings] = useState<CreditSettings>(
+    DEFAULT_CREDIT_SETTINGS,
+  )
+  const [savingCredits, setSavingCredits] = useState(false)
+  const [profitPreview, setProfitPreview] = useState<
+    Array<{
+      tier: UserRole
+      actualCostTHB: number
+      chargeTHB: number
+      profitTHB: number
+      credits: number
+    }>
+  >([])
+  const [previewInputTokens, setPreviewInputTokens] = useState(1000)
+  const [previewOutputTokens, setPreviewOutputTokens] = useState(400)
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
       try {
-        const [settingsData, pricingData] = await Promise.all([
+        const [settingsData, pricingData, creditData] = await Promise.all([
           getSystemSettings(),
           getGeminiPricingSettings(),
+          getAllCreditSettings(),
         ])
         setSettings(settingsData)
         setPricingSettings(pricingData)
         setCalcInputPrice(pricingData.inputPrice.toString())
         setCalcOutputPrice(pricingData.outputPrice.toString())
         setCalcFreeTierQuota(pricingData.freeTierQuota.toString())
+        setCreditSettings(creditData)
       } catch (error) {
         console.error('Failed to fetch settings:', error)
         toast.error('Failed to load settings')
@@ -109,6 +146,26 @@ function AdminSettings() {
 
     fetchData()
   }, [])
+
+  // Fetch profit preview when tokens change
+  useEffect(() => {
+    const fetchProfitPreview = async () => {
+      try {
+        const preview = await getProfitPreviewAllTiers({
+          data: {
+            inputTokens: previewInputTokens,
+            outputTokens: previewOutputTokens,
+          },
+        })
+        setProfitPreview(preview)
+      } catch (error) {
+        console.error('Failed to fetch profit preview:', error)
+      }
+    }
+
+    const timer = setTimeout(fetchProfitPreview, 300)
+    return () => clearTimeout(timer)
+  }, [previewInputTokens, previewOutputTokens, creditSettings])
 
   const handleSave = async () => {
     if (!settings) return
@@ -149,6 +206,75 @@ function AdminSettings() {
     setCalcOutputPrice(GEMINI_PRICING['gemini-2.0-flash'].output.toString())
     setCalcFreeTierQuota(GEMINI_FREE_TIER.requestsPerDay.toString())
     toast.success('Reset to default values (not saved yet)')
+  }
+
+  const handleSaveCreditSettings = async () => {
+    setSavingCredits(true)
+    try {
+      await saveAllCreditSettings({ data: creditSettings })
+      toast.success('Credit settings saved successfully')
+    } catch (error) {
+      console.error('Failed to save credit settings:', error)
+      toast.error('Failed to save credit settings')
+    } finally {
+      setSavingCredits(false)
+    }
+  }
+
+  const resetCreditSettingsToDefaults = () => {
+    setCreditSettings(DEFAULT_CREDIT_SETTINGS)
+    toast.success('Reset to default values (not saved yet)')
+  }
+
+  const updateTokenRatio = (
+    key: keyof TokenEstimationRatios,
+    value: number,
+  ) => {
+    setCreditSettings({
+      ...creditSettings,
+      tokenEstimationRatios: {
+        ...creditSettings.tokenEstimationRatios,
+        [key]: value,
+      },
+    })
+  }
+
+  const updateTierPricing = (
+    tier: UserRole,
+    field: 'markup' | 'fixed',
+    value: number,
+  ) => {
+    setCreditSettings({
+      ...creditSettings,
+      tierPricingConfig: {
+        ...creditSettings.tierPricingConfig,
+        tiers: {
+          ...creditSettings.tierPricingConfig.tiers,
+          [tier]: {
+            ...creditSettings.tierPricingConfig.tiers[tier],
+            [field]: value,
+          },
+        },
+      },
+    })
+  }
+
+  const updatePricingMode = (mode: 'markup' | 'fixed') => {
+    setCreditSettings({
+      ...creditSettings,
+      tierPricingConfig: {
+        ...creditSettings.tierPricingConfig,
+        mode,
+      },
+    })
+  }
+
+  const tierLabels: Record<UserRole, { name: string; color: string }> = {
+    user: { name: 'Free', color: 'text-gray-400' },
+    plus: { name: 'Plus', color: 'text-blue-400' },
+    pro: { name: 'Pro', color: 'text-purple-400' },
+    ultra: { name: 'Ultra', color: 'text-amber-400' },
+    admin: { name: 'Admin', color: 'text-red-400' },
   }
 
   const updateSetting = <K extends keyof SystemSettings>(
@@ -470,6 +596,401 @@ function AdminSettings() {
               </a>{' '}
               page. They don't affect actual API billing.
             </p>
+          </div>
+        </motion.div>
+
+        {/* AI Credit Configuration */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.37 }}
+          className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500">
+                <Coins className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">
+                  AI Credit Configuration
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Token estimation & tier pricing for credit calculation
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={resetCreditSettingsToDefaults}
+                className="px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors flex items-center gap-1"
+              >
+                <RotateCcw className="w-3 h-3" />
+                Reset
+              </button>
+              <Button
+                onClick={handleSaveCreditSettings}
+                disabled={savingCredits}
+                size="sm"
+                className="rounded-lg"
+              >
+                {savingCredits ? (
+                  <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                ) : (
+                  <Save className="w-3 h-3 mr-1" />
+                )}
+                Save
+              </Button>
+            </div>
+          </div>
+
+          {/* Token Estimation Ratios */}
+          <div className="mb-6">
+            <h3 className="text-sm font-medium text-foreground mb-3">
+              Token Estimation Ratios
+            </h3>
+            <p className="text-xs text-muted-foreground mb-4">
+              Output tokens = Input tokens x Ratio (used for credit estimation before AI processing)
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  Summarize
+                </label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    step="0.05"
+                    min={0}
+                    max={2}
+                    value={creditSettings.tokenEstimationRatios.summarize}
+                    onChange={(e) =>
+                      updateTokenRatio('summarize', parseFloat(e.target.value) || 0)
+                    }
+                    className="bg-card/50 border-border/50 rounded-xl"
+                  />
+                  <span className="text-xs text-muted-foreground w-8">
+                    {Math.round(creditSettings.tokenEstimationRatios.summarize * 100)}%
+                  </span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  Lesson
+                </label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    step="0.05"
+                    min={0}
+                    max={2}
+                    value={creditSettings.tokenEstimationRatios.lesson}
+                    onChange={(e) =>
+                      updateTokenRatio('lesson', parseFloat(e.target.value) || 0)
+                    }
+                    className="bg-card/50 border-border/50 rounded-xl"
+                  />
+                  <span className="text-xs text-muted-foreground w-8">
+                    {Math.round(creditSettings.tokenEstimationRatios.lesson * 100)}%
+                  </span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  Translate
+                </label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    step="0.05"
+                    min={0}
+                    max={2}
+                    value={creditSettings.tokenEstimationRatios.translate}
+                    onChange={(e) =>
+                      updateTokenRatio('translate', parseFloat(e.target.value) || 0)
+                    }
+                    className="bg-card/50 border-border/50 rounded-xl"
+                  />
+                  <span className="text-xs text-muted-foreground w-8">
+                    {Math.round(creditSettings.tokenEstimationRatios.translate * 100)}%
+                  </span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  Easy Explain (+)
+                </label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    step="0.05"
+                    min={0}
+                    max={1}
+                    value={creditSettings.tokenEstimationRatios.easyExplainModifier}
+                    onChange={(e) =>
+                      updateTokenRatio(
+                        'easyExplainModifier',
+                        parseFloat(e.target.value) || 0,
+                      )
+                    }
+                    className="bg-card/50 border-border/50 rounded-xl"
+                  />
+                  <span className="text-xs text-muted-foreground w-8">
+                    +{Math.round(creditSettings.tokenEstimationRatios.easyExplainModifier * 100)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Pricing Mode */}
+          <div className="mb-6">
+            <h3 className="text-sm font-medium text-foreground mb-3">
+              Pricing Mode
+            </h3>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="pricingMode"
+                  checked={creditSettings.tierPricingConfig.mode === 'markup'}
+                  onChange={() => updatePricingMode('markup')}
+                  className="w-4 h-4 text-primary"
+                />
+                <span className="text-sm">Markup Percentage</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="pricingMode"
+                  checked={creditSettings.tierPricingConfig.mode === 'fixed'}
+                  onChange={() => updatePricingMode('fixed')}
+                  className="w-4 h-4 text-primary"
+                />
+                <span className="text-sm">Fixed Price per 1K Tokens</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Tier Pricing Table */}
+          <div className="mb-6">
+            <h3 className="text-sm font-medium text-foreground mb-3">
+              Tier Pricing
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border/50">
+                    <th className="text-left py-2 px-3 font-medium text-muted-foreground">
+                      Tier
+                    </th>
+                    <th className="text-left py-2 px-3 font-medium text-muted-foreground">
+                      Markup %
+                    </th>
+                    <th className="text-left py-2 px-3 font-medium text-muted-foreground">
+                      Fixed (฿/1K tokens)
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(['user', 'plus', 'pro', 'ultra', 'admin'] as UserRole[]).map(
+                    (tier) => (
+                      <tr key={tier} className="border-b border-border/30">
+                        <td className="py-2 px-3">
+                          <span className={cn('font-medium', tierLabels[tier].color)}>
+                            {tierLabels[tier].name}
+                          </span>
+                        </td>
+                        <td className="py-2 px-3">
+                          <Input
+                            type="number"
+                            min={0}
+                            value={creditSettings.tierPricingConfig.tiers[tier].markup}
+                            onChange={(e) =>
+                              updateTierPricing(
+                                tier,
+                                'markup',
+                                parseInt(e.target.value) || 0,
+                              )
+                            }
+                            disabled={creditSettings.tierPricingConfig.mode === 'fixed'}
+                            className={cn(
+                              'w-24 h-8 bg-card/50 border-border/50 rounded-lg text-sm',
+                              creditSettings.tierPricingConfig.mode === 'fixed' &&
+                                'opacity-50',
+                            )}
+                          />
+                        </td>
+                        <td className="py-2 px-3">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min={0}
+                            value={creditSettings.tierPricingConfig.tiers[tier].fixed}
+                            onChange={(e) =>
+                              updateTierPricing(
+                                tier,
+                                'fixed',
+                                parseFloat(e.target.value) || 0,
+                              )
+                            }
+                            disabled={creditSettings.tierPricingConfig.mode === 'markup'}
+                            className={cn(
+                              'w-24 h-8 bg-card/50 border-border/50 rounded-lg text-sm',
+                              creditSettings.tierPricingConfig.mode === 'markup' &&
+                                'opacity-50',
+                            )}
+                          />
+                        </td>
+                      </tr>
+                    ),
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Conversion Settings */}
+          <div className="mb-6">
+            <h3 className="text-sm font-medium text-foreground mb-3">
+              Conversion Settings
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  USD to THB Rate
+                </label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  min={0}
+                  value={creditSettings.usdToThbRate}
+                  onChange={(e) =>
+                    setCreditSettings({
+                      ...creditSettings,
+                      usdToThbRate: parseFloat(e.target.value) || 35,
+                    })
+                  }
+                  className="bg-card/50 border-border/50 rounded-xl"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  Credits per THB
+                </label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={creditSettings.creditConversionRate}
+                  onChange={(e) =>
+                    setCreditSettings({
+                      ...creditSettings,
+                      creditConversionRate: parseInt(e.target.value) || 100,
+                    })
+                  }
+                  className="bg-card/50 border-border/50 rounded-xl"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  1 THB = {creditSettings.creditConversionRate} credits
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Profit Calculator Preview */}
+          <div className="p-4 rounded-xl bg-muted/30">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp className="w-4 h-4 text-emerald-500" />
+              <h3 className="text-sm font-medium text-foreground">
+                Profit Calculator (Preview)
+              </h3>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  Input Tokens
+                </label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={previewInputTokens}
+                  onChange={(e) =>
+                    setPreviewInputTokens(parseInt(e.target.value) || 0)
+                  }
+                  className="bg-card/50 border-border/50 rounded-xl"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  Output Tokens
+                </label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={previewOutputTokens}
+                  onChange={(e) =>
+                    setPreviewOutputTokens(parseInt(e.target.value) || 0)
+                  }
+                  className="bg-card/50 border-border/50 rounded-xl"
+                />
+              </div>
+            </div>
+
+            {profitPreview.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border/50">
+                      <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">
+                        Tier
+                      </th>
+                      <th className="text-right py-2 px-2 font-medium text-muted-foreground text-xs">
+                        Cost
+                      </th>
+                      <th className="text-right py-2 px-2 font-medium text-muted-foreground text-xs">
+                        Charge
+                      </th>
+                      <th className="text-right py-2 px-2 font-medium text-muted-foreground text-xs">
+                        Profit
+                      </th>
+                      <th className="text-right py-2 px-2 font-medium text-muted-foreground text-xs">
+                        Credits
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {profitPreview.map((row) => (
+                      <tr key={row.tier} className="border-b border-border/30">
+                        <td className="py-2 px-2">
+                          <span
+                            className={cn('font-medium', tierLabels[row.tier].color)}
+                          >
+                            {tierLabels[row.tier].name}
+                          </span>
+                        </td>
+                        <td className="py-2 px-2 text-right text-muted-foreground">
+                          ฿{row.actualCostTHB.toFixed(4)}
+                        </td>
+                        <td className="py-2 px-2 text-right">
+                          ฿{row.chargeTHB.toFixed(4)}
+                        </td>
+                        <td
+                          className={cn(
+                            'py-2 px-2 text-right font-medium',
+                            row.profitTHB >= 0 ? 'text-emerald-500' : 'text-red-500',
+                          )}
+                        >
+                          {row.profitTHB >= 0 ? '+' : ''}฿{row.profitTHB.toFixed(4)}
+                        </td>
+                        <td className="py-2 px-2 text-right font-medium text-amber-500">
+                          {row.credits}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </motion.div>
 
