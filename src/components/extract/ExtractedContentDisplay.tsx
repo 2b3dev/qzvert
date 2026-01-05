@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import Markdown from 'react-markdown'
-import { cn } from '../../lib/utils'
+import { cn, estimateCredits } from '../../lib/utils'
 import type { ExtractedContent, ExtractionInputType } from '../../types/database'
 import { Button } from '../ui/button'
 import {
@@ -67,6 +67,9 @@ export interface ExtractedContentDisplayProps {
   canUseEasyExplain?: boolean
   easyExplainEnabled?: boolean
   onEasyExplainToggle?: () => void
+
+  // Credit estimation
+  tokensPerCredit?: number
 
   className?: string
   translations?: {
@@ -157,6 +160,7 @@ export function ExtractedContentDisplay({
   canUseEasyExplain = false,
   easyExplainEnabled = false,
   onEasyExplainToggle,
+  tokensPerCredit = 500,
   className,
   translations,
 }: ExtractedContentDisplayProps) {
@@ -584,32 +588,55 @@ export function ExtractedContentDisplay({
       {/* Action Buttons */}
       <div className="flex flex-wrap items-center gap-2">
         {/* Generate/Regenerate button for summarize/lesson modes */}
-        {selectedMode !== 'original' && (
-          <Button
-            onClick={onGenerate}
-            disabled={isProcessing || !displayContent.trim()}
-            variant={
-              (selectedMode === 'summarize' && hasSummarized) ||
-              (selectedMode === 'lesson' && hasCrafted)
-                ? 'outline'
-                : 'default'
-            }
-            className="gap-2"
-          >
-            {isProcessing && (processingAction === selectedMode || processingAction === 'craft') ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (selectedMode === 'summarize' && hasSummarized) ||
-              (selectedMode === 'lesson' && hasCrafted) ? (
-              <RotateCcw className="w-4 h-4" />
-            ) : (
-              <Sparkles className="w-4 h-4" />
-            )}
-            {(selectedMode === 'summarize' && hasSummarized) ||
-            (selectedMode === 'lesson' && hasCrafted)
-              ? t.regenerate
-              : t.generate}
-          </Button>
-        )}
+        {selectedMode !== 'original' && (() => {
+          // Calculate estimated credits
+          const actionType = selectedMode === 'summarize' ? 'summarize' : 'lesson'
+          const estimation = estimateCredits(
+            displayContent,
+            actionType,
+            tokensPerCredit,
+            easyExplainEnabled
+          )
+
+          return (
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={onGenerate}
+                disabled={isProcessing || !displayContent.trim()}
+                variant={
+                  (selectedMode === 'summarize' && hasSummarized) ||
+                  (selectedMode === 'lesson' && hasCrafted)
+                    ? 'outline'
+                    : 'default'
+                }
+                className="gap-2"
+              >
+                {isProcessing && (processingAction === selectedMode || processingAction === 'craft') ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (selectedMode === 'summarize' && hasSummarized) ||
+                  (selectedMode === 'lesson' && hasCrafted) ? (
+                  <RotateCcw className="w-4 h-4" />
+                ) : (
+                  <Sparkles className="w-4 h-4" />
+                )}
+                {(selectedMode === 'summarize' && hasSummarized) ||
+                (selectedMode === 'lesson' && hasCrafted)
+                  ? t.regenerate
+                  : t.generate}
+              </Button>
+
+              {/* Estimated Credits */}
+              {displayContent.trim() && !isProcessing && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <span className="text-amber-500">~{estimation.credits}</span> credit{estimation.credits !== 1 ? 's' : ''}
+                  <span className="text-muted-foreground/50">
+                    ({(estimation.totalTokens / 1000).toFixed(1)}K tokens)
+                  </span>
+                </span>
+              )}
+            </div>
+          )
+        })()}
       </div>
     </div>
   )

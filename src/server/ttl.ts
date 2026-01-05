@@ -166,11 +166,36 @@ Example style:
 
     const prompt = `${languageInstruction}
 ${easyExplainInstruction}
-Summarize the following content concisely. Keep the key points and main ideas.
-Make it easy to understand but comprehensive.
-Output in plain text only, no markdown formatting.
 
-Content:
+You are an expert at creating concise summaries that capture the essence of content.
+
+SUMMARIZATION PRINCIPLES:
+1. **Shorter but complete understanding** - Reduce length significantly while preserving comprehension
+2. **Capture ALL main points** - Every key concept/argument must be included
+3. **Cut redundancy** - Remove repeated examples, secondary details, and filler content
+4. **Self-contained** - Reader should fully understand the topic WITHOUT needing the original text
+5. **Logical flow** - Present ideas in a clear, connected sequence
+
+WHAT TO KEEP:
+- Core concepts and definitions
+- Main arguments/thesis
+- Key facts and conclusions
+- Essential relationships between ideas
+- Critical numbers/statistics (if central to understanding)
+
+WHAT TO CUT:
+- Repetitive examples (keep only the best one if needed)
+- Tangential information
+- Excessive background/context
+- Rhetorical flourishes and filler
+- Secondary details that don't affect understanding
+
+FORMAT:
+- Plain text only, no markdown
+- Use short paragraphs for readability
+- Group related ideas together
+
+Content to summarize:
 ${data.content}
 
 Summary:`

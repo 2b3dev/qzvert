@@ -693,6 +693,92 @@ function AdminUsages() {
               )}
             </div>
           </div>
+
+          {/* Usage by Action - Token Analysis */}
+          {aiStats && (
+            <div className="mt-6">
+              <h3 className="font-medium flex items-center gap-2 mb-4">
+                <Zap className="w-4 h-4 text-amber-500" />
+                Token Usage by Action (Last 30 Days)
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border/50">
+                      <th className="text-left py-2 px-3 font-medium text-muted-foreground">Action</th>
+                      <th className="text-right py-2 px-3 font-medium text-muted-foreground">Requests</th>
+                      <th className="text-right py-2 px-3 font-medium text-muted-foreground">Total Tokens</th>
+                      <th className="text-right py-2 px-3 font-medium text-muted-foreground">Avg Tokens/Req</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(aiStats.requestsByAction)
+                      .filter(([, count]) => count > 0)
+                      .sort(([, a], [, b]) => b - a)
+                      .map(([action, requests]) => {
+                        const tokens = aiStats.tokensByAction[action as keyof typeof aiStats.tokensByAction]
+                        const avgTokens = requests > 0 ? Math.round(tokens / requests) : 0
+                        return (
+                          <tr key={action} className="border-b border-border/30 hover:bg-muted/20">
+                            <td className="py-2 px-3 font-medium text-foreground capitalize">
+                              {action.replace(/_/g, ' ')}
+                            </td>
+                            <td className="py-2 px-3 text-right text-muted-foreground">
+                              {requests.toLocaleString()}
+                            </td>
+                            <td className="py-2 px-3 text-right text-muted-foreground">
+                              {(tokens / 1000).toFixed(1)}K
+                            </td>
+                            <td className="py-2 px-3 text-right">
+                              <span className="font-mono font-bold text-amber-500">
+                                {avgTokens.toLocaleString()}
+                              </span>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    {Object.values(aiStats.requestsByAction).every(v => v === 0) && (
+                      <tr>
+                        <td colSpan={4} className="py-4 text-center text-muted-foreground">
+                          No usage data available
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                  {aiStats.totalRequests > 0 && (
+                    <tfoot>
+                      <tr className="bg-muted/30">
+                        <td className="py-2 px-3 font-bold text-foreground">Total</td>
+                        <td className="py-2 px-3 text-right font-bold text-foreground">
+                          {aiStats.totalRequests.toLocaleString()}
+                        </td>
+                        <td className="py-2 px-3 text-right font-bold text-foreground">
+                          {(aiStats.totalTokens / 1000).toFixed(1)}K
+                        </td>
+                        <td className="py-2 px-3 text-right">
+                          <span className="font-mono font-bold text-purple-500">
+                            {Math.round(aiStats.totalTokens / aiStats.totalRequests).toLocaleString()}
+                          </span>
+                        </td>
+                      </tr>
+                    </tfoot>
+                  )}
+                </table>
+              </div>
+
+              {/* Recommendation */}
+              {aiStats.totalRequests > 0 && (
+                <div className="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <p className="text-xs text-amber-400">
+                    <span className="font-medium">💡 Token per Credit Recommendation:</span>{' '}
+                    Based on your average of {Math.round(aiStats.totalTokens / aiStats.totalRequests).toLocaleString()} tokens/request,
+                    setting <span className="font-mono font-bold">{Math.round(aiStats.totalTokens / aiStats.totalRequests)}</span> tokens per credit
+                    would make 1 credit ≈ 1 typical request.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </motion.div>
         {/* Supabase Dashboard Link */}
         <motion.div

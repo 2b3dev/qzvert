@@ -983,6 +983,15 @@ export interface TokenEstimationRatios {
   easyExplainModifier: number // 20 = +20% additional
 }
 
+// Tier subscription pricing settings
+export interface TierSubscription {
+  packagePrice: number    // THB per month
+  monthlyCredits: number  // Credits included per month
+  pricePerCredit: number  // THB per credit (calculated: packagePrice / monthlyCredits)
+}
+
+export type TierSubscriptionSettings = Record<UserRole, TierSubscription>
+
 export interface CreditSettings {
   tokenEstimationRatios: TokenEstimationRatios
   tierPricingConfig: TierPricingConfig
@@ -991,14 +1000,15 @@ export interface CreditSettings {
   geminiInputPrice: number      // $ per 1M input tokens
   geminiOutputPrice: number     // $ per 1M output tokens
   tokensPerCredit: number       // How many tokens = 1 credit (e.g., 50 = 50 tokens per credit)
+  tierSubscriptions: TierSubscriptionSettings  // Tier subscription settings
 }
 
 // Default values for credit settings
 export const DEFAULT_TOKEN_ESTIMATION_RATIOS: TokenEstimationRatios = {
-  summarize: 40,        // 40% of input
-  lesson: 85,           // 85% of input
-  translate: 100,       // 100% of input
-  easyExplainModifier: 20, // +20% additional
+  summarize: 40,        // 40% of input (shorter output)
+  lesson: 100,          // 100% of input (full content expansion)
+  translate: 100,       // 100% of input (same length)
+  easyExplainModifier: 20, // +20% additional (for simpler explanations)
 }
 
 export const DEFAULT_TIER_PRICING_CONFIG: TierPricingConfig = {
@@ -1012,6 +1022,17 @@ export const DEFAULT_TIER_PRICING_CONFIG: TierPricingConfig = {
   },
 }
 
+// Default tier subscription settings
+// Pricing: Plus ฿199, Pro ฿599, Ultra ฿999
+// Higher tiers = lower price per credit (more value)
+export const DEFAULT_TIER_SUBSCRIPTIONS: TierSubscriptionSettings = {
+  user: { packagePrice: 0, monthlyCredits: 10, pricePerCredit: 0 },        // Free tier
+  plus: { packagePrice: 199, monthlyCredits: 300, pricePerCredit: 0.66 },  // ฿0.66/credit
+  pro: { packagePrice: 599, monthlyCredits: 1200, pricePerCredit: 0.50 }, // ฿0.50/credit (24% cheaper)
+  ultra: { packagePrice: 999, monthlyCredits: 2500, pricePerCredit: 0.40 }, // ฿0.40/credit (39% cheaper)
+  admin: { packagePrice: 0, monthlyCredits: 0, pricePerCredit: 0 },        // Unlimited
+}
+
 export const DEFAULT_CREDIT_SETTINGS: CreditSettings = {
   tokenEstimationRatios: DEFAULT_TOKEN_ESTIMATION_RATIOS,
   tierPricingConfig: DEFAULT_TIER_PRICING_CONFIG,
@@ -1020,4 +1041,5 @@ export const DEFAULT_CREDIT_SETTINGS: CreditSettings = {
   geminiInputPrice: 0.10,     // $0.10 per 1M input tokens
   geminiOutputPrice: 0.40,    // $0.40 per 1M output tokens
   tokensPerCredit: 500,       // 1 credit ≈ 1 typical AI request (~500 tokens)
+  tierSubscriptions: DEFAULT_TIER_SUBSCRIPTIONS,
 }

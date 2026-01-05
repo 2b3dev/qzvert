@@ -82,19 +82,21 @@ const defaultSettings: SystemSettings = {
   aiCreditsPerUser: 100,
   aiCreditsPerGeneration: 10,
 
+  // Tier pricing: Plus ฿199, Pro ฿599, Ultra ฿999
+  // Higher tiers = more credits = lower price per credit (more value)
   tierMonthlyCredits: {
-    user: 3,      // Explorer (Free)
-    plus: 30,     // Hero
-    pro: 100,     // Legend
-    ultra: 500,   // Enterprise
-    admin: 0,     // Unlimited
+    user: 10,      // Explorer (Free) - 10 credits/month
+    plus: 300,     // Plus ฿199/month - ฿0.66/credit
+    pro: 1200,     // Pro ฿599/month - ฿0.50/credit (24% cheaper)
+    ultra: 2500,   // Ultra ฿999/month - ฿0.40/credit (39% cheaper)
+    admin: 0,      // Unlimited
   },
 
   tierPackagePrice: {
     user: 0,      // Free
-    plus: 290,    // Hero ฿290/month
-    pro: 790,     // Legend ฿790/month
-    ultra: 2990,  // Enterprise ฿2990/month
+    plus: 199,    // Plus ฿199/month
+    pro: 599,     // Pro ฿599/month
+    ultra: 999,   // Ultra ฿999/month
     admin: 0,     // Free
   },
 
@@ -180,18 +182,24 @@ export const updateSystemSettings = createServerFn({ method: 'POST' })
       throw new Error('Admin access required')
     }
 
-    // Update each setting
+    // Upsert each setting (creates if not exists, updates if exists)
     const updates = Object.entries(data).map(async ([key, value]) => {
       const snakeKey = keyMapping[key as keyof SystemSettings]
       if (snakeKey) {
         const { error } = await supabase
           .from('system_settings')
-          .update({ value: JSON.parse(JSON.stringify(value)) })
-          .eq('key', snakeKey)
+          .upsert(
+            {
+              key: snakeKey,
+              value: JSON.parse(JSON.stringify(value)),
+              updated_by: user.id,
+            },
+            { onConflict: 'key' }
+          )
 
         if (error) {
-          console.error(`Failed to update ${snakeKey}:`, error)
-          throw new Error(`Failed to update setting: ${snakeKey}`)
+          console.error(`Failed to upsert ${snakeKey}:`, error)
+          throw new Error(`Failed to save setting: ${snakeKey}`)
         }
       }
     })
@@ -233,11 +241,17 @@ export const updateSingleSetting = createServerFn({ method: 'POST' })
 
     const { error } = await supabase
       .from('system_settings')
-      .update({ value: JSON.parse(JSON.stringify(data.value)) })
-      .eq('key', snakeKey)
+      .upsert(
+        {
+          key: snakeKey,
+          value: JSON.parse(JSON.stringify(data.value)),
+          updated_by: user.id,
+        },
+        { onConflict: 'key' }
+      )
 
     if (error) {
-      throw new Error(`Failed to update setting: ${error.message}`)
+      throw new Error(`Failed to save setting: ${error.message}`)
     }
 
     return { success: true }
@@ -1353,6 +1367,7 @@ export const getAllCreditSettings = createServerFn({
       'gemini_input_price',
       'gemini_output_price',
       'tokens_per_credit',
+      'tier_subscriptions',
     ])
 
   const settingsMap: Record<string, unknown> = {}
@@ -1384,6 +1399,9 @@ export const getAllCreditSettings = createServerFn({
       (settingsMap['gemini_output_price'] as number) || defaults.geminiOutputPrice,
     tokensPerCredit:
       (settingsMap['tokens_per_credit'] as number) || defaults.tokensPerCredit,
+    tierSubscriptions:
+      (settingsMap['tier_subscriptions'] as typeof defaults.tierSubscriptions) ||
+      defaults.tierSubscriptions,
   }
 })
 
@@ -1454,6 +1472,12 @@ export const saveAllCreditSettings = createServerFn({ method: 'POST' })
         key: 'tokens_per_credit',
         value: data.tokensPerCredit,
         description: 'Number of tokens per 1 credit',
+        updated_by: user.id,
+      },
+      {
+        key: 'tier_subscriptions',
+        value: data.tierSubscriptions,
+        description: 'Tier subscription pricing (package price, monthly credits, price per credit)',
         updated_by: user.id,
       },
     ]
