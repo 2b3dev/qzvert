@@ -2,6 +2,8 @@ import { createFileRoute, redirect } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import {
   AlertTriangle,
+  Check,
+  ChevronDown,
   Coins,
   ExternalLink,
   Loader2,
@@ -14,6 +16,12 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { AdminLayout } from '../../components/layouts/AdminLayout'
 import { Button } from '../../components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../../components/ui/dropdown-menu'
 import { Input } from '../../components/ui/input'
 import { NumberInput } from '../../components/ui/number-input'
 import { cn } from '../../lib/utils'
@@ -27,10 +35,10 @@ import {
 } from '../../server/admin-settings'
 import type {
   CreditSettings,
+  GeminiModelId,
   UserRole,
 } from '../../types/database'
-import { DEFAULT_CREDIT_SETTINGS } from '../../types/database'
-import { GEMINI_MODEL_DISPLAY_NAME } from '../../server/gemini-config'
+import { DEFAULT_CREDIT_SETTINGS, GEMINI_MODELS, GEMINI_PRICING } from '../../types/database'
 
 export const Route = createFileRoute('/admin/settings')({
   beforeLoad: async () => {
@@ -115,9 +123,6 @@ function AdminSettings() {
   // Toggle for showing cost in credits or baht
   const [showCostInBaht, setShowCostInBaht] = useState(true)
 
-  // Minimum margin threshold (admin-configurable)
-  const [minMarginThreshold, setMinMarginThreshold] = useState(50)
-
   // Auto-calculate pricePerCredit when packagePrice or monthlyCredits change
   useEffect(() => {
     const newPrices: Record<UserRole, number> = {} as Record<UserRole, number>
@@ -191,11 +196,6 @@ function AdminSettings() {
           }
         }
         setTierPricePerCredit(newPrices)
-
-        // Load min margin threshold from credit settings
-        if (creditData.minMarginThreshold !== undefined) {
-          setMinMarginThreshold(creditData.minMarginThreshold)
-        }
       } catch (error) {
         console.error('Failed to fetch settings:', error)
         toast.error('Failed to load settings')
@@ -293,7 +293,6 @@ function AdminSettings() {
         ...creditSettings,
         tierPricingConfig: updatedTierConfig,
         tierSubscriptions,
-        minMarginThreshold,
       }
 
       // Include tierMonthlyCredits and tierPackagePrice in settings
@@ -520,62 +519,122 @@ function AdminSettings() {
             </div>
           </div>
 
-          {/* API Pricing - moved to top */}
+          {/* API Pricing - Model Selection & Core Settings */}
           <div className="mb-6 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
-            <div className="flex items-center gap-2 mb-4">
-              <Zap className="w-4 h-4 text-purple-400" />
-              <span className="text-sm font-medium text-purple-400">API Pricing ({GEMINI_MODEL_DISPLAY_NAME})</span>
-              <a
-                href="https://ai.google.dev/pricing"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-1 p-1 rounded hover:bg-purple-500/20 transition-colors"
-                title="View Gemini Pricing"
-              >
-                <ExternalLink className="w-3.5 h-3.5 text-purple-400/70 hover:text-purple-400" />
-              </a>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-purple-400" />
+                <span className="text-sm font-medium text-purple-400">API Pricing</span>
+                <a
+                  href="https://ai.google.dev/gemini-api/docs/pricing"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-1 p-1 rounded hover:bg-purple-500/20 transition-colors"
+                  title="View Gemini Pricing (ส่ง link นี้มาให้ Claude อัพเดตราคา)"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-purple-400/70 hover:text-purple-400" />
+                </a>
+              </div>
+              {/* Model Selector */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="gap-2 bg-card/50 border-border/50 hover:bg-purple-500/10 hover:border-purple-500/30"
+                  >
+                    <span className="text-sm font-medium">
+                      {GEMINI_MODELS.find(m => m.id === creditSettings.geminiModel)?.name || 'Select Model'}
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80">
+                  {GEMINI_MODELS.map((model) => {
+                    const pricing = GEMINI_PRICING[model.id]
+                    return (
+                      <DropdownMenuItem
+                        key={model.id}
+                        onClick={() => {
+                          setCreditSettings({
+                            ...creditSettings,
+                            geminiModel: model.id,
+                            geminiInputPrice: pricing.input,
+                            geminiOutputPrice: pricing.output,
+                          })
+                        }}
+                        className="flex items-start gap-3 py-3 cursor-pointer"
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{model.name}</span>
+                            {model.recommended && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-500/20 text-green-400">แนะนำ</span>
+                            )}
+                            {creditSettings.geminiModel === model.id && (
+                              <Check className="w-4 h-4 text-purple-500" />
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {model.description}
+                          </p>
+                          <p className="text-xs text-purple-400 mt-1">
+                            Input: ${pricing.input}/1M • Output: ${pricing.output}/1M
+                            {pricing.batchInput && (
+                              <span className="text-muted-foreground"> (Batch: ${pricing.batchInput}/${pricing.batchOutput})</span>
+                            )}
+                          </p>
+                        </div>
+                      </DropdownMenuItem>
+                    )
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+
+            {/* Current Model Pricing (Read-only) */}
+            {(() => {
+              const currentPricing = GEMINI_PRICING[creditSettings.geminiModel] || GEMINI_PRICING['gemini-2.0-flash']
+              return (
+                <div className="mb-4 p-3 rounded-lg bg-muted/30 border border-border/30">
+                  <div className="text-xs text-muted-foreground mb-2">ราคา API ปัจจุบัน (Hardcoded)</div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                    <div>
+                      <span className="text-muted-foreground">Input:</span>
+                      <span className="ml-1 font-mono text-purple-400">${currentPricing.input}/1M</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Output:</span>
+                      <span className="ml-1 font-mono text-purple-400">${currentPricing.output}/1M</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Batch Input:</span>
+                      <span className="ml-1 font-mono text-green-400">${currentPricing.batchInput}/1M</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Batch Output:</span>
+                      <span className="ml-1 font-mono text-green-400">${currentPricing.batchOutput}/1M</span>
+                    </div>
+                    {currentPricing.audioInput && (
+                      <div>
+                        <span className="text-muted-foreground">Audio:</span>
+                        <span className="ml-1 font-mono text-amber-400">${currentPricing.audioInput}/1M</span>
+                      </div>
+                    )}
+                    {currentPricing.contextCacheInput && (
+                      <div>
+                        <span className="text-muted-foreground">Cache:</span>
+                        <span className="ml-1 font-mono text-blue-400">${currentPricing.contextCacheInput}/1M</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })()}
+
+            {/* 3 Editable Settings */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">
-                  Input ($/1M tokens)
-                </label>
-                <NumberInput
-                  step={0.01}
-                  min={0}
-                  allowDecimal
-                  decimalPlaces={2}
-                  value={creditSettings.geminiInputPrice}
-                  onChange={(value) =>
-                    setCreditSettings({
-                      ...creditSettings,
-                      geminiInputPrice: value || 0.1,
-                    })
-                  }
-                  className="bg-card/50 border-border/50 rounded-xl"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">
-                  Output ($/1M tokens)
-                </label>
-                <NumberInput
-                  step={0.01}
-                  min={0}
-                  allowDecimal
-                  decimalPlaces={2}
-                  value={creditSettings.geminiOutputPrice}
-                  onChange={(value) =>
-                    setCreditSettings({
-                      ...creditSettings,
-                      geminiOutputPrice: value || 0.4,
-                    })
-                  }
-                  className="bg-card/50 border-border/50 rounded-xl"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                <label className="block text-xs font-medium text-foreground mb-1">
                   USD → THB Rate
                 </label>
                 <NumberInput
@@ -594,24 +653,24 @@ function AdminSettings() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                <label className="block text-xs font-medium text-foreground mb-1">
                   Tokens per Credit
                 </label>
                 <NumberInput
-                  step={50}
+                  step={100}
                   min={1}
-                  value={creditSettings.tokensPerCredit || 500}
+                  value={creditSettings.tokensPerCredit || 2000}
                   onChange={(value) =>
                     setCreditSettings({
                       ...creditSettings,
-                      tokensPerCredit: value || 500,
+                      tokensPerCredit: value || 2000,
                     })
                   }
                   className="bg-card/50 border-border/50 rounded-xl"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                <label className="block text-xs font-medium text-foreground mb-1">
                   New User Credits
                 </label>
                 <NumberInput
@@ -622,6 +681,7 @@ function AdminSettings() {
                 />
               </div>
             </div>
+
             {/* Calculated values - compact inline */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-xs">
               <span className="text-muted-foreground">1 Credit =</span>
@@ -836,49 +896,6 @@ function AdminSettings() {
                 </p>
               </div>
             )}
-
-            {/* Margin Recommendation */}
-            {(() => {
-              const paidTiers = ['plus', 'pro', 'ultra'] as const
-              const margins = paidTiers.map(tier => {
-                const apiCost = tierMonthlyCredits[tier] * costInfo.thbPerCredit
-                const profit = tierPackagePrice[tier] - apiCost
-                const margin = tierPackagePrice[tier] > 0 ? (profit / tierPackagePrice[tier]) * 100 : 0
-                return { tier, margin }
-              })
-              const avgMargin = margins.reduce((sum, m) => sum + m.margin, 0) / margins.length
-              const lowestMargin = Math.min(...margins.map(m => m.margin))
-
-              const belowThreshold = margins.filter(m => m.margin < minMarginThreshold)
-
-              return (
-                <div className="mt-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="text-xs text-blue-400">
-                      <span className="font-medium">💡 Margin Guide:</span>{' '}
-                      Avg = <span className="font-mono font-bold">{avgMargin.toFixed(0)}%</span>
-                      {' | '}Min = <span className="font-mono font-bold">{lowestMargin.toFixed(0)}%</span>
-                      {belowThreshold.length > 0 && (
-                        <span className="ml-2 text-amber-400">
-                          ⚠️ {belowThreshold.map(m => m.tier.toUpperCase()).join(', ')} ต่ำกว่าเกณฑ์
-                        </span>
-                      )}
-                    </p>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-xs text-muted-foreground">Min margin:</span>
-                      <NumberInput
-                        min={0}
-                        max={100}
-                        value={minMarginThreshold}
-                        onChange={(value) => setMinMarginThreshold(value)}
-                        className="w-16 h-7 bg-card/50 border-border/50 rounded-lg text-xs text-center"
-                      />
-                      <span className="text-xs text-muted-foreground">%</span>
-                    </div>
-                  </div>
-                </div>
-              )
-            })()}
           </div>
 
 

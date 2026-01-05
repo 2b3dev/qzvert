@@ -586,28 +586,14 @@ export const isMaintenanceMode = createServerFn({ method: 'GET' }).handler(
 // AI Usage Tracking
 // ============================================
 
-// Gemini API Pricing (per 1M tokens) - Gemini 2.0 Flash
-export const GEMINI_PRICING = {
-  'gemini-2.0-flash': {
-    input: 0.10, // $0.10 per 1M input tokens
-    output: 0.40, // $0.40 per 1M output tokens
-  },
-  'gemini-1.5-flash': {
-    input: 0.075,
-    output: 0.30,
-  },
-  'gemini-1.5-pro': {
-    input: 1.25,
-    output: 5.00,
-  },
-} as const
+// Re-export pricing from types/database.ts (single source of truth)
+export { GEMINI_PRICING, GEMINI_FREE_TIER, GEMINI_ADDITIONAL_COSTS } from '../types/database'
+import { GEMINI_PRICING, GEMINI_FREE_TIER, type GeminiModelId } from '../types/database'
 
-// Free tier limits
-export const GEMINI_FREE_TIER = {
-  requestsPerMinute: 15,
-  tokensPerMinute: 1_000_000,
-  requestsPerDay: 1_500,
-} as const
+// Helper to get pricing for current model
+export function getModelPricing(modelId: GeminiModelId) {
+  return GEMINI_PRICING[modelId] || GEMINI_PRICING['gemini-2.0-flash']
+}
 
 // Log AI usage (called from ttl.ts and gemini.ts)
 export const logAIUsage = createServerFn({ method: 'POST' })
@@ -736,7 +722,7 @@ export const getAIUsageStats = createServerFn({ method: 'GET' })
     }))
 
     // Calculate estimated cost (using gemini-2.0-flash pricing)
-    const pricing = GEMINI_PRICING['gemini-2.0-flash']
+    const pricing = getModelPricing('gemini-2.0-flash')
     const estimatedCost =
       (totalInputTokens / 1_000_000) * pricing.input +
       (totalOutputTokens / 1_000_000) * pricing.output
@@ -857,7 +843,7 @@ export const getDailyAIUsageChart = createServerFn({ method: 'GET' })
       }
 
       // Calculate estimated cost
-      const pricing = GEMINI_PRICING['gemini-2.0-flash']
+      const pricing = getModelPricing('gemini-2.0-flash')
       const estimatedCost =
         (totalInputTokens / 1_000_000) * pricing.input +
         (totalOutputTokens / 1_000_000) * pricing.output
@@ -1364,6 +1350,7 @@ export const getAllCreditSettings = createServerFn({
       'tier_pricing_config',
       'credit_conversion_rate',
       'usd_to_thb_rate',
+      'gemini_model',
       'gemini_input_price',
       'gemini_output_price',
       'tokens_per_credit',
@@ -1394,6 +1381,8 @@ export const getAllCreditSettings = createServerFn({
       defaults.creditConversionRate,
     usdToThbRate:
       (settingsMap['usd_to_thb_rate'] as number) || defaults.usdToThbRate,
+    geminiModel:
+      (settingsMap['gemini_model'] as typeof defaults.geminiModel) || defaults.geminiModel,
     geminiInputPrice:
       (settingsMap['gemini_input_price'] as number) || defaults.geminiInputPrice,
     geminiOutputPrice:
@@ -1457,6 +1446,12 @@ export const saveAllCreditSettings = createServerFn({ method: 'POST' })
         key: 'usd_to_thb_rate',
         value: data.usdToThbRate,
         description: 'USD to THB exchange rate',
+        updated_by: user.id,
+      },
+      {
+        key: 'gemini_model',
+        value: data.geminiModel,
+        description: 'Selected Gemini model ID',
         updated_by: user.id,
       },
       {

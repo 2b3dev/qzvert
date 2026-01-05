@@ -165,3 +165,44 @@ Copy `.env.example` to `.env` and configure:
 - The AI should act as a "Quest Master".
 - Tone: Energetic, witty, and encouraging.
 - Feedback: Always include a pun or a funny remark for wrong answers to reduce frustration.
+
+## Lesson Token Limit Policy
+
+We define **2,000 tokens** as the maximum length for a single lesson.
+
+### Rationale
+
+The 2,000-token limit is based on practical learning and UX constraints rather than model capability.
+
+- A lesson should be completable in a single focused learning session (≈10–15 minutes).
+- This corresponds to approximately 1,200–1,500 words, which maps to ~1,800–2,000 tokens.
+- Lessons typically include:
+  - Introduction
+  - Core explanation
+  - Examples or comparisons
+  - Summary
+  - Optional practice questions
+- Empirically, this structure fits within ~1,600–2,000 tokens.
+
+Exceeding this range results in:
+- Reduced learner engagement
+- Excessive scrolling and cognitive load
+- Content that should be split into multiple lessons
+
+### Enforcement
+
+- Target output length: 1,200–1,500 tokens
+- Maximum output length: 2,000 tokens
+- Content exceeding 2,000 tokens must be split into multiple lessons
+- Absolute cutoff (including prompt and context): 2,500 tokens
+
+### Design Principle
+
+> One lesson = one primary concept.
+> If more than one major concept is required, the content should be divided.
+
+This limit balances:
+- Learner experience
+- Content clarity
+- System scalability
+- AI generation cost control

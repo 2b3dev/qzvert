@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-import { GEMINI_API_URL } from './gemini-config'
+import { getGeminiApiUrl, getGeminiModel } from './gemini-config'
 
 // Input type detection result
 export type InputType =
@@ -231,7 +231,11 @@ Please provide:
 
 Write naturally as if summarizing the actual video content. Be informative and educational.`
 
-  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+  // Get current model from settings
+  const currentModel = await getGeminiModel()
+  const apiUrl = getGeminiApiUrl(currentModel)
+
+  const response = await fetch(`${apiUrl}?key=${apiKey}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

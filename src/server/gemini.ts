@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import type { GeneratedQuest } from '../types/database'
 import { logAIUsage } from './admin-settings'
-import { GEMINI_API_URL, GEMINI_MODEL } from './gemini-config'
+import { getGeminiApiUrl, getGeminiModel } from './gemini-config'
 
 const MAX_RETRIES = 2
 const RETRY_DELAY_MS = 1000
@@ -414,9 +414,13 @@ Rules:
       roleplay: 'generate_quest',
     } as const
 
+    // Get current model from settings
+    const currentModel = await getGeminiModel()
+    const apiUrl = getGeminiApiUrl(currentModel)
+
     // Helper function to make a single API call
     const makeApiCall = async (): Promise<{ textContent: string; inputTokens: number; outputTokens: number }> => {
-      const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+      const response = await fetch(`${apiUrl}?key=${apiKey}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -477,7 +481,7 @@ Rules:
               action: actionMap[data.outputType] || 'generate_quiz',
               inputTokens: totalInputTokens,
               outputTokens: totalOutputTokens,
-              model: GEMINI_MODEL,
+              model: currentModel,
             },
           })
         } catch (error) {
@@ -508,7 +512,7 @@ Rules:
                 action: actionMap[data.outputType] || 'generate_quiz',
                 inputTokens: totalInputTokens,
                 outputTokens: totalOutputTokens,
-                model: GEMINI_MODEL,
+                model: currentModel,
               },
             })
           } catch (logError) {

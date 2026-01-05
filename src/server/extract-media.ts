@@ -9,7 +9,7 @@ import type {
   ExtractionMetadata,
 } from '../types/database'
 import { logAIUsage } from './admin-settings'
-import { GEMINI_API_URL, GEMINI_MODEL } from './gemini-config'
+import { getGeminiApiUrl, getGeminiModel } from './gemini-config'
 
 // Create Supabase client from cookies (SSR-compatible)
 const getSupabaseFromCookies = () => {
@@ -162,7 +162,11 @@ async function extractImageText(base64Data: string, fileName: string): Promise<E
   const mimeType = matches[1]
   const base64Content = matches[2]
 
-  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+  // Get current model from settings
+  const currentModel = await getGeminiModel()
+  const apiUrl = getGeminiApiUrl(currentModel)
+
+  const response = await fetch(`${apiUrl}?key=${apiKey}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -221,7 +225,7 @@ async function extractImageText(base64Data: string, fileName: string): Promise<E
         action: 'summarize', // Using summarize action type for OCR
         inputTokens: result.usageMetadata?.promptTokenCount || 0,
         outputTokens: result.usageMetadata?.candidatesTokenCount || 0,
-        model: `${GEMINI_MODEL}-vision`,
+        model: `${currentModel}-vision`,
       },
     })
   } catch {

@@ -992,11 +992,215 @@ export interface TierSubscription {
 
 export type TierSubscriptionSettings = Record<UserRole, TierSubscription>
 
+// ============================================
+// Gemini API Pricing (Hardcoded - Update via code)
+// Reference: https://ai.google.dev/gemini-api/docs/pricing
+// Last updated: 2026-01-05
+// ============================================
+
+export type GeminiModelId =
+  | 'gemini-2.0-flash'
+  | 'gemini-2.5-flash'
+  | 'gemini-2.5-flash-lite'
+  | 'gemini-2.5-pro'
+  | 'gemini-3-flash-preview'
+  | 'gemini-3-pro-preview'
+
+export interface GeminiModelPricing {
+  id: GeminiModelId
+  name: string
+  description: string
+  // Standard pricing ($ per 1M tokens)
+  input: number
+  output: number
+  // Extended context pricing (>200K tokens, for pro models)
+  inputExtended?: number
+  outputExtended?: number
+  // Batch API pricing (50% discount)
+  batchInput: number
+  batchOutput: number
+  batchInputExtended?: number
+  batchOutputExtended?: number
+  // Audio input pricing (different rate)
+  audioInput?: number
+  batchAudioInput?: number
+  // Context caching ($ per 1M tokens per hour)
+  contextCacheInput?: number
+  contextCacheStorage?: number  // per hour
+  // Model capabilities
+  contextWindow: number  // in tokens
+  recommended?: boolean
+}
+
+// Hardcoded Gemini pricing - updated from official docs
+// To update: send the pricing page URL to Claude and ask to update
+export const GEMINI_PRICING: Record<GeminiModelId, GeminiModelPricing> = {
+  // Gemini 2.0 Flash - Fast and efficient (RECOMMENDED)
+  'gemini-2.0-flash': {
+    id: 'gemini-2.0-flash',
+    name: 'Gemini 2.0 Flash',
+    description: 'Fast and efficient, best value',
+    input: 0.10,
+    output: 0.40,
+    batchInput: 0.05,
+    batchOutput: 0.20,
+    audioInput: 0.70,
+    batchAudioInput: 0.35,
+    contextCacheInput: 0.025,
+    contextCacheStorage: 0.00,
+    contextWindow: 1_000_000,
+    recommended: true,
+  },
+
+  // Gemini 2.5 Flash - Balanced performance
+  'gemini-2.5-flash': {
+    id: 'gemini-2.5-flash',
+    name: 'Gemini 2.5 Flash',
+    description: 'Balanced speed and quality',
+    input: 0.30,
+    output: 2.50,
+    batchInput: 0.15,
+    batchOutput: 1.25,
+    audioInput: 1.00,
+    batchAudioInput: 0.50,
+    contextCacheInput: 0.075,
+    contextCacheStorage: 0.0125,
+    contextWindow: 1_000_000,
+  },
+
+  // Gemini 2.5 Flash-Lite - Most economical
+  'gemini-2.5-flash-lite': {
+    id: 'gemini-2.5-flash-lite',
+    name: 'Gemini 2.5 Flash-Lite',
+    description: 'Most economical option',
+    input: 0.10,
+    output: 0.40,
+    batchInput: 0.05,
+    batchOutput: 0.20,
+    audioInput: 0.30,
+    batchAudioInput: 0.15,
+    contextCacheInput: 0.025,
+    contextCacheStorage: 0.00,
+    contextWindow: 1_000_000,
+  },
+
+  // Gemini 2.5 Pro - High quality with extended context
+  'gemini-2.5-pro': {
+    id: 'gemini-2.5-pro',
+    name: 'Gemini 2.5 Pro',
+    description: 'High quality, extended context',
+    input: 1.25,
+    output: 10.00,
+    inputExtended: 2.50,
+    outputExtended: 15.00,
+    batchInput: 0.625,
+    batchOutput: 5.00,
+    batchInputExtended: 1.25,
+    batchOutputExtended: 7.50,
+    contextCacheInput: 0.3125,
+    contextCacheStorage: 0.0625,
+    contextWindow: 1_000_000,
+  },
+
+  // Gemini 3 Flash Preview - Latest fast model
+  'gemini-3-flash-preview': {
+    id: 'gemini-3-flash-preview',
+    name: 'Gemini 3 Flash (Preview)',
+    description: 'Latest preview, fast',
+    input: 0.50,
+    output: 3.00,
+    batchInput: 0.25,
+    batchOutput: 1.50,
+    audioInput: 1.00,
+    batchAudioInput: 0.50,
+    contextWindow: 1_000_000,
+  },
+
+  // Gemini 3 Pro Preview - Latest high quality
+  'gemini-3-pro-preview': {
+    id: 'gemini-3-pro-preview',
+    name: 'Gemini 3 Pro (Preview)',
+    description: 'Latest preview, highest quality',
+    input: 2.00,
+    output: 12.00,
+    inputExtended: 4.00,
+    outputExtended: 18.00,
+    batchInput: 1.00,
+    batchOutput: 6.00,
+    batchInputExtended: 2.00,
+    batchOutputExtended: 9.00,
+    contextWindow: 1_000_000,
+  },
+}
+
+// Helper to get model list for UI dropdowns
+export const GEMINI_MODELS: Array<{
+  id: GeminiModelId
+  name: string
+  inputPrice: number
+  outputPrice: number
+  description: string
+  recommended?: boolean
+}> = Object.values(GEMINI_PRICING).map(m => ({
+  id: m.id,
+  name: m.name,
+  inputPrice: m.input,
+  outputPrice: m.output,
+  description: m.description,
+  recommended: m.recommended,
+}))
+
+// Free tier limits (for reference)
+export const GEMINI_FREE_TIER = {
+  requestsPerMinute: 15,
+  tokensPerMinute: 1_000_000,
+  requestsPerDay: 1_500,
+} as const
+
+// Additional API costs
+export const GEMINI_ADDITIONAL_COSTS = {
+  // Google Search Grounding
+  searchGrounding: {
+    freeRequestsPerDay: 500,  // Free tier
+    paidRequestsPerDay: 1500, // Paid tier free
+    pricePerThousandQueries: 35,  // $ per 1000 queries after free
+  },
+  // Image generation (Imagen)
+  imagen4: {
+    fast: 0.02,     // $ per image
+    standard: 0.04,
+    ultra: 0.06,
+  },
+  imagen3: {
+    standard: 0.03, // $ per image
+  },
+  // Video generation (Veo)
+  veo: {
+    perSecond: 0.15, // $ per second (720p)
+    perSecondHD: 0.40, // $ per second (1080p)
+  },
+  // Embeddings
+  embedding: {
+    standard: 0.15, // $ per 1M tokens
+    batch: 0.075,
+  },
+} as const
+
+// Legacy type for backward compatibility
+export interface GeminiModelConfig {
+  id: GeminiModelId
+  name: string
+  inputPrice: number
+  outputPrice: number
+  description: string
+}
+
 export interface CreditSettings {
   tokenEstimationRatios: TokenEstimationRatios
   tierPricingConfig: TierPricingConfig
   creditConversionRate: number  // Credits per THB (e.g., 100 = 1 THB = 100 credits)
   usdToThbRate: number          // USD to THB exchange rate
+  geminiModel: GeminiModelId    // Selected Gemini model
   geminiInputPrice: number      // $ per 1M input tokens
   geminiOutputPrice: number     // $ per 1M output tokens
   tokensPerCredit: number       // How many tokens = 1 credit (e.g., 50 = 50 tokens per credit)
@@ -1039,6 +1243,7 @@ export const DEFAULT_CREDIT_SETTINGS: CreditSettings = {
   tierPricingConfig: DEFAULT_TIER_PRICING_CONFIG,
   creditConversionRate: 100,  // 1 THB = 100 credits (legacy, calculated now)
   usdToThbRate: 35,           // 1 USD = 35 THB
+  geminiModel: 'gemini-2.0-flash',  // Default model
   geminiInputPrice: 0.10,     // $0.10 per 1M input tokens
   geminiOutputPrice: 0.40,    // $0.40 per 1M output tokens
   tokensPerCredit: 2000,      // 1 credit ≈ 1 typical AI request (~2000 tokens)

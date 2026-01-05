@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import type { AIAction, GeneratedQuest } from '../types/database'
 import { logAIUsage } from './admin-settings'
-import { GEMINI_API_URL, GEMINI_MODEL } from './gemini-config'
+import { getGeminiApiUrl, getGeminiModel, type GeminiModelId } from './gemini-config'
 
 // Interface for Gemini API response with usage metadata
 interface GeminiResponse {
@@ -63,6 +63,7 @@ interface GeminiCallResult {
   content: string
   inputTokens: number
   outputTokens: number
+  model: GeminiModelId
 }
 
 // Helper function to call Gemini API
@@ -73,7 +74,11 @@ async function callGeminiAPI(prompt: string): Promise<GeminiCallResult> {
     throw new Error('GEMINI_API_KEY is not configured')
   }
 
-  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+  // Get current model from settings
+  const currentModel = await getGeminiModel()
+  const apiUrl = getGeminiApiUrl(currentModel)
+
+  const response = await fetch(`${apiUrl}?key=${apiKey}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -113,6 +118,7 @@ async function callGeminiAPI(prompt: string): Promise<GeminiCallResult> {
     content,
     inputTokens: result.usageMetadata?.promptTokenCount || 0,
     outputTokens: result.usageMetadata?.candidatesTokenCount || 0,
+    model: currentModel,
   }
 }
 
@@ -121,6 +127,7 @@ async function logUsage(
   action: AIAction,
   inputTokens: number,
   outputTokens: number,
+  model: GeminiModelId,
 ) {
   try {
     await logAIUsage({
@@ -128,7 +135,7 @@ async function logUsage(
         action,
         inputTokens,
         outputTokens,
-        model: GEMINI_MODEL,
+        model,
       },
     })
   } catch (error) {
@@ -201,7 +208,7 @@ Summary:`
     const result = await callGeminiAPI(prompt)
 
     // Log usage
-    await logUsage('summarize', result.inputTokens, result.outputTokens)
+    await logUsage('summarize', result.inputTokens, result.outputTokens, result.model)
 
     return { summary: result.content.trim() }
   })
@@ -290,7 +297,7 @@ JSON array of key points:`
     }
 
     // Log usage
-    await logUsage('craft', totalInputTokens, totalOutputTokens)
+    await logUsage('craft', totalInputTokens, totalOutputTokens, craftResult.model)
 
     return {
       crafted: craftResult.content.trim(),
@@ -315,7 +322,7 @@ Translation:`
     const result = await callGeminiAPI(prompt)
 
     // Log usage
-    await logUsage('translate', result.inputTokens, result.outputTokens)
+    await logUsage('translate', result.inputTokens, result.outputTokens, result.model)
 
     return { translated: result.content.trim() }
   })
@@ -374,7 +381,7 @@ IMPORTANT:
     const result = await callGeminiAPI(prompt)
 
     // Log usage
-    await logUsage('deep_lesson', result.inputTokens, result.outputTokens)
+    await logUsage('deep_lesson', result.inputTokens, result.outputTokens, result.model)
 
     // Clean and parse JSON
     let cleanedContent = result.content.trim()
