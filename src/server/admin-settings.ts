@@ -1368,6 +1368,7 @@ export const getAllCreditSettings = createServerFn({
       'gemini_output_price',
       'tokens_per_credit',
       'tier_subscriptions',
+      'min_margin_threshold',
     ])
 
   const settingsMap: Record<string, unknown> = {}
@@ -1402,6 +1403,8 @@ export const getAllCreditSettings = createServerFn({
     tierSubscriptions:
       (settingsMap['tier_subscriptions'] as typeof defaults.tierSubscriptions) ||
       defaults.tierSubscriptions,
+    minMarginThreshold:
+      (settingsMap['min_margin_threshold'] as number) ?? defaults.minMarginThreshold,
   }
 })
 
@@ -1478,6 +1481,12 @@ export const saveAllCreditSettings = createServerFn({ method: 'POST' })
         key: 'tier_subscriptions',
         value: data.tierSubscriptions,
         description: 'Tier subscription pricing (package price, monthly credits, price per credit)',
+        updated_by: user.id,
+      },
+      {
+        key: 'min_margin_threshold',
+        value: data.minMarginThreshold,
+        description: 'Minimum margin % threshold for tier pricing warnings',
         updated_by: user.id,
       },
     ]

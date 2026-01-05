@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import {
   AlertTriangle,
   Coins,
+  ExternalLink,
   Loader2,
   RotateCcw,
   Save,
@@ -29,6 +30,7 @@ import type {
   UserRole,
 } from '../../types/database'
 import { DEFAULT_CREDIT_SETTINGS } from '../../types/database'
+import { GEMINI_MODEL_DISPLAY_NAME } from '../../server/gemini-config'
 
 export const Route = createFileRoute('/admin/settings')({
   beforeLoad: async () => {
@@ -113,6 +115,9 @@ function AdminSettings() {
   // Toggle for showing cost in credits or baht
   const [showCostInBaht, setShowCostInBaht] = useState(true)
 
+  // Minimum margin threshold (admin-configurable)
+  const [minMarginThreshold, setMinMarginThreshold] = useState(50)
+
   // Auto-calculate pricePerCredit when packagePrice or monthlyCredits change
   useEffect(() => {
     const newPrices: Record<UserRole, number> = {} as Record<UserRole, number>
@@ -186,6 +191,11 @@ function AdminSettings() {
           }
         }
         setTierPricePerCredit(newPrices)
+
+        // Load min margin threshold from credit settings
+        if (creditData.minMarginThreshold !== undefined) {
+          setMinMarginThreshold(creditData.minMarginThreshold)
+        }
       } catch (error) {
         console.error('Failed to fetch settings:', error)
         toast.error('Failed to load settings')
@@ -283,6 +293,7 @@ function AdminSettings() {
         ...creditSettings,
         tierPricingConfig: updatedTierConfig,
         tierSubscriptions,
+        minMarginThreshold,
       }
 
       // Include tierMonthlyCredits and tierPackagePrice in settings
@@ -513,7 +524,16 @@ function AdminSettings() {
           <div className="mb-6 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
             <div className="flex items-center gap-2 mb-4">
               <Zap className="w-4 h-4 text-purple-400" />
-              <span className="text-sm font-medium text-purple-400">API Pricing (Gemini 2.0 Flash)</span>
+              <span className="text-sm font-medium text-purple-400">API Pricing ({GEMINI_MODEL_DISPLAY_NAME})</span>
+              <a
+                href="https://ai.google.dev/pricing"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-1 p-1 rounded hover:bg-purple-500/20 transition-colors"
+                title="View Gemini Pricing"
+              >
+                <ExternalLink className="w-3.5 h-3.5 text-purple-400/70 hover:text-purple-400" />
+              </a>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
               <div>
@@ -816,6 +836,49 @@ function AdminSettings() {
                 </p>
               </div>
             )}
+
+            {/* Margin Recommendation */}
+            {(() => {
+              const paidTiers = ['plus', 'pro', 'ultra'] as const
+              const margins = paidTiers.map(tier => {
+                const apiCost = tierMonthlyCredits[tier] * costInfo.thbPerCredit
+                const profit = tierPackagePrice[tier] - apiCost
+                const margin = tierPackagePrice[tier] > 0 ? (profit / tierPackagePrice[tier]) * 100 : 0
+                return { tier, margin }
+              })
+              const avgMargin = margins.reduce((sum, m) => sum + m.margin, 0) / margins.length
+              const lowestMargin = Math.min(...margins.map(m => m.margin))
+
+              const belowThreshold = margins.filter(m => m.margin < minMarginThreshold)
+
+              return (
+                <div className="mt-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="text-xs text-blue-400">
+                      <span className="font-medium">💡 Margin Guide:</span>{' '}
+                      Avg = <span className="font-mono font-bold">{avgMargin.toFixed(0)}%</span>
+                      {' | '}Min = <span className="font-mono font-bold">{lowestMargin.toFixed(0)}%</span>
+                      {belowThreshold.length > 0 && (
+                        <span className="ml-2 text-amber-400">
+                          ⚠️ {belowThreshold.map(m => m.tier.toUpperCase()).join(', ')} ต่ำกว่าเกณฑ์
+                        </span>
+                      )}
+                    </p>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs text-muted-foreground">Min margin:</span>
+                      <NumberInput
+                        min={0}
+                        max={100}
+                        value={minMarginThreshold}
+                        onChange={(value) => setMinMarginThreshold(value)}
+                        className="w-16 h-7 bg-card/50 border-border/50 rounded-lg text-xs text-center"
+                      />
+                      <span className="text-xs text-muted-foreground">%</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
           </div>
 
 

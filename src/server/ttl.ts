@@ -1,9 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import type { AIAction, GeneratedQuest } from '../types/database'
 import { logAIUsage } from './admin-settings'
-
-const GEMINI_API_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+import { GEMINI_API_URL, GEMINI_MODEL } from './gemini-config'
 
 // Interface for Gemini API response with usage metadata
 interface GeminiResponse {
@@ -130,7 +128,7 @@ async function logUsage(
         action,
         inputTokens,
         outputTokens,
-        model: 'gemini-2.0-flash',
+        model: GEMINI_MODEL,
       },
     })
   } catch (error) {

@@ -1,7 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-
-const GEMINI_API_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+import { GEMINI_API_URL } from './gemini-config'
 
 // Input type detection result
 export type InputType =

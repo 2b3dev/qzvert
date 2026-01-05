@@ -9,6 +9,7 @@ import type {
   ExtractionMetadata,
 } from '../types/database'
 import { logAIUsage } from './admin-settings'
+import { GEMINI_API_URL, GEMINI_MODEL } from './gemini-config'
 
 // Create Supabase client from cookies (SSR-compatible)
 const getSupabaseFromCookies = () => {
@@ -21,9 +22,6 @@ const getSupabaseFromCookies = () => {
 const getUntypedClient = () => getSupabaseFromCookies() as any
 
 const EXTRACTED_FILES_BUCKET = 'extracted-files'
-
-const GEMINI_API_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
 
 // ============================================
 // Helper Functions
@@ -223,7 +221,7 @@ async function extractImageText(base64Data: string, fileName: string): Promise<E
         action: 'summarize', // Using summarize action type for OCR
         inputTokens: result.usageMetadata?.promptTokenCount || 0,
         outputTokens: result.usageMetadata?.candidatesTokenCount || 0,
-        model: 'gemini-2.0-flash-vision',
+        model: `${GEMINI_MODEL}-vision`,
       },
     })
   } catch {

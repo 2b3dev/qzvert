@@ -1001,6 +1001,7 @@ export interface CreditSettings {
   geminiOutputPrice: number     // $ per 1M output tokens
   tokensPerCredit: number       // How many tokens = 1 credit (e.g., 50 = 50 tokens per credit)
   tierSubscriptions: TierSubscriptionSettings  // Tier subscription settings
+  minMarginThreshold: number    // Minimum margin % threshold for warnings
 }
 
 // Default values for credit settings
@@ -1040,6 +1041,7 @@ export const DEFAULT_CREDIT_SETTINGS: CreditSettings = {
   usdToThbRate: 35,           // 1 USD = 35 THB
   geminiInputPrice: 0.10,     // $0.10 per 1M input tokens
   geminiOutputPrice: 0.40,    // $0.40 per 1M output tokens
-  tokensPerCredit: 500,       // 1 credit ≈ 1 typical AI request (~500 tokens)
+  tokensPerCredit: 2000,      // 1 credit ≈ 1 typical AI request (~2000 tokens)
   tierSubscriptions: DEFAULT_TIER_SUBSCRIPTIONS,
+  minMarginThreshold: 50,     // Default 50% minimum margin threshold
 }

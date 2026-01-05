@@ -1,9 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import type { GeneratedQuest } from '../types/database'
 import { logAIUsage } from './admin-settings'
-
-const GEMINI_API_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+import { GEMINI_API_URL, GEMINI_MODEL } from './gemini-config'
 
 const MAX_RETRIES = 2
 const RETRY_DELAY_MS = 1000
@@ -479,7 +477,7 @@ Rules:
               action: actionMap[data.outputType] || 'generate_quiz',
               inputTokens: totalInputTokens,
               outputTokens: totalOutputTokens,
-              model: 'gemini-2.0-flash',
+              model: GEMINI_MODEL,
             },
           })
         } catch (error) {
@@ -510,7 +508,7 @@ Rules:
                 action: actionMap[data.outputType] || 'generate_quiz',
                 inputTokens: totalInputTokens,
                 outputTokens: totalOutputTokens,
-                model: 'gemini-2.0-flash',
+                model: GEMINI_MODEL,
               },
             })
           } catch (logError) {
