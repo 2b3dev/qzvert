@@ -38,7 +38,7 @@ import type {
   GeminiModelId,
   UserRole,
 } from '../../types/database'
-import { DEFAULT_CREDIT_SETTINGS, GEMINI_MODELS, GEMINI_PRICING } from '../../types/database'
+import { DEFAULT_CREDIT_SETTINGS, GEMINI_ADDITIONAL_COSTS, GEMINI_MODELS, GEMINI_PRICING } from '../../types/database'
 
 export const Route = createFileRoute('/admin/settings')({
   beforeLoad: async () => {
@@ -591,41 +591,307 @@ function AdminSettings() {
               </DropdownMenu>
             </div>
 
-            {/* Current Model Pricing (Read-only) */}
+            {/* Current Model Pricing (Read-only) - Detailed */}
             {(() => {
               const currentPricing = GEMINI_PRICING[creditSettings.geminiModel] || GEMINI_PRICING['gemini-2.0-flash']
+              const usdToThb = creditSettings.usdToThbRate
+              const formatThb = (usd: number) => (usd * usdToThb).toFixed(2)
+              const formatThbPer1K = (usdPer1M: number) => ((usdPer1M * usdToThb) / 1000).toFixed(4)
+
               return (
-                <div className="mb-4 p-3 rounded-lg bg-muted/30 border border-border/30">
-                  <div className="text-xs text-muted-foreground mb-2">ราคา API ปัจจุบัน (Hardcoded)</div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                    <div>
-                      <span className="text-muted-foreground">Input:</span>
-                      <span className="ml-1 font-mono text-purple-400">${currentPricing.input}/1M</span>
+                <div className="mb-4 p-4 rounded-lg bg-muted/30 border border-border/30 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs font-medium text-foreground">
+                      ราคา API: {currentPricing.name}
                     </div>
-                    <div>
-                      <span className="text-muted-foreground">Output:</span>
-                      <span className="ml-1 font-mono text-purple-400">${currentPricing.output}/1M</span>
+                    <div className="text-[10px] text-muted-foreground">
+                      Context: {(currentPricing.contextWindow / 1_000_000).toFixed(0)}M tokens
                     </div>
-                    <div>
-                      <span className="text-muted-foreground">Batch Input:</span>
-                      <span className="ml-1 font-mono text-green-400">${currentPricing.batchInput}/1M</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Batch Output:</span>
-                      <span className="ml-1 font-mono text-green-400">${currentPricing.batchOutput}/1M</span>
-                    </div>
-                    {currentPricing.audioInput && (
-                      <div>
-                        <span className="text-muted-foreground">Audio:</span>
-                        <span className="ml-1 font-mono text-amber-400">${currentPricing.audioInput}/1M</span>
+                  </div>
+
+                  {/* 1. Standard Pricing */}
+                  <div className="space-y-2">
+                    <div className="text-[10px] font-medium text-purple-400 uppercase tracking-wide">Standard API</div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                      <div className="p-2 rounded bg-purple-500/10">
+                        <div className="text-muted-foreground text-[10px]">Input</div>
+                        <div className="font-mono text-purple-400">${currentPricing.input}/1M</div>
+                        <div className="font-mono text-purple-400/60 text-[10px]">฿{formatThb(currentPricing.input)}/1M</div>
+                        <div className="font-mono text-purple-400/40 text-[9px]">฿{formatThbPer1K(currentPricing.input)}/1K</div>
                       </div>
-                    )}
-                    {currentPricing.contextCacheInput && (
-                      <div>
-                        <span className="text-muted-foreground">Cache:</span>
-                        <span className="ml-1 font-mono text-blue-400">${currentPricing.contextCacheInput}/1M</span>
+                      <div className="p-2 rounded bg-purple-500/10">
+                        <div className="text-muted-foreground text-[10px]">Output</div>
+                        <div className="font-mono text-purple-400">${currentPricing.output}/1M</div>
+                        <div className="font-mono text-purple-400/60 text-[10px]">฿{formatThb(currentPricing.output)}/1M</div>
+                        <div className="font-mono text-purple-400/40 text-[9px]">฿{formatThbPer1K(currentPricing.output)}/1K</div>
                       </div>
-                    )}
+                      {currentPricing.inputExtended && (
+                        <div className="p-2 rounded bg-purple-500/10 border border-purple-500/20">
+                          <div className="text-muted-foreground text-[10px]">Input &gt;200K</div>
+                          <div className="font-mono text-purple-400">${currentPricing.inputExtended}/1M</div>
+                          <div className="font-mono text-purple-400/60 text-[10px]">฿{formatThb(currentPricing.inputExtended)}/1M</div>
+                        </div>
+                      )}
+                      {currentPricing.outputExtended && (
+                        <div className="p-2 rounded bg-purple-500/10 border border-purple-500/20">
+                          <div className="text-muted-foreground text-[10px]">Output &gt;200K</div>
+                          <div className="font-mono text-purple-400">${currentPricing.outputExtended}/1M</div>
+                          <div className="font-mono text-purple-400/60 text-[10px]">฿{formatThb(currentPricing.outputExtended)}/1M</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 2. Batch API Pricing (50% discount) */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="text-[10px] font-medium text-green-400 uppercase tracking-wide">Batch API</div>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-green-500/20 text-green-400">50% OFF</span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                      <div className="p-2 rounded bg-green-500/10">
+                        <div className="text-muted-foreground text-[10px]">Input</div>
+                        <div className="font-mono text-green-400">${currentPricing.batchInput}/1M</div>
+                        <div className="font-mono text-green-400/60 text-[10px]">฿{formatThb(currentPricing.batchInput)}/1M</div>
+                      </div>
+                      <div className="p-2 rounded bg-green-500/10">
+                        <div className="text-muted-foreground text-[10px]">Output</div>
+                        <div className="font-mono text-green-400">${currentPricing.batchOutput}/1M</div>
+                        <div className="font-mono text-green-400/60 text-[10px]">฿{formatThb(currentPricing.batchOutput)}/1M</div>
+                      </div>
+                      {currentPricing.batchInputExtended && (
+                        <div className="p-2 rounded bg-green-500/10 border border-green-500/20">
+                          <div className="text-muted-foreground text-[10px]">Input &gt;200K</div>
+                          <div className="font-mono text-green-400">${currentPricing.batchInputExtended}/1M</div>
+                        </div>
+                      )}
+                      {currentPricing.batchOutputExtended && (
+                        <div className="p-2 rounded bg-green-500/10 border border-green-500/20">
+                          <div className="text-muted-foreground text-[10px]">Output &gt;200K</div>
+                          <div className="font-mono text-green-400">${currentPricing.batchOutputExtended}/1M</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 3. Audio Input Pricing */}
+                  {currentPricing.audioInput && (
+                    <div className="space-y-2">
+                      <div className="text-[10px] font-medium text-amber-400 uppercase tracking-wide">Audio Input</div>
+                      <div className="grid grid-cols-2 gap-3 text-xs">
+                        <div className="p-2 rounded bg-amber-500/10">
+                          <div className="text-muted-foreground text-[10px]">Standard</div>
+                          <div className="font-mono text-amber-400">${currentPricing.audioInput}/1M</div>
+                          <div className="font-mono text-amber-400/60 text-[10px]">฿{formatThb(currentPricing.audioInput)}/1M</div>
+                        </div>
+                        {currentPricing.batchAudioInput && (
+                          <div className="p-2 rounded bg-amber-500/10 border border-amber-500/20">
+                            <div className="text-muted-foreground text-[10px]">Batch</div>
+                            <div className="font-mono text-amber-400">${currentPricing.batchAudioInput}/1M</div>
+                            <div className="font-mono text-amber-400/60 text-[10px]">฿{formatThb(currentPricing.batchAudioInput)}/1M</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 4. Context Caching */}
+                  {currentPricing.contextCacheInput && (
+                    <div className="space-y-2">
+                      <div className="text-[10px] font-medium text-blue-400 uppercase tracking-wide">Context Caching</div>
+                      <div className="grid grid-cols-2 gap-3 text-xs">
+                        <div className="p-2 rounded bg-blue-500/10">
+                          <div className="text-muted-foreground text-[10px]">Cache Input</div>
+                          <div className="font-mono text-blue-400">${currentPricing.contextCacheInput}/1M</div>
+                          <div className="font-mono text-blue-400/60 text-[10px]">฿{formatThb(currentPricing.contextCacheInput)}/1M</div>
+                        </div>
+                        {currentPricing.contextCacheStorage !== undefined && currentPricing.contextCacheStorage > 0 && (
+                          <div className="p-2 rounded bg-blue-500/10 border border-blue-500/20">
+                            <div className="text-muted-foreground text-[10px]">Storage/hr</div>
+                            <div className="font-mono text-blue-400">${currentPricing.contextCacheStorage}/1M</div>
+                            <div className="font-mono text-blue-400/60 text-[10px]">฿{formatThb(currentPricing.contextCacheStorage)}/1M/hr</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 5. Additional Services (Imagen, Veo, Embeddings, Grounding) */}
+                  {(() => {
+                    const { imagen4, imagen3, veo, embedding, searchGrounding } = GEMINI_ADDITIONAL_COSTS
+                    return (
+                      <div className="space-y-3 pt-3 border-t border-border/30">
+                        <div className="text-[10px] font-medium text-foreground/80 uppercase tracking-wide">Additional Services</div>
+
+                        {/* Image Generation */}
+                        <div className="space-y-2">
+                          <div className="text-[10px] font-medium text-pink-400">Image Generation (Imagen)</div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                            <div className="p-2 rounded bg-pink-500/10">
+                              <div className="text-muted-foreground text-[10px]">Imagen 4 Fast</div>
+                              <div className="font-mono text-pink-400">${imagen4.fast}/img</div>
+                              <div className="font-mono text-pink-400/60 text-[10px]">฿{formatThb(imagen4.fast)}/img</div>
+                            </div>
+                            <div className="p-2 rounded bg-pink-500/10">
+                              <div className="text-muted-foreground text-[10px]">Imagen 4 Standard</div>
+                              <div className="font-mono text-pink-400">${imagen4.standard}/img</div>
+                              <div className="font-mono text-pink-400/60 text-[10px]">฿{formatThb(imagen4.standard)}/img</div>
+                            </div>
+                            <div className="p-2 rounded bg-pink-500/10">
+                              <div className="text-muted-foreground text-[10px]">Imagen 4 Ultra</div>
+                              <div className="font-mono text-pink-400">${imagen4.ultra}/img</div>
+                              <div className="font-mono text-pink-400/60 text-[10px]">฿{formatThb(imagen4.ultra)}/img</div>
+                            </div>
+                            <div className="p-2 rounded bg-pink-500/10 border border-pink-500/20">
+                              <div className="text-muted-foreground text-[10px]">Imagen 3</div>
+                              <div className="font-mono text-pink-400">${imagen3.standard}/img</div>
+                              <div className="font-mono text-pink-400/60 text-[10px]">฿{formatThb(imagen3.standard)}/img</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Video Generation */}
+                        <div className="space-y-2">
+                          <div className="text-[10px] font-medium text-rose-400">Video Generation (Veo)</div>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="p-2 rounded bg-rose-500/10">
+                              <div className="text-muted-foreground text-[10px]">720p</div>
+                              <div className="font-mono text-rose-400">${veo.perSecond}/sec</div>
+                              <div className="font-mono text-rose-400/60 text-[10px]">฿{formatThb(veo.perSecond)}/sec</div>
+                            </div>
+                            <div className="p-2 rounded bg-rose-500/10">
+                              <div className="text-muted-foreground text-[10px]">1080p HD</div>
+                              <div className="font-mono text-rose-400">${veo.perSecondHD}/sec</div>
+                              <div className="font-mono text-rose-400/60 text-[10px]">฿{formatThb(veo.perSecondHD)}/sec</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Embeddings & Grounding */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {/* Embeddings */}
+                          <div className="space-y-2">
+                            <div className="text-[10px] font-medium text-cyan-400">Embeddings</div>
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              <div className="p-2 rounded bg-cyan-500/10">
+                                <div className="text-muted-foreground text-[10px]">Standard</div>
+                                <div className="font-mono text-cyan-400">${embedding.standard}/1M</div>
+                                <div className="font-mono text-cyan-400/60 text-[10px]">฿{formatThb(embedding.standard)}/1M</div>
+                              </div>
+                              <div className="p-2 rounded bg-cyan-500/10">
+                                <div className="text-muted-foreground text-[10px]">Batch</div>
+                                <div className="font-mono text-cyan-400">${embedding.batch}/1M</div>
+                                <div className="font-mono text-cyan-400/60 text-[10px]">฿{formatThb(embedding.batch)}/1M</div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Search Grounding */}
+                          <div className="space-y-2">
+                            <div className="text-[10px] font-medium text-orange-400">Search Grounding</div>
+                            <div className="p-2 rounded bg-orange-500/10 text-xs">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Free/day:</span>
+                                <span className="font-mono text-orange-400">{searchGrounding.freeRequestsPerDay} (Free) / {searchGrounding.paidRequestsPerDay} (Paid)</span>
+                              </div>
+                              <div className="flex justify-between mt-1">
+                                <span className="text-muted-foreground">After free:</span>
+                                <span className="font-mono text-orange-400">${searchGrounding.pricePerThousandQueries}/1K queries</span>
+                              </div>
+                              <div className="text-orange-400/60 text-[10px] mt-1">
+                                ฿{formatThb(searchGrounding.pricePerThousandQueries)}/1K queries
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })()}
+
+                  {/* Cost Calculation Examples */}
+                  <div className="pt-3 border-t border-border/30 space-y-2">
+                    <div className="text-[10px] font-medium text-foreground/80">ตัวอย่างการคำนวณ (ที่ {creditSettings.usdToThbRate} ฿/USD)</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[10px]">
+                      {/* Typical Request */}
+                      {(() => {
+                        const inputTokens = 1500
+                        const outputTokens = 500
+                        const inputCost = (inputTokens / 1_000_000) * currentPricing.input
+                        const outputCost = (outputTokens / 1_000_000) * currentPricing.output
+                        const totalUsd = inputCost + outputCost
+                        const totalThb = totalUsd * usdToThb
+                        return (
+                          <div className="p-2 rounded bg-card/50 border border-border/30">
+                            <div className="text-muted-foreground">Typical Request (1.5K in + 500 out)</div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="font-mono text-foreground">${totalUsd.toFixed(6)}</span>
+                              <span className="text-muted-foreground/50">=</span>
+                              <span className="font-mono text-amber-400">฿{totalThb.toFixed(4)}</span>
+                            </div>
+                          </div>
+                        )
+                      })()}
+                      {/* Quiz Generation */}
+                      {(() => {
+                        const inputTokens = 2000
+                        const outputTokens = 3000
+                        const inputCost = (inputTokens / 1_000_000) * currentPricing.input
+                        const outputCost = (outputTokens / 1_000_000) * currentPricing.output
+                        const totalUsd = inputCost + outputCost
+                        const totalThb = totalUsd * usdToThb
+                        return (
+                          <div className="p-2 rounded bg-card/50 border border-border/30">
+                            <div className="text-muted-foreground">Quiz Gen (2K in + 3K out)</div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="font-mono text-foreground">${totalUsd.toFixed(6)}</span>
+                              <span className="text-muted-foreground/50">=</span>
+                              <span className="font-mono text-amber-400">฿{totalThb.toFixed(4)}</span>
+                            </div>
+                          </div>
+                        )
+                      })()}
+                      {/* Batch Comparison */}
+                      {(() => {
+                        const inputTokens = 10000
+                        const outputTokens = 5000
+                        const standardInputCost = (inputTokens / 1_000_000) * currentPricing.input
+                        const standardOutputCost = (outputTokens / 1_000_000) * currentPricing.output
+                        const standardTotal = (standardInputCost + standardOutputCost) * usdToThb
+                        const batchInputCost = (inputTokens / 1_000_000) * currentPricing.batchInput
+                        const batchOutputCost = (outputTokens / 1_000_000) * currentPricing.batchOutput
+                        const batchTotal = (batchInputCost + batchOutputCost) * usdToThb
+                        const savings = standardTotal - batchTotal
+                        return (
+                          <div className="p-2 rounded bg-card/50 border border-border/30">
+                            <div className="text-muted-foreground">Batch vs Standard (10K in + 5K out)</div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="font-mono text-foreground line-through opacity-50">฿{standardTotal.toFixed(4)}</span>
+                              <span className="text-muted-foreground/50">→</span>
+                              <span className="font-mono text-green-400">฿{batchTotal.toFixed(4)}</span>
+                              <span className="text-green-500 text-[9px]">(-฿{savings.toFixed(4)})</span>
+                            </div>
+                          </div>
+                        )
+                      })()}
+                      {/* 1 Credit Cost */}
+                      {(() => {
+                        const tokensPerCredit = creditSettings.tokensPerCredit || 2000
+                        // Weighted average (60% input, 40% output)
+                        const weightedPrice = (currentPricing.input * 0.6 + currentPricing.output * 0.4)
+                        const creditCostUsd = (tokensPerCredit / 1_000_000) * weightedPrice
+                        const creditCostThb = creditCostUsd * usdToThb
+                        return (
+                          <div className="p-2 rounded bg-purple-500/10 border border-purple-500/20">
+                            <div className="text-purple-400">1 Credit ({tokensPerCredit.toLocaleString()} tokens)</div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="font-mono text-foreground">${creditCostUsd.toFixed(6)}</span>
+                              <span className="text-muted-foreground/50">=</span>
+                              <span className="font-mono text-purple-400 font-bold">฿{creditCostThb.toFixed(4)}</span>
+                            </div>
+                          </div>
+                        )
+                      })()}
+                    </div>
                   </div>
                 </div>
               )
