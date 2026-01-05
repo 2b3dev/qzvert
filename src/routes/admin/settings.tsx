@@ -34,11 +34,18 @@ import {
   type SystemSettings,
 } from '../../server/admin-settings'
 import type {
+  ActionPricingConfig,
+  AIAction,
   CreditSettings,
-  GeminiModelId,
   UserRole,
 } from '../../types/database'
-import { DEFAULT_CREDIT_SETTINGS, GEMINI_ADDITIONAL_COSTS, GEMINI_MODELS, GEMINI_PRICING } from '../../types/database'
+import {
+  DEFAULT_ACTION_PRICING,
+  DEFAULT_CREDIT_SETTINGS,
+  GEMINI_ADDITIONAL_COSTS,
+  GEMINI_MODELS,
+  GEMINI_PRICING,
+} from '../../types/database'
 
 export const Route = createFileRoute('/admin/settings')({
   beforeLoad: async () => {
@@ -93,40 +100,60 @@ function AdminSettings() {
 
   // Tier pricing in user-friendly format (price per credit in THB)
   // Price per credit (calculated from packagePrice / monthlyCredits)
-  const [tierPricePerCredit, setTierPricePerCredit] = useState<Record<UserRole, number>>({
-    user: 0,       // Free tier - no price per credit
-    plus: 0.66,    // ฿199 / 300 credits = ฿0.66/credit
-    pro: 0.50,     // ฿599 / 1200 credits = ฿0.50/credit
-    ultra: 0.40,   // ฿999 / 2500 credits = ฿0.40/credit
-    admin: 0,      // Free for admin
+  const [tierPricePerCredit, setTierPricePerCredit] = useState<
+    Record<UserRole, number>
+  >({
+    user: 0, // Free tier - no price per credit
+    plus: 0.66, // ฿199 / 300 credits = ฿0.66/credit
+    pro: 0.5, // ฿599 / 1200 credits = ฿0.50/credit
+    ultra: 0.4, // ฿999 / 2500 credits = ฿0.40/credit
+    admin: 0, // Free for admin
   })
 
   // Monthly credits per tier (editable)
   // Higher tiers = more credits = better value
-  const [tierMonthlyCredits, setTierMonthlyCredits] = useState<Record<UserRole, number>>({
-    user: 10,      // Free tier - 10 credits/month
-    plus: 300,     // Plus ฿199/month
-    pro: 1200,     // Pro ฿599/month
-    ultra: 2500,   // Ultra ฿999/month
-    admin: 0,      // Unlimited (shown as ∞)
+  const [tierMonthlyCredits, setTierMonthlyCredits] = useState<
+    Record<UserRole, number>
+  >({
+    user: 10, // Free tier - 10 credits/month
+    plus: 300, // Plus ฿199/month
+    pro: 1200, // Pro ฿599/month
+    ultra: 2500, // Ultra ฿999/month
+    admin: 0, // Unlimited (shown as ∞)
   })
 
   // Package price per tier (editable) - THB per month
-  const [tierPackagePrice, setTierPackagePrice] = useState<Record<UserRole, number>>({
-    user: 0,       // Free
-    plus: 199,     // Plus ฿199/month
-    pro: 599,      // Pro ฿599/month
-    ultra: 999,    // Ultra ฿999/month
-    admin: 0,      // Free
+  const [tierPackagePrice, setTierPackagePrice] = useState<
+    Record<UserRole, number>
+  >({
+    user: 0, // Free
+    plus: 199, // Plus ฿199/month
+    pro: 599, // Pro ฿599/month
+    ultra: 999, // Ultra ฿999/month
+    admin: 0, // Free
   })
 
   // Toggle for showing cost in credits or baht
   const [showCostInBaht, setShowCostInBaht] = useState(true)
 
+  // Action-based pricing state
+  const [actionPricing, setActionPricing] = useState<ActionPricingConfig>(
+    DEFAULT_ACTION_PRICING,
+  )
+
+  // Collapsible state for advanced pricing
+  const [showAdvancedPricing, setShowAdvancedPricing] = useState(false)
+
   // Auto-calculate pricePerCredit when packagePrice or monthlyCredits change
   useEffect(() => {
     const newPrices: Record<UserRole, number> = {} as Record<UserRole, number>
-    for (const tier of ['user', 'plus', 'pro', 'ultra', 'admin'] as UserRole[]) {
+    for (const tier of [
+      'user',
+      'plus',
+      'pro',
+      'ultra',
+      'admin',
+    ] as UserRole[]) {
       const pkg = tierPackagePrice[tier] || 0
       const credits = tierMonthlyCredits[tier] || 1
       newPrices[tier] = credits > 0 ? Number((pkg / credits).toFixed(2)) : 0
@@ -156,7 +183,13 @@ function AdminSettings() {
           loadedMonthlyCredits = {} as Record<UserRole, number>
           loadedPricePerCredit = {} as Record<UserRole, number>
 
-          for (const tier of ['user', 'plus', 'pro', 'ultra', 'admin'] as UserRole[]) {
+          for (const tier of [
+            'user',
+            'plus',
+            'pro',
+            'ultra',
+            'admin',
+          ] as UserRole[]) {
             const sub = creditData.tierSubscriptions[tier]
             if (sub) {
               loadedPackagePrices[tier] = sub.packagePrice
@@ -168,13 +201,19 @@ function AdminSettings() {
 
         // Override with system settings if available (takes precedence)
         if (settingsData.tierMonthlyCredits) {
-          loadedMonthlyCredits = settingsData.tierMonthlyCredits as Record<UserRole, number>
+          loadedMonthlyCredits = settingsData.tierMonthlyCredits as Record<
+            UserRole,
+            number
+          >
         } else if (!loadedMonthlyCredits!) {
           loadedMonthlyCredits = tierMonthlyCredits
         }
 
         if (settingsData.tierPackagePrice) {
-          loadedPackagePrices = settingsData.tierPackagePrice as Record<UserRole, number>
+          loadedPackagePrices = settingsData.tierPackagePrice as Record<
+            UserRole,
+            number
+          >
         } else if (!loadedPackagePrices!) {
           loadedPackagePrices = tierPackagePrice
         }
@@ -183,19 +222,37 @@ function AdminSettings() {
         setTierPackagePrice(loadedPackagePrices)
 
         // Calculate price per credit from loaded values (packagePrice / monthlyCredits)
-        const newPrices: Record<UserRole, number> = {} as Record<UserRole, number>
-        for (const tier of ['user', 'plus', 'pro', 'ultra', 'admin'] as UserRole[]) {
-          if (loadedPricePerCredit && loadedPricePerCredit[tier] !== undefined) {
+        const newPrices: Record<UserRole, number> = {} as Record<
+          UserRole,
+          number
+        >
+        for (const tier of [
+          'user',
+          'plus',
+          'pro',
+          'ultra',
+          'admin',
+        ] as UserRole[]) {
+          if (
+            loadedPricePerCredit &&
+            loadedPricePerCredit[tier] !== undefined
+          ) {
             // Use saved price per credit if available
             newPrices[tier] = loadedPricePerCredit[tier]
           } else {
             // Calculate from package price / monthly credits
             const pkg = loadedPackagePrices[tier] || 0
             const credits = loadedMonthlyCredits[tier] || 1
-            newPrices[tier] = credits > 0 ? Number((pkg / credits).toFixed(2)) : 0
+            newPrices[tier] =
+              credits > 0 ? Number((pkg / credits).toFixed(2)) : 0
           }
         }
         setTierPricePerCredit(newPrices)
+
+        // Load action pricing from credit settings
+        if (creditData.actionPricing) {
+          setActionPricing(creditData.actionPricing)
+        }
       } catch (error) {
         console.error('Failed to fetch settings:', error)
         toast.error('Failed to load settings')
@@ -213,10 +270,10 @@ function AdminSettings() {
     // Weighted average price per token (assume 60% input, 40% output for typical usage)
     const inputRatio = 0.6
     const outputRatio = 0.4
-    const weightedPricePerTokenUSD = (
-      (creditSettings.geminiInputPrice * inputRatio) +
-      (creditSettings.geminiOutputPrice * outputRatio)
-    ) / 1_000_000
+    const weightedPricePerTokenUSD =
+      (creditSettings.geminiInputPrice * inputRatio +
+        creditSettings.geminiOutputPrice * outputRatio) /
+      1_000_000
 
     // Cost in THB per token
     const thbPerToken = weightedPricePerTokenUSD * creditSettings.usdToThbRate
@@ -271,8 +328,17 @@ function AdminSettings() {
       updatedTierConfig.mode = 'fixed' // Use fixed mode for simplicity
 
       // Build tier subscriptions from current UI state
-      const tierSubscriptions: Record<UserRole, { packagePrice: number; monthlyCredits: number; pricePerCredit: number }> = {} as any
-      for (const tier of ['user', 'plus', 'pro', 'ultra', 'admin'] as UserRole[]) {
+      const tierSubscriptions: Record<
+        UserRole,
+        { packagePrice: number; monthlyCredits: number; pricePerCredit: number }
+      > = {} as any
+      for (const tier of [
+        'user',
+        'plus',
+        'pro',
+        'ultra',
+        'admin',
+      ] as UserRole[]) {
         // Convert price per credit to price per 1K tokens
         // If 1 credit = ฿X, then price per 1K tokens = X * 100 (approx)
         updatedTierConfig.tiers[tier] = {
@@ -293,6 +359,7 @@ function AdminSettings() {
         ...creditSettings,
         tierPricingConfig: updatedTierConfig,
         tierSubscriptions,
+        actionPricing,
       }
 
       // Include tierMonthlyCredits and tierPackagePrice in settings
@@ -322,35 +389,75 @@ function AdminSettings() {
     setCreditSettings(DEFAULT_CREDIT_SETTINGS)
     // Use new pricing: Plus ฿199, Pro ฿599, Ultra ฿999
     setTierPricePerCredit({
-      user: 0,       // Free tier
-      plus: 0.66,    // ฿199 / 300 credits = ฿0.66/credit
-      pro: 0.50,     // ฿599 / 1200 credits = ฿0.50/credit
-      ultra: 0.40,   // ฿999 / 2500 credits = ฿0.40/credit
+      user: 0, // Free tier
+      plus: 0.66, // ฿199 / 300 credits = ฿0.66/credit
+      pro: 0.5, // ฿599 / 1200 credits = ฿0.50/credit
+      ultra: 0.4, // ฿999 / 2500 credits = ฿0.40/credit
       admin: 0,
     })
     setTierMonthlyCredits({
-      user: 10,      // Free tier - 10 credits/month
-      plus: 300,     // Plus ฿199/month
-      pro: 1200,     // Pro ฿599/month
-      ultra: 2500,   // Ultra ฿999/month
-      admin: 0,      // Unlimited
+      user: 10, // Free tier - 10 credits/month
+      plus: 300, // Plus ฿199/month
+      pro: 1200, // Pro ฿599/month
+      ultra: 2500, // Ultra ฿999/month
+      admin: 0, // Unlimited
     })
     setTierPackagePrice({
-      user: 0,       // Free
-      plus: 199,     // Plus ฿199/month
-      pro: 599,      // Pro ฿599/month
-      ultra: 999,    // Ultra ฿999/month
-      admin: 0,      // Free
+      user: 0, // Free
+      plus: 199, // Plus ฿199/month
+      pro: 599, // Pro ฿599/month
+      ultra: 999, // Ultra ฿999/month
+      admin: 0, // Free
     })
+    setActionPricing(DEFAULT_ACTION_PRICING)
     toast.success('Reset to default values (not saved yet)')
   }
 
+  // Calculate action cost and margin
+  const calculateActionCostAndMargin = (action: AIAction) => {
+    const pricing = actionPricing[action]
+    const currentModel =
+      GEMINI_PRICING[creditSettings.geminiModel] ||
+      GEMINI_PRICING['gemini-2.0-flash']
+    const usdToThb = creditSettings.usdToThbRate
 
-  const tierLabels: Record<UserRole, {
-    name: string
-    color: string
-    bg: string
-  }> = {
+    // Calculate actual API cost
+    const inputCostUsd =
+      (pricing.estimatedInputTokens / 1_000_000) * currentModel.input
+    const outputCostUsd =
+      (pricing.estimatedOutputTokens / 1_000_000) * currentModel.output
+    const totalCostUsd = inputCostUsd + outputCostUsd
+    const totalCostThb = totalCostUsd * usdToThb
+
+    // Calculate selling price (credits × price per credit for Plus tier as reference)
+    const sellingPriceThb = pricing.creditsPerAction * tierPricePerCredit.plus
+
+    // Calculate profit and margin
+    const profitThb = sellingPriceThb - totalCostThb
+    const marginPercent =
+      sellingPriceThb > 0 ? (profitThb / sellingPriceThb) * 100 : 0
+
+    return {
+      inputTokens: pricing.estimatedInputTokens,
+      outputTokens: pricing.estimatedOutputTokens,
+      totalTokens: pricing.estimatedInputTokens + pricing.estimatedOutputTokens,
+      costUsd: totalCostUsd,
+      costThb: totalCostThb,
+      credits: pricing.creditsPerAction,
+      sellingPriceThb,
+      profitThb,
+      marginPercent,
+    }
+  }
+
+  const tierLabels: Record<
+    UserRole,
+    {
+      name: string
+      color: string
+      bg: string
+    }
+  > = {
     user: {
       name: 'Free',
       color: 'text-gray-400',
@@ -442,7 +549,9 @@ function AdminSettings() {
                 </label>
                 <Input
                   value={settings?.siteDescription || ''}
-                  onChange={(e) => updateSetting('siteDescription', e.target.value)}
+                  onChange={(e) =>
+                    updateSetting('siteDescription', e.target.value)
+                  }
                   placeholder="AI-powered Learning Platform"
                   className="bg-card/50 border-border/50 rounded-xl"
                 />
@@ -458,7 +567,9 @@ function AdminSettings() {
               </div>
               <Toggle
                 checked={settings?.maintenanceMode || false}
-                onChange={(checked) => updateSetting('maintenanceMode', checked)}
+                onChange={(checked) =>
+                  updateSetting('maintenanceMode', checked)
+                }
               />
             </div>
 
@@ -506,7 +617,9 @@ function AdminSettings() {
                 <span className="text-xs text-muted-foreground">Enable AI</span>
                 <Toggle
                   checked={settings?.enableAIGeneration ?? true}
-                  onChange={(checked) => updateSetting('enableAIGeneration', checked)}
+                  onChange={(checked) =>
+                    updateSetting('enableAIGeneration', checked)
+                  }
                 />
               </div>
               <button
@@ -524,7 +637,9 @@ function AdminSettings() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Zap className="w-4 h-4 text-purple-400" />
-                <span className="text-sm font-medium text-purple-400">API Pricing</span>
+                <span className="text-sm font-medium text-purple-400">
+                  API Pricing
+                </span>
                 <a
                   href="https://ai.google.dev/gemini-api/docs/pricing"
                   target="_blank"
@@ -543,7 +658,9 @@ function AdminSettings() {
                     className="gap-2 bg-card/50 border-border/50 hover:bg-purple-500/10 hover:border-purple-500/30"
                   >
                     <span className="text-sm font-medium">
-                      {GEMINI_MODELS.find(m => m.id === creditSettings.geminiModel)?.name || 'Select Model'}
+                      {GEMINI_MODELS.find(
+                        (m) => m.id === creditSettings.geminiModel,
+                      )?.name || 'Select Model'}
                     </span>
                     <ChevronDown className="w-4 h-4 text-muted-foreground" />
                   </Button>
@@ -568,7 +685,9 @@ function AdminSettings() {
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{model.name}</span>
                             {model.recommended && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-500/20 text-green-400">แนะนำ</span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-500/20 text-green-400">
+                                แนะนำ
+                              </span>
                             )}
                             {creditSettings.geminiModel === model.id && (
                               <Check className="w-4 h-4 text-purple-500" />
@@ -578,9 +697,14 @@ function AdminSettings() {
                             {model.description}
                           </p>
                           <p className="text-xs text-purple-400 mt-1">
-                            Input: ${pricing.input}/1M • Output: ${pricing.output}/1M
+                            Input: ${pricing.input}/1M • Output: $
+                            {pricing.output}/1M
                             {pricing.batchInput && (
-                              <span className="text-muted-foreground"> (Batch: ${pricing.batchInput}/${pricing.batchOutput})</span>
+                              <span className="text-muted-foreground">
+                                {' '}
+                                (Batch: ${pricing.batchInput}/$
+                                {pricing.batchOutput})
+                              </span>
                             )}
                           </p>
                         </div>
@@ -591,12 +715,16 @@ function AdminSettings() {
               </DropdownMenu>
             </div>
 
-            {/* Current Model Pricing (Read-only) - Detailed */}
+            {/* Current Model Pricing (Read-only) - Reorganized */}
             {(() => {
-              const currentPricing = GEMINI_PRICING[creditSettings.geminiModel] || GEMINI_PRICING['gemini-2.0-flash']
+              const currentPricing =
+                GEMINI_PRICING[creditSettings.geminiModel] ||
+                GEMINI_PRICING['gemini-2.0-flash']
               const usdToThb = creditSettings.usdToThbRate
               const formatThb = (usd: number) => (usd * usdToThb).toFixed(2)
-              const formatThbPer1K = (usdPer1M: number) => ((usdPer1M * usdToThb) / 1000).toFixed(4)
+              const formatThbPer1K = (usdPer1M: number) =>
+                ((usdPer1M * usdToThb) / 1000).toFixed(4)
+              const { imagen4, veo } = GEMINI_ADDITIONAL_COSTS
 
               return (
                 <div className="mb-4 p-4 rounded-lg bg-muted/30 border border-border/30 space-y-4">
@@ -605,293 +733,395 @@ function AdminSettings() {
                       ราคา API: {currentPricing.name}
                     </div>
                     <div className="text-[10px] text-muted-foreground">
-                      Context: {(currentPricing.contextWindow / 1_000_000).toFixed(0)}M tokens
+                      Context:{' '}
+                      {(currentPricing.contextWindow / 1_000_000).toFixed(0)}M
+                      tokens
                     </div>
                   </div>
 
-                  {/* 1. Standard Pricing */}
+                  {/* ===== MAIN FEATURES ===== */}
+
+                  {/* 1. Text Generation (Main) */}
                   <div className="space-y-2">
-                    <div className="text-[10px] font-medium text-purple-400 uppercase tracking-wide">Standard API</div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-[10px] font-medium text-purple-400 uppercase tracking-wide">
+                        Text Generation
+                      </div>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400">
+                        Quiz, Quest, Lesson, Summarize and other activities
+                      </span>
+                    </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                       <div className="p-2 rounded bg-purple-500/10">
-                        <div className="text-muted-foreground text-[10px]">Input</div>
-                        <div className="font-mono text-purple-400">${currentPricing.input}/1M</div>
-                        <div className="font-mono text-purple-400/60 text-[10px]">฿{formatThb(currentPricing.input)}/1M</div>
-                        <div className="font-mono text-purple-400/40 text-[9px]">฿{formatThbPer1K(currentPricing.input)}/1K</div>
+                        <div className="text-muted-foreground text-[10px]">
+                          Input
+                        </div>
+                        <div className="font-mono text-purple-400">
+                          ${currentPricing.input}/1M
+                        </div>
+                        <div className="font-mono text-purple-400/60 text-[10px]">
+                          ฿{formatThb(currentPricing.input)}/1M
+                        </div>
+                        <div className="font-mono text-purple-400/40 text-[9px]">
+                          ฿{formatThbPer1K(currentPricing.input)}/1K
+                        </div>
                       </div>
                       <div className="p-2 rounded bg-purple-500/10">
-                        <div className="text-muted-foreground text-[10px]">Output</div>
-                        <div className="font-mono text-purple-400">${currentPricing.output}/1M</div>
-                        <div className="font-mono text-purple-400/60 text-[10px]">฿{formatThb(currentPricing.output)}/1M</div>
-                        <div className="font-mono text-purple-400/40 text-[9px]">฿{formatThbPer1K(currentPricing.output)}/1K</div>
+                        <div className="text-muted-foreground text-[10px]">
+                          Output
+                        </div>
+                        <div className="font-mono text-purple-400">
+                          ${currentPricing.output}/1M
+                        </div>
+                        <div className="font-mono text-purple-400/60 text-[10px]">
+                          ฿{formatThb(currentPricing.output)}/1M
+                        </div>
+                        <div className="font-mono text-purple-400/40 text-[9px]">
+                          ฿{formatThbPer1K(currentPricing.output)}/1K
+                        </div>
                       </div>
                       {currentPricing.inputExtended && (
                         <div className="p-2 rounded bg-purple-500/10 border border-purple-500/20">
-                          <div className="text-muted-foreground text-[10px]">Input &gt;200K</div>
-                          <div className="font-mono text-purple-400">${currentPricing.inputExtended}/1M</div>
-                          <div className="font-mono text-purple-400/60 text-[10px]">฿{formatThb(currentPricing.inputExtended)}/1M</div>
+                          <div className="text-muted-foreground text-[10px]">
+                            Input &gt;200K
+                          </div>
+                          <div className="font-mono text-purple-400">
+                            ${currentPricing.inputExtended}/1M
+                          </div>
+                          <div className="font-mono text-purple-400/60 text-[10px]">
+                            ฿{formatThb(currentPricing.inputExtended)}/1M
+                          </div>
                         </div>
                       )}
                       {currentPricing.outputExtended && (
                         <div className="p-2 rounded bg-purple-500/10 border border-purple-500/20">
-                          <div className="text-muted-foreground text-[10px]">Output &gt;200K</div>
-                          <div className="font-mono text-purple-400">${currentPricing.outputExtended}/1M</div>
-                          <div className="font-mono text-purple-400/60 text-[10px]">฿{formatThb(currentPricing.outputExtended)}/1M</div>
+                          <div className="text-muted-foreground text-[10px]">
+                            Output &gt;200K
+                          </div>
+                          <div className="font-mono text-purple-400">
+                            ${currentPricing.outputExtended}/1M
+                          </div>
+                          <div className="font-mono text-purple-400/60 text-[10px]">
+                            ฿{formatThb(currentPricing.outputExtended)}/1M
+                          </div>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  {/* 2. Batch API Pricing (50% discount) */}
+                  {/* 2. Image Generation (Main) */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <div className="text-[10px] font-medium text-green-400 uppercase tracking-wide">Batch API</div>
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-green-500/20 text-green-400">50% OFF</span>
+                      <div className="text-[10px] font-medium text-pink-400 uppercase tracking-wide">
+                        Image Generation
+                      </div>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-pink-500/20 text-pink-400">
+                        Imagen 4
+                      </span>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                      <div className="p-2 rounded bg-green-500/10">
-                        <div className="text-muted-foreground text-[10px]">Input</div>
-                        <div className="font-mono text-green-400">${currentPricing.batchInput}/1M</div>
-                        <div className="font-mono text-green-400/60 text-[10px]">฿{formatThb(currentPricing.batchInput)}/1M</div>
-                      </div>
-                      <div className="p-2 rounded bg-green-500/10">
-                        <div className="text-muted-foreground text-[10px]">Output</div>
-                        <div className="font-mono text-green-400">${currentPricing.batchOutput}/1M</div>
-                        <div className="font-mono text-green-400/60 text-[10px]">฿{formatThb(currentPricing.batchOutput)}/1M</div>
-                      </div>
-                      {currentPricing.batchInputExtended && (
-                        <div className="p-2 rounded bg-green-500/10 border border-green-500/20">
-                          <div className="text-muted-foreground text-[10px]">Input &gt;200K</div>
-                          <div className="font-mono text-green-400">${currentPricing.batchInputExtended}/1M</div>
+                    <div className="grid grid-cols-3 gap-3 text-xs">
+                      <div className="p-2 rounded bg-pink-500/10">
+                        <div className="text-muted-foreground text-[10px]">
+                          Fast
                         </div>
-                      )}
-                      {currentPricing.batchOutputExtended && (
-                        <div className="p-2 rounded bg-green-500/10 border border-green-500/20">
-                          <div className="text-muted-foreground text-[10px]">Output &gt;200K</div>
-                          <div className="font-mono text-green-400">${currentPricing.batchOutputExtended}/1M</div>
+                        <div className="font-mono text-pink-400">
+                          ${imagen4.fast}/img
                         </div>
-                      )}
+                        <div className="font-mono text-pink-400/60 text-[10px]">
+                          ฿{formatThb(imagen4.fast)}/img
+                        </div>
+                      </div>
+                      <div className="p-2 rounded bg-pink-500/10">
+                        <div className="text-muted-foreground text-[10px]">
+                          Standard
+                        </div>
+                        <div className="font-mono text-pink-400">
+                          ${imagen4.standard}/img
+                        </div>
+                        <div className="font-mono text-pink-400/60 text-[10px]">
+                          ฿{formatThb(imagen4.standard)}/img
+                        </div>
+                      </div>
+                      <div className="p-2 rounded bg-pink-500/10">
+                        <div className="text-muted-foreground text-[10px]">
+                          Ultra
+                        </div>
+                        <div className="font-mono text-pink-400">
+                          ${imagen4.ultra}/img
+                        </div>
+                        <div className="font-mono text-pink-400/60 text-[10px]">
+                          ฿{formatThb(imagen4.ultra)}/img
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* 3. Audio Input Pricing */}
-                  {currentPricing.audioInput && (
-                    <div className="space-y-2">
-                      <div className="text-[10px] font-medium text-amber-400 uppercase tracking-wide">Audio Input</div>
-                      <div className="grid grid-cols-2 gap-3 text-xs">
-                        <div className="p-2 rounded bg-amber-500/10">
-                          <div className="text-muted-foreground text-[10px]">Standard</div>
-                          <div className="font-mono text-amber-400">${currentPricing.audioInput}/1M</div>
-                          <div className="font-mono text-amber-400/60 text-[10px]">฿{formatThb(currentPricing.audioInput)}/1M</div>
+                  {/* 3. Video Generation (Main) */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="text-[10px] font-medium text-rose-400 uppercase tracking-wide">
+                        Video Generation
+                      </div>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400">
+                        Veo
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div className="p-2 rounded bg-rose-500/10">
+                        <div className="text-muted-foreground text-[10px]">
+                          720p
                         </div>
-                        {currentPricing.batchAudioInput && (
-                          <div className="p-2 rounded bg-amber-500/10 border border-amber-500/20">
-                            <div className="text-muted-foreground text-[10px]">Batch</div>
-                            <div className="font-mono text-amber-400">${currentPricing.batchAudioInput}/1M</div>
-                            <div className="font-mono text-amber-400/60 text-[10px]">฿{formatThb(currentPricing.batchAudioInput)}/1M</div>
-                          </div>
-                        )}
+                        <div className="font-mono text-rose-400">
+                          ${veo.perSecond}/sec
+                        </div>
+                        <div className="font-mono text-rose-400/60 text-[10px]">
+                          ฿{formatThb(veo.perSecond)}/sec
+                        </div>
+                        <div className="font-mono text-rose-400/40 text-[9px]">
+                          10s = ฿{formatThb(veo.perSecond * 10)}
+                        </div>
+                      </div>
+                      <div className="p-2 rounded bg-rose-500/10">
+                        <div className="text-muted-foreground text-[10px]">
+                          1080p HD
+                        </div>
+                        <div className="font-mono text-rose-400">
+                          ${veo.perSecondHD}/sec
+                        </div>
+                        <div className="font-mono text-rose-400/60 text-[10px]">
+                          ฿{formatThb(veo.perSecondHD)}/sec
+                        </div>
+                        <div className="font-mono text-rose-400/40 text-[9px]">
+                          10s = ฿{formatThb(veo.perSecondHD * 10)}
+                        </div>
                       </div>
                     </div>
-                  )}
+                  </div>
 
-                  {/* 4. Context Caching */}
-                  {currentPricing.contextCacheInput && (
-                    <div className="space-y-2">
-                      <div className="text-[10px] font-medium text-blue-400 uppercase tracking-wide">Context Caching</div>
-                      <div className="grid grid-cols-2 gap-3 text-xs">
-                        <div className="p-2 rounded bg-blue-500/10">
-                          <div className="text-muted-foreground text-[10px]">Cache Input</div>
-                          <div className="font-mono text-blue-400">${currentPricing.contextCacheInput}/1M</div>
-                          <div className="font-mono text-blue-400/60 text-[10px]">฿{formatThb(currentPricing.contextCacheInput)}/1M</div>
+                  {/* ===== ADVANCED PRICING (Collapsible) ===== */}
+                  <div className="pt-3 border-t border-border/30">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowAdvancedPricing(!showAdvancedPricing)
+                      }
+                      className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full"
+                    >
+                      <ChevronDown
+                        className={cn(
+                          'w-3.5 h-3.5 transition-transform',
+                          showAdvancedPricing && 'rotate-180',
+                        )}
+                      />
+                      <span>Advanced Pricing</span>
+                      <span className="text-[10px] text-muted-foreground/60">
+                        (Batch, Audio, Caching, Embeddings, Grounding)
+                      </span>
+                    </button>
+
+                    {showAdvancedPricing && (
+                      <div className="mt-4 space-y-4">
+                        {/* Batch API */}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <div className="text-[10px] font-medium text-green-400 uppercase tracking-wide">
+                              Batch API
+                            </div>
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-green-500/20 text-green-400">
+                              50% OFF
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                            <div className="p-2 rounded bg-green-500/10">
+                              <div className="text-muted-foreground text-[10px]">
+                                Input
+                              </div>
+                              <div className="font-mono text-green-400">
+                                ${currentPricing.batchInput}/1M
+                              </div>
+                              <div className="font-mono text-green-400/60 text-[10px]">
+                                ฿{formatThb(currentPricing.batchInput)}/1M
+                              </div>
+                            </div>
+                            <div className="p-2 rounded bg-green-500/10">
+                              <div className="text-muted-foreground text-[10px]">
+                                Output
+                              </div>
+                              <div className="font-mono text-green-400">
+                                ${currentPricing.batchOutput}/1M
+                              </div>
+                              <div className="font-mono text-green-400/60 text-[10px]">
+                                ฿{formatThb(currentPricing.batchOutput)}/1M
+                              </div>
+                            </div>
+                            {currentPricing.batchInputExtended && (
+                              <div className="p-2 rounded bg-green-500/10 border border-green-500/20">
+                                <div className="text-muted-foreground text-[10px]">
+                                  Input &gt;200K
+                                </div>
+                                <div className="font-mono text-green-400">
+                                  ${currentPricing.batchInputExtended}/1M
+                                </div>
+                              </div>
+                            )}
+                            {currentPricing.batchOutputExtended && (
+                              <div className="p-2 rounded bg-green-500/10 border border-green-500/20">
+                                <div className="text-muted-foreground text-[10px]">
+                                  Output &gt;200K
+                                </div>
+                                <div className="font-mono text-green-400">
+                                  ${currentPricing.batchOutputExtended}/1M
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        {currentPricing.contextCacheStorage !== undefined && currentPricing.contextCacheStorage > 0 && (
-                          <div className="p-2 rounded bg-blue-500/10 border border-blue-500/20">
-                            <div className="text-muted-foreground text-[10px]">Storage/hr</div>
-                            <div className="font-mono text-blue-400">${currentPricing.contextCacheStorage}/1M</div>
-                            <div className="font-mono text-blue-400/60 text-[10px]">฿{formatThb(currentPricing.contextCacheStorage)}/1M/hr</div>
+
+                        {/* Audio Input */}
+                        {currentPricing.audioInput && (
+                          <div className="space-y-2">
+                            <div className="text-[10px] font-medium text-amber-400 uppercase tracking-wide">
+                              Audio Input
+                            </div>
+                            <div className="grid grid-cols-2 gap-3 text-xs">
+                              <div className="p-2 rounded bg-amber-500/10">
+                                <div className="text-muted-foreground text-[10px]">
+                                  Standard
+                                </div>
+                                <div className="font-mono text-amber-400">
+                                  ${currentPricing.audioInput}/1M
+                                </div>
+                                <div className="font-mono text-amber-400/60 text-[10px]">
+                                  ฿{formatThb(currentPricing.audioInput)}/1M
+                                </div>
+                              </div>
+                              {currentPricing.batchAudioInput && (
+                                <div className="p-2 rounded bg-amber-500/10 border border-amber-500/20">
+                                  <div className="text-muted-foreground text-[10px]">
+                                    Batch
+                                  </div>
+                                  <div className="font-mono text-amber-400">
+                                    ${currentPricing.batchAudioInput}/1M
+                                  </div>
+                                  <div className="font-mono text-amber-400/60 text-[10px]">
+                                    ฿{formatThb(currentPricing.batchAudioInput)}
+                                    /1M
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         )}
-                      </div>
-                    </div>
-                  )}
 
-                  {/* 5. Additional Services (Imagen, Veo, Embeddings, Grounding) */}
-                  {(() => {
-                    const { imagen4, imagen3, veo, embedding, searchGrounding } = GEMINI_ADDITIONAL_COSTS
-                    return (
-                      <div className="space-y-3 pt-3 border-t border-border/30">
-                        <div className="text-[10px] font-medium text-foreground/80 uppercase tracking-wide">Additional Services</div>
-
-                        {/* Image Generation */}
-                        <div className="space-y-2">
-                          <div className="text-[10px] font-medium text-pink-400">Image Generation (Imagen)</div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                            <div className="p-2 rounded bg-pink-500/10">
-                              <div className="text-muted-foreground text-[10px]">Imagen 4 Fast</div>
-                              <div className="font-mono text-pink-400">${imagen4.fast}/img</div>
-                              <div className="font-mono text-pink-400/60 text-[10px]">฿{formatThb(imagen4.fast)}/img</div>
+                        {/* Context Caching */}
+                        {currentPricing.contextCacheInput && (
+                          <div className="space-y-2">
+                            <div className="text-[10px] font-medium text-blue-400 uppercase tracking-wide">
+                              Context Caching
                             </div>
-                            <div className="p-2 rounded bg-pink-500/10">
-                              <div className="text-muted-foreground text-[10px]">Imagen 4 Standard</div>
-                              <div className="font-mono text-pink-400">${imagen4.standard}/img</div>
-                              <div className="font-mono text-pink-400/60 text-[10px]">฿{formatThb(imagen4.standard)}/img</div>
-                            </div>
-                            <div className="p-2 rounded bg-pink-500/10">
-                              <div className="text-muted-foreground text-[10px]">Imagen 4 Ultra</div>
-                              <div className="font-mono text-pink-400">${imagen4.ultra}/img</div>
-                              <div className="font-mono text-pink-400/60 text-[10px]">฿{formatThb(imagen4.ultra)}/img</div>
-                            </div>
-                            <div className="p-2 rounded bg-pink-500/10 border border-pink-500/20">
-                              <div className="text-muted-foreground text-[10px]">Imagen 3</div>
-                              <div className="font-mono text-pink-400">${imagen3.standard}/img</div>
-                              <div className="font-mono text-pink-400/60 text-[10px]">฿{formatThb(imagen3.standard)}/img</div>
+                            <div className="grid grid-cols-2 gap-3 text-xs">
+                              <div className="p-2 rounded bg-blue-500/10">
+                                <div className="text-muted-foreground text-[10px]">
+                                  Cache Input
+                                </div>
+                                <div className="font-mono text-blue-400">
+                                  ${currentPricing.contextCacheInput}/1M
+                                </div>
+                                <div className="font-mono text-blue-400/60 text-[10px]">
+                                  ฿{formatThb(currentPricing.contextCacheInput)}
+                                  /1M
+                                </div>
+                              </div>
+                              {currentPricing.contextCacheStorage !==
+                                undefined &&
+                                currentPricing.contextCacheStorage > 0 && (
+                                  <div className="p-2 rounded bg-blue-500/10 border border-blue-500/20">
+                                    <div className="text-muted-foreground text-[10px]">
+                                      Storage/hr
+                                    </div>
+                                    <div className="font-mono text-blue-400">
+                                      ${currentPricing.contextCacheStorage}/1M
+                                    </div>
+                                    <div className="font-mono text-blue-400/60 text-[10px]">
+                                      ฿
+                                      {formatThb(
+                                        currentPricing.contextCacheStorage,
+                                      )}
+                                      /1M/hr
+                                    </div>
+                                  </div>
+                                )}
                             </div>
                           </div>
-                        </div>
-
-                        {/* Video Generation */}
-                        <div className="space-y-2">
-                          <div className="text-[10px] font-medium text-rose-400">Video Generation (Veo)</div>
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div className="p-2 rounded bg-rose-500/10">
-                              <div className="text-muted-foreground text-[10px]">720p</div>
-                              <div className="font-mono text-rose-400">${veo.perSecond}/sec</div>
-                              <div className="font-mono text-rose-400/60 text-[10px]">฿{formatThb(veo.perSecond)}/sec</div>
-                            </div>
-                            <div className="p-2 rounded bg-rose-500/10">
-                              <div className="text-muted-foreground text-[10px]">1080p HD</div>
-                              <div className="font-mono text-rose-400">${veo.perSecondHD}/sec</div>
-                              <div className="font-mono text-rose-400/60 text-[10px]">฿{formatThb(veo.perSecondHD)}/sec</div>
-                            </div>
-                          </div>
-                        </div>
+                        )}
 
                         {/* Embeddings & Grounding */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {/* Embeddings */}
-                          <div className="space-y-2">
-                            <div className="text-[10px] font-medium text-cyan-400">Embeddings</div>
-                            <div className="grid grid-cols-2 gap-2 text-xs">
-                              <div className="p-2 rounded bg-cyan-500/10">
-                                <div className="text-muted-foreground text-[10px]">Standard</div>
-                                <div className="font-mono text-cyan-400">${embedding.standard}/1M</div>
-                                <div className="font-mono text-cyan-400/60 text-[10px]">฿{formatThb(embedding.standard)}/1M</div>
+                        {(() => {
+                          const { imagen3, embedding, searchGrounding } =
+                            GEMINI_ADDITIONAL_COSTS
+                          return (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                              {/* Imagen 3 (legacy) */}
+                              <div className="space-y-2">
+                                <div className="text-[10px] font-medium text-pink-400/70">
+                                  Imagen 3 (Legacy)
+                                </div>
+                                <div className="p-2 rounded bg-pink-500/5 text-xs">
+                                  <div className="font-mono text-pink-400/70">
+                                    ${imagen3.standard}/img
+                                  </div>
+                                  <div className="font-mono text-pink-400/50 text-[10px]">
+                                    ฿{formatThb(imagen3.standard)}/img
+                                  </div>
+                                </div>
                               </div>
-                              <div className="p-2 rounded bg-cyan-500/10">
-                                <div className="text-muted-foreground text-[10px]">Batch</div>
-                                <div className="font-mono text-cyan-400">${embedding.batch}/1M</div>
-                                <div className="font-mono text-cyan-400/60 text-[10px]">฿{formatThb(embedding.batch)}/1M</div>
-                              </div>
-                            </div>
-                          </div>
 
-                          {/* Search Grounding */}
-                          <div className="space-y-2">
-                            <div className="text-[10px] font-medium text-orange-400">Search Grounding</div>
-                            <div className="p-2 rounded bg-orange-500/10 text-xs">
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground">Free/day:</span>
-                                <span className="font-mono text-orange-400">{searchGrounding.freeRequestsPerDay} (Free) / {searchGrounding.paidRequestsPerDay} (Paid)</span>
+                              {/* Embeddings */}
+                              <div className="space-y-2">
+                                <div className="text-[10px] font-medium text-cyan-400">
+                                  Embeddings
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                  <div className="p-2 rounded bg-cyan-500/10">
+                                    <div className="text-muted-foreground text-[10px]">
+                                      Standard
+                                    </div>
+                                    <div className="font-mono text-cyan-400">
+                                      ${embedding.standard}/1M
+                                    </div>
+                                  </div>
+                                  <div className="p-2 rounded bg-cyan-500/10">
+                                    <div className="text-muted-foreground text-[10px]">
+                                      Batch
+                                    </div>
+                                    <div className="font-mono text-cyan-400">
+                                      ${embedding.batch}/1M
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="flex justify-between mt-1">
-                                <span className="text-muted-foreground">After free:</span>
-                                <span className="font-mono text-orange-400">${searchGrounding.pricePerThousandQueries}/1K queries</span>
-                              </div>
-                              <div className="text-orange-400/60 text-[10px] mt-1">
-                                ฿{formatThb(searchGrounding.pricePerThousandQueries)}/1K queries
+
+                              {/* Search Grounding */}
+                              <div className="space-y-2">
+                                <div className="text-[10px] font-medium text-orange-400">
+                                  Search Grounding
+                                </div>
+                                <div className="p-2 rounded bg-orange-500/10 text-xs">
+                                  <div className="text-muted-foreground text-[10px]">
+                                    Free: {searchGrounding.freeRequestsPerDay}
+                                    /day
+                                  </div>
+                                  <div className="font-mono text-orange-400">
+                                    ${searchGrounding.pricePerThousandQueries}
+                                    /1K
+                                  </div>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </div>
+                          )
+                        })()}
                       </div>
-                    )
-                  })()}
-
-                  {/* Cost Calculation Examples */}
-                  <div className="pt-3 border-t border-border/30 space-y-2">
-                    <div className="text-[10px] font-medium text-foreground/80">ตัวอย่างการคำนวณ (ที่ {creditSettings.usdToThbRate} ฿/USD)</div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[10px]">
-                      {/* Typical Request */}
-                      {(() => {
-                        const inputTokens = 1500
-                        const outputTokens = 500
-                        const inputCost = (inputTokens / 1_000_000) * currentPricing.input
-                        const outputCost = (outputTokens / 1_000_000) * currentPricing.output
-                        const totalUsd = inputCost + outputCost
-                        const totalThb = totalUsd * usdToThb
-                        return (
-                          <div className="p-2 rounded bg-card/50 border border-border/30">
-                            <div className="text-muted-foreground">Typical Request (1.5K in + 500 out)</div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="font-mono text-foreground">${totalUsd.toFixed(6)}</span>
-                              <span className="text-muted-foreground/50">=</span>
-                              <span className="font-mono text-amber-400">฿{totalThb.toFixed(4)}</span>
-                            </div>
-                          </div>
-                        )
-                      })()}
-                      {/* Quiz Generation */}
-                      {(() => {
-                        const inputTokens = 2000
-                        const outputTokens = 3000
-                        const inputCost = (inputTokens / 1_000_000) * currentPricing.input
-                        const outputCost = (outputTokens / 1_000_000) * currentPricing.output
-                        const totalUsd = inputCost + outputCost
-                        const totalThb = totalUsd * usdToThb
-                        return (
-                          <div className="p-2 rounded bg-card/50 border border-border/30">
-                            <div className="text-muted-foreground">Quiz Gen (2K in + 3K out)</div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="font-mono text-foreground">${totalUsd.toFixed(6)}</span>
-                              <span className="text-muted-foreground/50">=</span>
-                              <span className="font-mono text-amber-400">฿{totalThb.toFixed(4)}</span>
-                            </div>
-                          </div>
-                        )
-                      })()}
-                      {/* Batch Comparison */}
-                      {(() => {
-                        const inputTokens = 10000
-                        const outputTokens = 5000
-                        const standardInputCost = (inputTokens / 1_000_000) * currentPricing.input
-                        const standardOutputCost = (outputTokens / 1_000_000) * currentPricing.output
-                        const standardTotal = (standardInputCost + standardOutputCost) * usdToThb
-                        const batchInputCost = (inputTokens / 1_000_000) * currentPricing.batchInput
-                        const batchOutputCost = (outputTokens / 1_000_000) * currentPricing.batchOutput
-                        const batchTotal = (batchInputCost + batchOutputCost) * usdToThb
-                        const savings = standardTotal - batchTotal
-                        return (
-                          <div className="p-2 rounded bg-card/50 border border-border/30">
-                            <div className="text-muted-foreground">Batch vs Standard (10K in + 5K out)</div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="font-mono text-foreground line-through opacity-50">฿{standardTotal.toFixed(4)}</span>
-                              <span className="text-muted-foreground/50">→</span>
-                              <span className="font-mono text-green-400">฿{batchTotal.toFixed(4)}</span>
-                              <span className="text-green-500 text-[9px]">(-฿{savings.toFixed(4)})</span>
-                            </div>
-                          </div>
-                        )
-                      })()}
-                      {/* 1 Credit Cost */}
-                      {(() => {
-                        const tokensPerCredit = creditSettings.tokensPerCredit || 2000
-                        // Weighted average (60% input, 40% output)
-                        const weightedPrice = (currentPricing.input * 0.6 + currentPricing.output * 0.4)
-                        const creditCostUsd = (tokensPerCredit / 1_000_000) * weightedPrice
-                        const creditCostThb = creditCostUsd * usdToThb
-                        return (
-                          <div className="p-2 rounded bg-purple-500/10 border border-purple-500/20">
-                            <div className="text-purple-400">1 Credit ({tokensPerCredit.toLocaleString()} tokens)</div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="font-mono text-foreground">${creditCostUsd.toFixed(6)}</span>
-                              <span className="text-muted-foreground/50">=</span>
-                              <span className="font-mono text-purple-400 font-bold">฿{creditCostThb.toFixed(4)}</span>
-                            </div>
-                          </div>
-                        )
-                      })()}
-                    </div>
+                    )}
                   </div>
                 </div>
               )
@@ -951,20 +1181,28 @@ function AdminSettings() {
             {/* Calculated values - compact inline */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-xs">
               <span className="text-muted-foreground">1 Credit =</span>
-              <span className="font-mono font-bold text-foreground">฿{calculatedRate.thbPerCredit.toFixed(4)}</span>
+              <span className="font-mono font-bold text-foreground">
+                ฿{calculatedRate.thbPerCredit.toFixed(4)}
+              </span>
               <span className="text-muted-foreground/30">|</span>
               <span className="text-muted-foreground">฿1 =</span>
-              <span className="font-mono font-bold text-foreground">{calculatedRate.creditsPerBaht.toLocaleString()}</span>
+              <span className="font-mono font-bold text-foreground">
+                {calculatedRate.creditsPerBaht.toLocaleString()}
+              </span>
               <span className="text-muted-foreground">credits</span>
               <span className="text-muted-foreground/30">|</span>
               <span className="text-muted-foreground">฿1 =</span>
-              <span className="font-mono font-bold text-foreground">{calculatedRate.tokensPerBaht.toLocaleString()}</span>
+              <span className="font-mono font-bold text-foreground">
+                {calculatedRate.tokensPerBaht.toLocaleString()}
+              </span>
               <span className="text-muted-foreground">tokens</span>
             </div>
             {/* Cost Analysis Section */}
             <div className="mt-4 p-3 rounded-lg bg-muted/30">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-medium text-muted-foreground">ต้นทุนโดยประมาณ</span>
+                <span className="text-xs font-medium text-muted-foreground">
+                  ต้นทุนโดยประมาณ
+                </span>
                 <button
                   type="button"
                   onClick={() => setShowCostInBaht(!showCostInBaht)}
@@ -988,23 +1226,31 @@ function AdminSettings() {
                   { count: 100000, label: '100K' },
                   { count: 1000000, label: '1M' },
                 ]
-                const costPerNewUser = newUserCredits * calculatedRate.thbPerCredit
+                const costPerNewUser =
+                  newUserCredits * calculatedRate.thbPerCredit
 
                 return (
                   <div className="space-y-3">
                     {/* Action costs */}
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
                       {actions.map(({ name, tokens }) => {
-                        const credits = Math.max(1, Math.ceil(tokens / tokensPerCredit))
+                        const credits = Math.max(
+                          1,
+                          Math.ceil(tokens / tokensPerCredit),
+                        )
                         const cost = credits * calculatedRate.thbPerCredit
                         return (
                           <span key={name} className="flex items-center gap-1">
                             <span className="text-purple-400">{name}</span>
                             <span className="text-muted-foreground">=</span>
                             {showCostInBaht ? (
-                              <span className="font-mono text-purple-400/80">฿{cost.toFixed(2)}</span>
+                              <span className="font-mono text-purple-400/80">
+                                ฿{cost.toFixed(2)}
+                              </span>
                             ) : (
-                              <span className="font-mono text-purple-400/80">{credits} cr</span>
+                              <span className="font-mono text-purple-400/80">
+                                {credits} cr
+                              </span>
                             )}
                           </span>
                         )
@@ -1018,9 +1264,21 @@ function AdminSettings() {
                           <span className="text-amber-400">{label}</span>
                           <span className="text-muted-foreground"> = </span>
                           {showCostInBaht ? (
-                            <span className="font-mono text-amber-400/80">฿{(costPerNewUser * count).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                            <span className="font-mono text-amber-400/80">
+                              ฿
+                              {(costPerNewUser * count).toLocaleString(
+                                undefined,
+                                { maximumFractionDigits: 0 },
+                              )}
+                            </span>
                           ) : (
-                            <span className="font-mono text-amber-400/80">{(newUserCredits * count / 1000).toLocaleString()}K cr</span>
+                            <span className="font-mono text-amber-400/80">
+                              {(
+                                (newUserCredits * count) /
+                                1000
+                              ).toLocaleString()}
+                              K cr
+                            </span>
                           )}
                           <span className="text-muted-foreground/60">/mo</span>
                         </span>
@@ -1042,36 +1300,57 @@ function AdminSettings() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border/50">
-                    <th className="text-left py-3 px-3 font-medium text-muted-foreground">Tier</th>
-                    <th className="text-center py-3 px-3 font-medium text-muted-foreground">แพ็กเกจ/เดือน</th>
+                    <th className="text-left py-3 px-3 font-medium text-muted-foreground">
+                      Tier
+                    </th>
+                    <th className="text-center py-3 px-3 font-medium text-muted-foreground">
+                      แพ็กเกจ/เดือน
+                    </th>
                     <th className="text-center py-3 px-3 font-medium text-muted-foreground">
                       <div className="flex flex-col">
                         <span>ต้นทุน API</span>
-                        <span className="text-xs text-muted-foreground/60">(คำนวณ)</span>
+                        <span className="text-xs text-muted-foreground/60">
+                          (คำนวณ)
+                        </span>
                       </div>
                     </th>
-                    <th className="text-center py-3 px-3 font-medium text-muted-foreground">Credits</th>
+                    <th className="text-center py-3 px-3 font-medium text-muted-foreground">
+                      Credits
+                    </th>
                     <th className="text-center py-3 px-3 font-medium text-muted-foreground">
                       <div className="flex flex-col">
                         <span>กำไร/Package</span>
-                        <span className="text-xs text-muted-foreground/60">(Margin)</span>
+                        <span className="text-xs text-muted-foreground/60">
+                          (Margin)
+                        </span>
                       </div>
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {(['user', 'plus', 'pro', 'ultra', 'admin'] as UserRole[]).map((tier) => {
+                  {(
+                    ['user', 'plus', 'pro', 'ultra', 'admin'] as UserRole[]
+                  ).map((tier) => {
                     const tierInfo = tierLabels[tier]
                     const monthlyCredits = tierMonthlyCredits[tier]
 
                     // Calculate API cost for this tier's credits
-                    const apiCostForTier = monthlyCredits * costInfo.thbPerCredit
+                    const apiCostForTier =
+                      monthlyCredits * costInfo.thbPerCredit
 
                     return (
-                      <tr key={tier} className="border-b border-border/30 hover:bg-muted/20">
+                      <tr
+                        key={tier}
+                        className="border-b border-border/30 hover:bg-muted/20"
+                      >
                         <td className="py-3 px-3">
                           <div className="flex items-center gap-2">
-                            <div className={cn('w-2 h-2 rounded-full', tierInfo.bg.replace('/20', ''))} />
+                            <div
+                              className={cn(
+                                'w-2 h-2 rounded-full',
+                                tierInfo.bg.replace('/20', ''),
+                              )}
+                            />
                             <span className={cn('font-medium', tierInfo.color)}>
                               {tierInfo.name}
                             </span>
@@ -1118,30 +1397,45 @@ function AdminSettings() {
                         <td className="py-3 px-3 text-center">
                           {tier === 'user' || tier === 'admin' ? (
                             <span className="text-muted-foreground">-</span>
-                          ) : (() => {
-                            // กำไร/Package = แพ็กเกจ - ต้นทุน API
-                            const packagePrice = tierPackagePrice[tier]
-                            const profitPerPackage = packagePrice - apiCostForTier
-                            const packageMargin = packagePrice > 0 ? ((profitPerPackage / packagePrice) * 100) : 0
-                            const isProfitable = profitPerPackage >= 0
+                          ) : (
+                            (() => {
+                              // กำไร/Package = แพ็กเกจ - ต้นทุน API
+                              const packagePrice = tierPackagePrice[tier]
+                              const profitPerPackage =
+                                packagePrice - apiCostForTier
+                              const packageMargin =
+                                packagePrice > 0
+                                  ? (profitPerPackage / packagePrice) * 100
+                                  : 0
+                              const isProfitable = profitPerPackage >= 0
 
-                            return (
-                              <div className="flex items-center justify-center gap-2">
-                                <span className={cn(
-                                  'font-medium font-mono',
-                                  isProfitable ? 'text-emerald-500' : 'text-red-500'
-                                )}>
-                                  {isProfitable ? '+' : ''}฿{profitPerPackage.toFixed(2)}
-                                </span>
-                                <span className={cn(
-                                  'text-xs font-medium px-2 py-0.5 rounded-full',
-                                  isProfitable ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
-                                )}>
-                                  {packageMargin.toFixed(0)}%
-                                </span>
-                              </div>
-                            )
-                          })()}
+                              return (
+                                <div className="flex items-center justify-center gap-2">
+                                  <span
+                                    className={cn(
+                                      'font-medium font-mono',
+                                      isProfitable
+                                        ? 'text-emerald-500'
+                                        : 'text-red-500',
+                                    )}
+                                  >
+                                    {isProfitable ? '+' : ''}฿
+                                    {profitPerPackage.toFixed(2)}
+                                  </span>
+                                  <span
+                                    className={cn(
+                                      'text-xs font-medium px-2 py-0.5 rounded-full',
+                                      isProfitable
+                                        ? 'bg-emerald-500/20 text-emerald-400'
+                                        : 'bg-red-500/20 text-red-400',
+                                    )}
+                                  >
+                                    {packageMargin.toFixed(0)}%
+                                  </span>
+                                </div>
+                              )
+                            })()
+                          )}
                         </td>
                       </tr>
                     )
@@ -1151,20 +1445,256 @@ function AdminSettings() {
             </div>
 
             {/* Warning if any paid tier has negative margin (exclude user/admin) */}
-            {(['plus', 'pro', 'ultra'] as UserRole[]).some(tier => {
+            {(['plus', 'pro', 'ultra'] as UserRole[]).some((tier) => {
               const apiCost = tierMonthlyCredits[tier] * costInfo.thbPerCredit
               return tierPackagePrice[tier] < apiCost
             }) && (
               <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
                 <p className="text-xs text-red-400">
-                  บาง tier มีราคาต่ำกว่าต้นทุน! ควรปรับราคาให้สูงกว่าต้นทุนเพื่อไม่ให้ขาดทุน
+                  บาง tier มีราคาต่ำกว่าต้นทุน!
+                  ควรปรับราคาให้สูงกว่าต้นทุนเพื่อไม่ให้ขาดทุน
                 </p>
               </div>
             )}
           </div>
 
+          {/* Action-Based Pricing Section */}
+          <div className="mt-8 pt-6 border-t border-border/50">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-medium text-foreground">
+                  Action-Based Pricing
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  1 Credit = 1 Action • ตั้งจำนวน credits ต่อ action และดู
+                  margin
+                </p>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Reference: Plus tier (฿{tierPricePerCredit.plus}/credit)
+              </div>
+            </div>
 
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border/50">
+                    <th className="text-left py-3 px-3 font-medium text-muted-foreground">
+                      Action
+                    </th>
+                    <th className="text-center py-3 px-3 font-medium text-muted-foreground">
+                      <div className="flex flex-col">
+                        <span>Tokens</span>
+                        <span className="text-[10px] text-muted-foreground/60">
+                          (In/Out)
+                        </span>
+                      </div>
+                    </th>
+                    <th className="text-center py-3 px-3 font-medium text-muted-foreground">
+                      <div className="flex flex-col">
+                        <span>ต้นทุน API</span>
+                        <span className="text-[10px] text-muted-foreground/60">
+                          (THB)
+                        </span>
+                      </div>
+                    </th>
+                    <th className="text-center py-3 px-3 font-medium text-muted-foreground">
+                      Credits
+                    </th>
+                    <th className="text-center py-3 px-3 font-medium text-muted-foreground">
+                      <div className="flex flex-col">
+                        <span>ราคาขาย</span>
+                        <span className="text-[10px] text-muted-foreground/60">
+                          (Plus tier)
+                        </span>
+                      </div>
+                    </th>
+                    <th className="text-center py-3 px-3 font-medium text-muted-foreground">
+                      <div className="flex flex-col">
+                        <span>กำไร</span>
+                        <span className="text-[10px] text-muted-foreground/60">
+                          (Margin)
+                        </span>
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(Object.keys(actionPricing) as AIAction[]).map((action) => {
+                    const calc = calculateActionCostAndMargin(action)
+                    const pricing = actionPricing[action]
+                    const isProfitable = calc.profitThb >= 0
+                    const isLowMargin =
+                      calc.marginPercent < creditSettings.minMarginThreshold
+
+                    return (
+                      <tr
+                        key={action}
+                        className="border-b border-border/30 hover:bg-muted/20"
+                      >
+                        <td className="py-3 px-3">
+                          <div>
+                            <span className="font-medium text-foreground">
+                              {action.replace(/_/g, ' ')}
+                            </span>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                              {pricing.description}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          <div className="text-xs">
+                            <span className="font-mono text-blue-400">
+                              {(calc.inputTokens / 1000).toFixed(1)}K
+                            </span>
+                            <span className="text-muted-foreground mx-1">
+                              /
+                            </span>
+                            <span className="font-mono text-purple-400">
+                              {(calc.outputTokens / 1000).toFixed(1)}K
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-muted-foreground">
+                            = {(calc.totalTokens / 1000).toFixed(1)}K total
+                          </div>
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          <span className="font-mono text-amber-400">
+                            ฿{calc.costThb.toFixed(4)}
+                          </span>
+                          <div className="text-[10px] text-muted-foreground">
+                            (${calc.costUsd.toFixed(6)})
+                          </div>
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          <NumberInput
+                            min={1}
+                            max={100}
+                            value={pricing.creditsPerAction}
+                            onChange={(value) =>
+                              setActionPricing({
+                                ...actionPricing,
+                                [action]: {
+                                  ...pricing,
+                                  creditsPerAction: value || 1,
+                                },
+                              })
+                            }
+                            className="w-14 h-8 bg-card/50 border-border/50 rounded-lg text-sm text-center mx-auto"
+                          />
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          <span className="font-mono text-foreground">
+                            ฿{calc.sellingPriceThb.toFixed(2)}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <span
+                              className={cn(
+                                'font-medium font-mono',
+                                isProfitable
+                                  ? 'text-emerald-500'
+                                  : 'text-red-500',
+                              )}
+                            >
+                              {isProfitable ? '+' : ''}฿
+                              {calc.profitThb.toFixed(4)}
+                            </span>
+                            <span
+                              className={cn(
+                                'text-xs font-medium px-2 py-0.5 rounded-full',
+                                !isProfitable
+                                  ? 'bg-red-500/20 text-red-400'
+                                  : isLowMargin
+                                    ? 'bg-amber-500/20 text-amber-400'
+                                    : 'bg-emerald-500/20 text-emerald-400',
+                              )}
+                            >
+                              {calc.marginPercent.toFixed(0)}%
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Summary: Average margin */}
+            {(() => {
+              const allActions = Object.keys(actionPricing) as AIAction[]
+              const totalCost = allActions.reduce(
+                (sum, action) =>
+                  sum + calculateActionCostAndMargin(action).costThb,
+                0,
+              )
+              const totalRevenue = allActions.reduce(
+                (sum, action) =>
+                  sum + calculateActionCostAndMargin(action).sellingPriceThb,
+                0,
+              )
+              const totalProfit = totalRevenue - totalCost
+              const avgMargin =
+                totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0
+              const unprofitableActions = allActions.filter(
+                (action) => calculateActionCostAndMargin(action).profitThb < 0,
+              )
+
+              return (
+                <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">
+                      เฉลี่ย Margin:
+                    </span>
+                    <span
+                      className={cn(
+                        'font-medium px-2 py-0.5 rounded-full',
+                        avgMargin >= 50
+                          ? 'bg-emerald-500/20 text-emerald-400'
+                          : avgMargin >= 0
+                            ? 'bg-amber-500/20 text-amber-400'
+                            : 'bg-red-500/20 text-red-400',
+                      )}
+                    >
+                      {avgMargin.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">
+                      กำไรรวม (ต่อ 1 ชุด action):
+                    </span>
+                    <span
+                      className={cn(
+                        'font-mono font-medium',
+                        totalProfit >= 0 ? 'text-emerald-400' : 'text-red-400',
+                      )}
+                    >
+                      {totalProfit >= 0 ? '+' : ''}฿{totalProfit.toFixed(4)}
+                    </span>
+                  </div>
+                  {unprofitableActions.length > 0 && (
+                    <div className="flex items-center gap-1 text-red-400">
+                      <AlertTriangle className="w-3 h-3" />
+                      <span>{unprofitableActions.length} action ขาดทุน</span>
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
+
+            {/* Tip */}
+            <div className="mt-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              <p className="text-xs text-blue-400">
+                <strong>Tip:</strong> ถ้า margin ต่ำ สามารถเพิ่มจำนวน credits
+                หรือลด estimated tokens ได้ เป้าหมาย margin ควรอยู่ที่{' '}
+                {creditSettings.minMarginThreshold}%+
+                เพื่อให้มีกำไรหลังหักค่าใช้จ่ายอื่น
+              </p>
+            </div>
+          </div>
         </motion.div>
 
         {/* Save Button */}

@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import {
   AlertTriangle,
@@ -8,6 +8,7 @@ import {
   ExternalLink,
   HardDrive,
   Loader2,
+  Settings,
   Sparkles,
   TrendingUp,
   Zap,
@@ -18,7 +19,6 @@ import { AdminLayout } from '../../components/layouts/AdminLayout'
 import { cn } from '../../lib/utils'
 import {
   checkAdminAccess,
-  GEMINI_FREE_TIER,
   GEMINI_PRICING,
   getAIUsageStats,
   getDailyAIUsageChart,
@@ -45,9 +45,6 @@ export const Route = createFileRoute('/admin/usages')({
 interface TodayUsage {
   requests: number
   tokens: number
-  requestsLimit: number
-  tokensLimit: number
-  isFreeTier: boolean
 }
 
 interface ChartData {
@@ -79,9 +76,6 @@ function AdminUsages() {
   const [calcOutputPrice, setCalcOutputPrice] = useState<string>(
     GEMINI_PRICING['gemini-2.0-flash'].output.toString(),
   )
-  const [calcFreeTierQuota, setCalcFreeTierQuota] = useState<string>(
-    GEMINI_FREE_TIER.requestsPerDay.toString(),
-  )
   const [selectedPeriod, setSelectedPeriod] = useState<
     '7d' | '30d' | '365d' | 'total'
   >('7d')
@@ -97,7 +91,7 @@ function AdminUsages() {
     return 'week' // 1d and 7d use week
   }
 
-  // Calculate cost estimation for different time periods
+  // Calculate cost estimation for different time periods (Paid tier - no free quota)
   const calculateCostEstimation = (
     inputTokens: number,
     outputTokens: number,
@@ -105,44 +99,24 @@ function AdminUsages() {
     days: number,
     inputPrice: number,
     outputPrice: number,
-    freeTierQuota: number,
   ) => {
     // Calculate daily averages
     const avgInputTokensPerDay = inputTokens / Math.max(days, 1)
     const avgOutputTokensPerDay = outputTokens / Math.max(days, 1)
     const avgRequestsPerDay = requests / Math.max(days, 1)
 
-    // For pay-as-you-go, only requests over free tier per day would trigger billing
-    const paidRequestsPerDay = Math.max(0, avgRequestsPerDay - freeTierQuota)
-    const freeRequestsPerDay = Math.min(avgRequestsPerDay, freeTierQuota)
-
-    // Calculate daily token cost (using average tokens per request for paid requests)
-    const avgInputPerRequest = requests > 0 ? inputTokens / requests : 0
-    const avgOutputPerRequest = requests > 0 ? outputTokens / requests : 0
-
-    // Only paid requests cost tokens
-    const paidInputTokensPerDay = paidRequestsPerDay * avgInputPerRequest
-    const paidOutputTokensPerDay = paidRequestsPerDay * avgOutputPerRequest
-
+    // All requests are paid (no free tier)
     const dailyCost =
-      (paidInputTokensPerDay / 1_000_000) * inputPrice +
-      (paidOutputTokensPerDay / 1_000_000) * outputPrice
+      (avgInputTokensPerDay / 1_000_000) * inputPrice +
+      (avgOutputTokensPerDay / 1_000_000) * outputPrice
 
-    // Calculate total cost with free tier deduction
-    // Total paid requests = total requests - (free tier quota × number of days)
-    const totalFreeRequests = freeTierQuota * days
-    const totalPaidRequests = Math.max(0, requests - totalFreeRequests)
-    const paidRatio = requests > 0 ? totalPaidRequests / requests : 0
-    const totalPaidInputTokens = inputTokens * paidRatio
-    const totalPaidOutputTokens = outputTokens * paidRatio
+    // Calculate total cost
     const totalCost =
-      (totalPaidInputTokens / 1_000_000) * inputPrice +
-      (totalPaidOutputTokens / 1_000_000) * outputPrice
+      (inputTokens / 1_000_000) * inputPrice +
+      (outputTokens / 1_000_000) * outputPrice
 
     return {
       avgRequestsPerDay,
-      freeRequestsPerDay,
-      paidRequestsPerDay,
       avgInputTokensPerDay,
       avgOutputTokensPerDay,
       dailyCost,
@@ -181,7 +155,6 @@ function AdminUsages() {
         // Load pricing settings from DB
         setCalcInputPrice(pricingSettings.inputPrice.toString())
         setCalcOutputPrice(pricingSettings.outputPrice.toString())
-        setCalcFreeTierQuota(pricingSettings.freeTierQuota.toString())
       } catch (error) {
         console.error('Failed to fetch usage data:', error)
         toast.error('Failed to load usage data')
@@ -275,64 +248,38 @@ function AdminUsages() {
                 <span>AI Studio</span>
                 <ExternalLink className="w-4 h-4" />
               </a>
+              <Link
+                to="/admin/settings"
+                className="p-2 rounded-xl bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                title="AI Credit Settings"
+              >
+                <Settings className="w-5 h-5" />
+              </Link>
             </div>
           </div>
 
-          {/* Today's Usage & Quota */}
+          {/* Today's Usage */}
           {todayUsage && (
             <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20">
-              {/* Header Row with remaining requests */}
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between">
                 <h3 className="font-medium flex items-center gap-2">
                   <Zap className="w-4 h-4 text-purple-500" />
                   Today's Usage
                 </h3>
-                <div className="flex items-center gap-2">
-                  {todayUsage.requests / todayUsage.requestsLimit > 0.8 ? (
-                    <span className="flex items-center gap-1 text-xs text-red-500">
-                      <AlertTriangle className="w-3 h-3" />
-                      Approaching limit
+                <div className="flex items-center gap-4 text-sm">
+                  <span className="flex items-center gap-1.5">
+                    <span className="text-muted-foreground">Requests:</span>
+                    <span className="font-mono font-medium text-purple-400">
+                      {todayUsage.requests.toLocaleString()}
                     </span>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">
-                      {(
-                        todayUsage.requestsLimit - todayUsage.requests
-                      ).toLocaleString()}{' '}
-                      remaining
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="text-muted-foreground">Tokens:</span>
+                    <span className="font-mono font-medium text-purple-400">
+                      {(todayUsage.tokens / 1000).toFixed(1)}K
                     </span>
-                  )}
-                  {todayUsage.isFreeTier ? (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/20 text-amber-500">
-                      Free
-                    </span>
-                  ) : (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/20 text-emerald-500">
-                      Paid
-                    </span>
-                  )}
+                  </span>
                 </div>
-              </div>
-
-              {/* Requests Progress */}
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${
-                      todayUsage.requests / todayUsage.requestsLimit > 0.8
-                        ? 'bg-red-500'
-                        : todayUsage.requests / todayUsage.requestsLimit > 0.5
-                          ? 'bg-amber-500'
-                          : 'bg-emerald-500'
-                    }`}
-                    style={{
-                      width: `${Math.min((todayUsage.requests / todayUsage.requestsLimit) * 100, 100)}%`,
-                    }}
-                  />
-                </div>
-                <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
-                  {todayUsage.requests.toLocaleString()} /{' '}
-                  {todayUsage.requestsLimit.toLocaleString()}
-                </span>
               </div>
             </div>
           )}
@@ -342,7 +289,6 @@ function AdminUsages() {
             (() => {
               const inputPrice = parseFloat(calcInputPrice) || 0
               const outputPrice = parseFloat(calcOutputPrice) || 0
-              const freeTierQuota = parseFloat(calcFreeTierQuota) || 0
               const days = 30
               const estimation = calculateCostEstimation(
                 aiStats.totalInputTokens,
@@ -351,7 +297,6 @@ function AdminUsages() {
                 days,
                 inputPrice,
                 outputPrice,
-                freeTierQuota,
               )
 
               return (
@@ -420,40 +365,8 @@ function AdminUsages() {
                     {/* Collapsible Settings */}
                     {showCostCalculator && (
                       <div className="mt-3 pt-3 border-t border-purple-500/20 space-y-3">
-                        {/* Free Tier Limits */}
-                        <div className="grid grid-cols-3 gap-3 text-xs">
-                          <div>
-                            <p className="text-muted-foreground text-[10px]">
-                              Free Tier
-                            </p>
-                            <p className="font-medium text-foreground">
-                              {GEMINI_FREE_TIER.requestsPerDay.toLocaleString()}{' '}
-                              req/day
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground text-[10px]">
-                              RPM
-                            </p>
-                            <p className="font-medium text-foreground">
-                              {GEMINI_FREE_TIER.requestsPerMinute} req/min
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground text-[10px]">
-                              TPM
-                            </p>
-                            <p className="font-medium text-foreground">
-                              {(
-                                GEMINI_FREE_TIER.tokensPerMinute / 1_000_000
-                              ).toFixed(0)}
-                              M/min
-                            </p>
-                          </div>
-                        </div>
-
                         {/* Editable Pricing Parameters */}
-                        <div className="pt-2 border-t border-purple-500/20">
+                        <div>
                           <div className="flex items-center justify-between mb-2">
                             <p className="text-xs text-muted-foreground">
                               Pricing Settings
@@ -468,8 +381,6 @@ function AdminUsages() {
                                         parseFloat(calcInputPrice) || 0,
                                       outputPrice:
                                         parseFloat(calcOutputPrice) || 0,
-                                      freeTierQuota:
-                                        parseFloat(calcFreeTierQuota) || 0,
                                     },
                                   })
                                   toast.success('Settings saved')
@@ -486,7 +397,7 @@ function AdminUsages() {
                               {savingSettings ? 'Saving...' : 'Save'}
                             </button>
                           </div>
-                          <div className="grid grid-cols-3 gap-2">
+                          <div className="grid grid-cols-2 gap-2">
                             <div>
                               <label className="text-[10px] text-muted-foreground block mb-1">
                                 Input $/1M
@@ -511,19 +422,6 @@ function AdminUsages() {
                                 value={calcOutputPrice}
                                 onChange={(e) =>
                                   setCalcOutputPrice(e.target.value)
-                                }
-                                className="w-full px-2 py-1 rounded bg-background border border-border text-xs focus:outline-none focus:ring-1 focus:ring-purple-500/50"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-[10px] text-muted-foreground block mb-1">
-                                Free/Day
-                              </label>
-                              <input
-                                type="number"
-                                value={calcFreeTierQuota}
-                                onChange={(e) =>
-                                  setCalcFreeTierQuota(e.target.value)
                                 }
                                 className="w-full px-2 py-1 rounded bg-background border border-border text-xs focus:outline-none focus:ring-1 focus:ring-purple-500/50"
                               />

@@ -587,8 +587,8 @@ export const isMaintenanceMode = createServerFn({ method: 'GET' }).handler(
 // ============================================
 
 // Re-export pricing from types/database.ts (single source of truth)
-export { GEMINI_PRICING, GEMINI_FREE_TIER, GEMINI_ADDITIONAL_COSTS } from '../types/database'
-import { GEMINI_PRICING, GEMINI_FREE_TIER, type GeminiModelId } from '../types/database'
+export { GEMINI_PRICING, GEMINI_ADDITIONAL_COSTS } from '../types/database'
+import { GEMINI_PRICING, type GeminiModelId } from '../types/database'
 
 // Helper to get pricing for current model
 export function getModelPricing(modelId: GeminiModelId) {
@@ -887,14 +887,11 @@ export const getDailyAIUsageChart = createServerFn({ method: 'GET' })
     },
   )
 
-// Get today's usage for quota check
+// Get today's usage (no quota - paid tier)
 export const getTodayAIUsage = createServerFn({ method: 'GET' }).handler(
   async (): Promise<{
     requests: number
     tokens: number
-    requestsLimit: number
-    tokensLimit: number
-    isFreeTier: boolean
   }> => {
     const supabase = getSupabaseFromCookies()
 
@@ -929,16 +926,9 @@ export const getTodayAIUsage = createServerFn({ method: 'GET' }).handler(
     const totalTokens =
       logs?.reduce((sum, log) => sum + log.total_tokens, 0) || 0
 
-    // Check if we're on free tier (no billing configured)
-    // For now, assume free tier
-    const isFreeTier = true
-
     return {
       requests: count || 0,
       tokens: totalTokens,
-      requestsLimit: isFreeTier ? GEMINI_FREE_TIER.requestsPerDay : -1, // -1 = unlimited
-      tokensLimit: isFreeTier ? GEMINI_FREE_TIER.tokensPerMinute * 60 * 24 : -1,
-      isFreeTier,
     }
   },
 )
@@ -1057,7 +1047,6 @@ export const getCurrentMonthAIUsage = createServerFn({ method: 'GET' }).handler(
 export interface GeminiPricingSettings {
   inputPrice: number
   outputPrice: number
-  freeTierQuota: number
 }
 
 // Get Gemini pricing settings from DB (admin only)
@@ -1097,7 +1086,6 @@ export const getGeminiPricingSettings = createServerFn({
     return {
       inputPrice: GEMINI_PRICING['gemini-2.0-flash'].input,
       outputPrice: GEMINI_PRICING['gemini-2.0-flash'].output,
-      freeTierQuota: GEMINI_FREE_TIER.requestsPerDay,
     }
   }
 

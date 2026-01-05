@@ -671,6 +671,73 @@ export interface CollectionWithCount extends Collection {
 // AI Usage Log
 export type AIAction = 'summarize' | 'craft' | 'translate' | 'generate_quiz' | 'generate_quest' | 'generate_lesson' | 'deep_lesson'
 
+// ============================================
+// Action-Based Pricing Types
+// ============================================
+
+export interface ActionPricing {
+  creditsPerAction: number          // จำนวน credits ต่อ 1 action
+  estimatedInputTokens: number      // Token input โดยประมาณ
+  estimatedOutputTokens: number     // Token output โดยประมาณ
+  description: string               // คำอธิบาย action
+}
+
+export type ActionPricingConfig = Record<AIAction, ActionPricing>
+
+// Default action pricing based on typical token usage
+// Input:Output ratio varies by action type
+export const DEFAULT_ACTION_PRICING: ActionPricingConfig = {
+  // Summarize: short output from long input
+  summarize: {
+    creditsPerAction: 1,
+    estimatedInputTokens: 2000,    // Long input text
+    estimatedOutputTokens: 500,    // Short summary
+    description: 'สรุปเนื้อหา (Input มาก, Output น้อย)',
+  },
+  // Craft: medium output from medium input
+  craft: {
+    creditsPerAction: 1,
+    estimatedInputTokens: 1000,
+    estimatedOutputTokens: 800,
+    description: 'ปรับแต่งเนื้อหา',
+  },
+  // Translate: output ≈ input
+  translate: {
+    creditsPerAction: 1,
+    estimatedInputTokens: 1500,
+    estimatedOutputTokens: 1500,
+    description: 'แปลภาษา (Output ≈ Input)',
+  },
+  // Generate Quiz: structured output
+  generate_quiz: {
+    creditsPerAction: 2,
+    estimatedInputTokens: 1500,    // Source content
+    estimatedOutputTokens: 2500,   // 10 questions with options
+    description: 'สร้าง Quiz 10 ข้อ',
+  },
+  // Generate Quest: large structured output
+  generate_quest: {
+    creditsPerAction: 5,
+    estimatedInputTokens: 2000,    // Source content
+    estimatedOutputTokens: 6000,   // Multiple stages + lessons + quizzes
+    description: 'สร้าง Quest (หลาย Stage + บทเรียน)',
+  },
+  // Generate Lesson: medium-large output
+  generate_lesson: {
+    creditsPerAction: 2,
+    estimatedInputTokens: 1500,
+    estimatedOutputTokens: 2000,
+    description: 'สร้างบทเรียน',
+  },
+  // Deep Lesson: comprehensive output
+  deep_lesson: {
+    creditsPerAction: 3,
+    estimatedInputTokens: 2000,
+    estimatedOutputTokens: 4000,
+    description: 'บทเรียนเชิงลึก (Feynman Mode)',
+  },
+}
+
 export interface AIUsageLog {
   id: string
   user_id: string | null
@@ -1206,6 +1273,7 @@ export interface CreditSettings {
   tokensPerCredit: number       // How many tokens = 1 credit (e.g., 50 = 50 tokens per credit)
   tierSubscriptions: TierSubscriptionSettings  // Tier subscription settings
   minMarginThreshold: number    // Minimum margin % threshold for warnings
+  actionPricing: ActionPricingConfig  // Action-based pricing config
 }
 
 // Default values for credit settings
@@ -1249,4 +1317,5 @@ export const DEFAULT_CREDIT_SETTINGS: CreditSettings = {
   tokensPerCredit: 2000,      // 1 credit ≈ 1 typical AI request (~2000 tokens)
   tierSubscriptions: DEFAULT_TIER_SUBSCRIPTIONS,
   minMarginThreshold: 50,     // Default 50% minimum margin threshold
+  actionPricing: DEFAULT_ACTION_PRICING,
 }

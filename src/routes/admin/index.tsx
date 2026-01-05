@@ -248,8 +248,7 @@ function AdminDashboard() {
   } | null>(null)
   const [todayUsage, setTodayUsage] = useState<{
     requests: number
-    requestsLimit: number
-    isFreeTier: boolean
+    tokens: number
   } | null>(null)
 
   // Stats period filter
@@ -315,8 +314,7 @@ function AdminDashboard() {
       setAiUsage(usage)
       setTodayUsage({
         requests: today.requests,
-        requestsLimit: today.requestsLimit,
-        isFreeTier: today.isFreeTier,
+        tokens: today.tokens,
       })
     } catch (error) {
       console.error('Failed to fetch AI usage:', error)
@@ -781,39 +779,21 @@ function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* Today's Quota Progress */}
+                {/* Today's Usage */}
                 {todayUsage && (
                   <div className="mt-3 pt-3 border-t border-border/30">
-                    <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center justify-between">
                       <span className="text-[10px] text-muted-foreground">
-                        Today's Quota
+                        Today
                       </span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] font-medium text-muted-foreground">
-                          {todayUsage.requests.toLocaleString()} /{' '}
-                          {todayUsage.requestsLimit.toLocaleString()}
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-medium text-purple-400">
+                          {todayUsage.requests.toLocaleString()} requests
                         </span>
-                        {todayUsage.isFreeTier && (
-                          <span className="px-1.5 py-0.5 rounded text-[8px] font-medium bg-amber-500/20 text-amber-500">
-                            Free
-                          </span>
-                        )}
+                        <span className="text-[10px] font-medium text-purple-400">
+                          {(todayUsage.tokens / 1000).toFixed(1)}K tokens
+                        </span>
                       </div>
-                    </div>
-                    <div className="h-1.5 bg-muted/50 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${
-                          todayUsage.requests / todayUsage.requestsLimit > 0.9
-                            ? 'bg-red-500'
-                            : todayUsage.requests / todayUsage.requestsLimit >
-                                0.7
-                              ? 'bg-amber-500'
-                              : 'bg-purple-500'
-                        }`}
-                        style={{
-                          width: `${Math.min((todayUsage.requests / todayUsage.requestsLimit) * 100, 100)}%`,
-                        }}
-                      />
                     </div>
                   </div>
                 )}
